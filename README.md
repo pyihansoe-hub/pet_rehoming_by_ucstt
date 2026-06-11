@@ -1,3 +1,5 @@
+***project is still in development and it's just for education purpose and some or all codes of a file was modified by AI***
+
 # Pet Rehoming API v2
 
 Node.js + PostgreSQL (raw SQL) + Aya Pay + Claude AI Chatbot
