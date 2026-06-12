@@ -1,6 +1,8 @@
-# 🐾 Pet Rehoming API v2
+***project is still in development and it's just for education purpose and some or all codes of a file was modified by AI***
 
-Node.js + PostgreSQL (raw SQL) + Aya Pay + Claude AI Chatbot
+# Pet Rehoming API v2
+
+Node.js + PostgreSQL (raw SQL) + Chatbot
 
 ---
 
@@ -51,8 +53,8 @@ sql/
 
 ## API Reference
 
-> 🔒 = requires `Authorization: Bearer <token>`
-> 👑 = admin only
+> requires `Authorization: Bearer <token>`
+> admin only
 
 ---
 
@@ -65,7 +67,7 @@ sql/
 
 ---
 
-### User 🔒
+### User 
 
 | Method | Endpoint | Body |
 |--------|----------|------|
@@ -80,8 +82,8 @@ sql/
 | Method | Endpoint | Auth |
 |--------|----------|------|
 | GET | `/api/pet-types` | public |
-| POST | `/api/pet-types` | 👑 admin |
-| DELETE | `/api/pet-types/:id` | 👑 admin |
+| POST | `/api/pet-types` |  admin |
+| DELETE | `/api/pet-types/:id` |  admin |
 
 Seeded by default: Dog, Cat, Rabbit, Bird, Fish, Reptile, Hamster, Guinea Pig, Other
 
@@ -222,9 +224,6 @@ PawBot is powered by Claude and knows about pet care, adoption advice, training,
 
 ## Aya Pay Integration
 
-Edit `src/services/ayapay.js` — update endpoint paths and request body shape once you have their API docs. The status mapping (`SUCCESS → completed`) is ready for you to adjust.
-
----
 
 ## Notes
 
