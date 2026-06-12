@@ -2,7 +2,7 @@
 
 # Pet Rehoming API v2
 
-Node.js + PostgreSQL (raw SQL) + Aya Pay + Claude AI Chatbot
+Node.js + PostgreSQL (raw SQL) + Chatbot
 
 ---
 
