@@ -158,8 +158,11 @@ const deletePet = async (req, res) => {
 
 // POST /api/pets/:id/images
 const addPetImage = async (req, res) => {
-  const { url, is_primary = false } = req.body;
-  if (!url) return res.status(400).json({ message: 'Image URL is required.' });
+  if (!req.file) return res.status(400).json({ message: 'Image file is required.' });
+
+  const url        = /uploads/pets/${req.file.filename};
+  const is_primary = req.body.is_primary === 'true';
+
   try {
     const check = await pool.query('SELECT owner_id FROM pets WHERE id=$1', [req.params.id]);
     if (!check.rows.length) return res.status(404).json({ message: 'Pet not found.' });

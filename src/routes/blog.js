@@ -5,21 +5,19 @@ const {
   listBlogs, getBlog, createBlog, updateBlog, deleteBlog,
   getComments, addComment, deleteComment,
 } = require('../controllers/blogController');
+const { blogCoverUploader } = require('../services/upload');
 
-// Categories
-router.get('/categories',        listCategories);
-router.post('/categories',       protect, adminOnly, createCategory);
+router.get('/categories',               listCategories);
+router.post('/categories',              protect, adminOnly, createCategory);
 
-// Blogs
-router.get('/',                  optionalAuth, listBlogs);
-router.get('/:slug',             optionalAuth, getBlog);
-router.post('/',                 protect,      createBlog);
-router.patch('/:id',             protect,      updateBlog);
-router.delete('/:id',            protect,      deleteBlog);
+router.get('/',                         optionalAuth, listBlogs);
+router.get('/:slug',                    optionalAuth, getBlog);
+router.post('/',                        protect, blogCoverUploader.single('cover'), createBlog);
+router.patch('/:id',                    protect, blogCoverUploader.single('cover'), updateBlog);
+router.delete('/:id',                   protect, deleteBlog);
 
-// Comments
-router.get('/:id/comments',      getComments);
-router.post('/:id/comments',     protect, addComment);
+router.get('/:id/comments',             getComments);
+router.post('/:id/comments',            protect, addComment);
 router.delete('/:id/comments/:commentId', protect, deleteComment);
 
 module.exports = router;
