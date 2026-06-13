@@ -160,7 +160,7 @@ const deletePet = async (req, res) => {
 const addPetImage = async (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'Image file is required.' });
 
-  const url        = /uploads/pets/${req.file.filename};
+  const url        = '/uploads/pets/${req.file.filename}';
   const is_primary = req.body.is_primary === 'true';
 
   try {

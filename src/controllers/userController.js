@@ -7,22 +7,24 @@ const getProfile = (req, res) => res.json({ user: req.user });
 const updateProfile = async (req, res) => {
   const { name, phone, address } = req.body;
   const avatar_url = req.file
-    ? /uploads/avatars/${req.file.filename}
+    ? "/uploads/avatars/" + req.file.filename
     : undefined;
 
-  const fields = []; const values = []; let i = 1;
-  if (name)                  { fields.push(name=$${i++});       values.push(name); }
-  if (phone)                 { fields.push(phone=$${i++});      values.push(phone); }
-  if (address)               { fields.push(address=$${i++});    values.push(address); }
-  if (avatar_url !== undefined) { fields.push(avatar_url=$${i++}); values.push(avatar_url); }
+  const fields = [];
+  const values = [];
+  let i = 1;
+
+  if (name)                  { fields.push(name + "=$" + i++);       values.push(name); }
+  if (phone)                 { fields.push(phone + "=$" + i++);      values.push(phone); }
+  if (address)               { fields.push(address + "=$" + i++);    values.push(address); }
+  if (avatar_url !== undefined) { fields.push(avatar_url + "=$" + i++); values.push(avatar_url); }
 
   if (!fields.length) return res.status(400).json({ message: 'No fields to update.' });
   values.push(req.user.id);
 
   try {
     const { rows } = await pool.query(
-      UPDATE users SET ${fields.join(',')} WHERE id=$${i}
-       RETURNING id, name, email, phone, address, avatar_url, updated_at,
+      'UPDATE users SET ' + fields.join(',') + ' WHERE id=$' + i + ' RETURNING id, name, email, phone, address, avatar_url, updated_at',
       values
     );
     res.json({ message: 'Profile updated.', user: rows[0] });
