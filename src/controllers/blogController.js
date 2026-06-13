@@ -99,7 +99,7 @@ const getBlog = async (req, res) => {
 // POST /api/blogs
 const createBlog = async (req, res) => {
   const { title, content, summary, category_id, status = 'draft', tags = [] } = req.body;
-  const cover_image_url = req.file ? /uploads/blogs/${req.file.filename} : null;
+  const cover_image_url = req.file ? '/uploads/blogs/${req.file.filename}' : null;
   if (!title || !content) return res.status(400).json({ message: 'Title and content are required.' });
 
   const client = await pool.connect();
@@ -137,7 +137,7 @@ const createBlog = async (req, res) => {
 // PATCH /api/blogs/:id
 const updateBlog = async (req, res) => {
   const { title, content, summary, category_id, status, tags } = req.body;
-  const cover_image_url = req.file ? /uploads/blogs/${req.file.filename} : undefined;
+  const cover_image_url = req.file ? '/uploads/blogs/${req.file.filename}' : undefined;
 
   try {
     const check = await pool.query('SELECT author_id, status FROM blogs WHERE id=$1', [req.params.id]);
@@ -150,7 +150,7 @@ const updateBlog = async (req, res) => {
     if (content)        { fields.push(`content=$${i++}`);         values.push(content); }
     if (summary)        { fields.push(`summary=$${i++}`);         values.push(summary); }
     if (category_id)    { fields.push(`category_id=$${i++}`);     values.push(category_id); }
-    if (cover_image_url !== undefined) { fields.push(cover_image_url=$${i++}); values.push(cover_image_url); }
+    if (cover_image_url !== undefined) { fields.push('cover_image_url=$${i++}'); values.push(cover_image_url); }
     // if (cover_image_url){ fields.push(`cover_image_url=$${i++}`); values.push(cover_image_url); }
     if (status) {
       fields.push(`status=$${i++}`); values.push(status);
