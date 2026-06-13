@@ -1,4 +1,4 @@
-# 🐾 Pet Rehoming API v2
+#  Pet Rehoming API v2
 
 Node.js + PostgreSQL (raw SQL) + Aya Pay + Claude AI Chatbot
 
@@ -222,9 +222,8 @@ PawBot is powered by Claude and knows about pet care, adoption advice, training,
 
 ## Aya Pay Integration
 
-Edit `src/services/ayapay.js` — update endpoint paths and request body shape once you have their API docs. The status mapping (`SUCCESS → completed`) is ready for you to adjust.
 
----
+
 
 ## Notes
 
