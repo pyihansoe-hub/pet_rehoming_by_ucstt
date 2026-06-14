@@ -39,7 +39,11 @@ app.use('/api/adoption-requests',  require('./routes/adoption'));
 app.use('/api/payments',           require('./routes/payment'));
 app.use('/api/blogs',              require('./routes/blog'));
 app.use('/api/chat',               require('./routes/chat'));
-
+app.use('/api/favorites',          require('./routes/favorite'));
+app.use('/api/monitoring',     require('./routes/monitoring'));
+app.use('/api/reports',        require('./routes/report'));
+app.use('/api/notifications',  require('./routes/notification'));
+app.use('/api/admin',          require('./routes/admin'));
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ message: 'Unexpected error.', error: err.message });

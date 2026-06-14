@@ -77,6 +77,13 @@ const verifyPayment = async (req, res) => {
           );
         }
         await client.query('COMMIT');
+        const { send, emails } = require('../services/email');
+pool.query('SELECT name, email FROM users WHERE id=$1', [pet.owner_id])
+  .then(({ rows }) => {
+    const tmpl = emails.adoptionRequestReceived(rows[0].name, pet.name, req.user.name);
+    return send(rows[0].email, tmpl.subject, tmpl.html);
+  })
+  .catch(err => console.error('Email failed:', err.message));
       } catch { await client.query('ROLLBACK'); }
       finally { client.release(); }
     }
