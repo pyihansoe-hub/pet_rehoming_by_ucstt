@@ -1,9 +1,8 @@
 const router = require('express').Router();
 const { protect, optionalAuth, adminOnly } = require('../middleware/auth');
-const { listCategories, createCategory, listBlogs, getBlog, createBlog, updateBlog, deleteBlog, getComments, addComment, deleteComment } = require('../controllers/blogController');
+const { listCategories, createCategory, listBlogs, getBlog, createBlog, updateBlog, deleteBlog, getComments, addComment, deleteComment,toggleLike}= require('../controllers/blogController');
 const { blogCoverUploader } = require('../services/upload');
 const { validate, rules } = require('../middleware/validate');
-const { ..., toggleLike } = require('../controllers/blogController');
 router.post('/:id/like', protect, toggleLike);
 router.get('/categories',                   listCategories);
 router.post('/categories',                  protect, adminOnly, createCategory);
