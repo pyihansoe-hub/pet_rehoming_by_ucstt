@@ -1,5 +1,6 @@
 const pool = require('../db/pool');
-
+const path = require('path');
+const fs   = require('fs');
 // ── helpers ──────────────────────────────────────────────────────────────────
 const PET_SELECT = `
   p.*,
@@ -184,12 +185,17 @@ const addPetImage = async (req, res) => {
 const deletePetImage = async (req, res) => {
   try {
     const check = await pool.query(
-      'SELECT p.owner_id FROM pet_images pi JOIN pets p ON p.id=pi.pet_id WHERE pi.id=$1',
+      'SELECT pi.url, p.owner_id FROM pet_images pi JOIN pets p ON p.id=pi.pet_id WHERE pi.id=$1',
       [req.params.imageId]
     );
     if (!check.rows.length) return res.status(404).json({ message: 'Image not found.' });
     if (check.rows[0].owner_id !== req.user.id && req.user.role !== 'admin')
       return res.status(403).json({ message: 'Not authorized.' });
+
+    // delete file from disk
+    const filePath = path.join(__dirname, '../../', check.rows[0].url);
+    fs.unlink(filePath, () => {});
+
     await pool.query('DELETE FROM pet_images WHERE id=$1', [req.params.imageId]);
     res.json({ message: 'Image deleted.' });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }

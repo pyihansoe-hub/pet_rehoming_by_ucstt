@@ -1,6 +1,8 @@
-// routes/auth.js
-const authRouter = require('express').Router();
+const router = require('express').Router();
 const { register, login } = require('../controllers/authController');
-authRouter.post('/register', register);
-authRouter.post('/login',    login);
-module.exports = authRouter;
+const { validate, rules } = require('../middleware/validate');
+
+router.post('/register', validate(rules.register), register);
+router.post('/login',    validate(rules.login),    login);
+
+module.exports = router;

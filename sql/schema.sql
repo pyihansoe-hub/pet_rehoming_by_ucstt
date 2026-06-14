@@ -279,3 +279,37 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 );
 
 CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id);
+
+CREATE TABLE IF NOT EXISTS favorites (
+  user_id  INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  pet_id   INT NOT NULL REFERENCES pets(id)  ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, pet_id)
+);
+CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id);
+
+CREATE TABLE IF NOT EXISTS adoption_followups (
+  id                  SERIAL PRIMARY KEY,
+  adoption_request_id INT   NOT NULL REFERENCES adoption_requests(id) ON DELETE CASCADE,
+  submitted_by        INT   NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  health_status       VARCHAR(50) NOT NULL DEFAULT 'good', -- good | fair | poor
+  weight_kg           NUMERIC(5,2),
+  notes               TEXT,
+  image_url           TEXT,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS pet_health_logs (
+  id          SERIAL PRIMARY KEY,
+  pet_id      INT   NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+  logged_by   INT   NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type        VARCHAR(80) NOT NULL, -- vaccination | vet_visit | deworming | weight | other
+  description TEXT,
+  vet_name    VARCHAR(150),
+  weight_kg   NUMERIC(5,2),
+  next_due    DATE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_followups_adoption ON adoption_followups(adoption_request_id);
+CREATE INDEX IF NOT EXISTS idx_health_logs_pet    ON pet_health_logs(pet_id);
