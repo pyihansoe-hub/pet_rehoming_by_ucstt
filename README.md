@@ -1,10 +1,11 @@
+
 # Pet Rehoming & Monitoring System — API Reference
 
 **Base URL:** `http://localhost:3000`  
 **Auth:** `Authorization: Bearer <token>`  
 **Uploads:** `multipart/form-data` — never set Content-Type manually  
 **Images:** prefix URL → `http://localhost:3000/uploads/pets/file.jpg`  
-🔒 = login required · 👑= admin only
+
 
 ---
 
@@ -19,7 +20,7 @@ Both return `{ token, user }`.
 
 ---
 
-## User 🔒
+## User 
 
 | Method | Endpoint | Body |
 |--------|----------|------|
