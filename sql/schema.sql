@@ -313,3 +313,36 @@ CREATE TABLE IF NOT EXISTS pet_health_logs (
 
 CREATE INDEX IF NOT EXISTS idx_followups_adoption ON adoption_followups(adoption_request_id);
 CREATE INDEX IF NOT EXISTS idx_health_logs_pet    ON pet_health_logs(pet_id);
+
+
+-- ── User suspension ───────────────────────────────────────────
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_suspended  BOOLEAN     NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS suspended_at  TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS suspend_reason TEXT;
+
+-- ── Admin seed tracking (prevents re-seeding) ─────────────────
+CREATE TABLE IF NOT EXISTS system_config (
+  key   VARCHAR(100) PRIMARY KEY,
+  value TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ── Admin activity / audit log ────────────────────────────────
+CREATE TABLE IF NOT EXISTS admin_audit_log (
+  id          SERIAL PRIMARY KEY,
+  admin_id    INT         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  action      VARCHAR(100) NOT NULL,
+  target_type VARCHAR(50),           -- user | pet | blog | adoption | report | payment
+  target_id   INT,
+  detail      TEXT,
+  ip_address  VARCHAR(64),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_admin  ON admin_audit_log(admin_id);
+CREATE INDEX IF NOT EXISTS idx_audit_target ON admin_audit_log(target_type, target_id);
+CREATE INDEX IF NOT EXISTS idx_audit_time   ON admin_audit_log(created_at);
+
+-- ── Add visibility flag to follow-ups ─────────────────────────
+-- (already private by default, this just makes it explicit)
+ALTER TABLE adoption_followups ADD COLUMN IF NOT EXISTS is_visible_to_public BOOLEAN NOT NULL DEFAULT FALSE;

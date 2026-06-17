@@ -1,156 +1,99 @@
-#  Pet Rehoming API v2
+# Pet Rehoming & Monitoring System — API Reference
 
-Node.js + PostgreSQL (raw SQL) + Aya Pay + Claude AI Chatbot
-
----
-
-## Setup
-
-```bash
-npm install
-cp .env.example .env     # fill in all values
-npm run db:migrate        # creates all tables + seeds pet types & blog categories
-npm run dev
-```
+**Base URL:** `http://localhost:3000`  
+**Auth:** `Authorization: Bearer <token>`  
+**Uploads:** `multipart/form-data` — never set Content-Type manually  
+**Images:** prefix URL → `http://localhost:3000/uploads/pets/file.jpg`  
+🔒 = login required · 👑= admin only
 
 ---
 
-## Project Structure
-
-```
-src/
-├── server.js
-├── db/pool.js
-├── middleware/auth.js          # protect, optionalAuth, adminOnly
-├── controllers/
-│   ├── authController.js
-│   ├── userController.js
-│   ├── petTypeController.js
-│   ├── petController.js
-│   ├── adoptionController.js
-│   ├── paymentController.js
-│   ├── blogController.js
-│   └── chatController.js
-├── routes/
-│   ├── auth.js
-│   ├── user.js
-│   ├── petType.js
-│   ├── pet.js
-│   ├── adoption.js
-│   ├── payment.js
-│   ├── blog.js
-│   └── chat.js
-└── services/
-    └── ayapay.js
-sql/
-├── schema.sql
-└── migrate.js
-```
-
----
-
-## API Reference
-
-> 🔒 = requires `Authorization: Bearer <token>`
-> 👑 = admin only
-
----
-
-### Auth
+## Auth
 
 | Method | Endpoint | Body |
 |--------|----------|------|
 | POST | `/api/auth/register` | `name, email, password, phone?, address?` |
 | POST | `/api/auth/login` | `email, password` |
 
+Both return `{ token, user }`.
+
 ---
 
-### User 🔒
+## User 🔒
 
 | Method | Endpoint | Body |
 |--------|----------|------|
 | GET | `/api/user/profile` | — |
-| PATCH | `/api/user/profile` | `name?, phone?, address?, avatar_url?` |
+| PATCH | `/api/user/profile` | `name?, phone?, address?` + file `avatar` (multipart) |
 | PATCH | `/api/user/change-password` | `currentPassword, newPassword` |
 
 ---
 
-### Pet Types
+## Pet Types
 
-| Method | Endpoint | Auth |
-|--------|----------|------|
-| GET | `/api/pet-types` | public |
-| POST | `/api/pet-types` | 👑 admin |
-| DELETE | `/api/pet-types/:id` | 👑 admin |
+| Method | Endpoint | Notes |
+|--------|----------|-------|
+| GET | `/api/pet-types` | Public |
 
-Seeded by default: Dog, Cat, Rabbit, Bird, Fish, Reptile, Hamster, Guinea Pig, Other
+Seeded: `1=Dog, 2=Cat, 3=Rabbit, 4=Bird, 5=Fish, 6=Reptile, 7=Hamster, 8=Guinea Pig, 9=Other`
 
 ---
 
-### Pets
+## Pets
 
-| Method | Endpoint | Auth | Notes |
-|--------|----------|------|-------|
-| GET | `/api/pets` | public | filters: `type, status, fee_type, gender, search, page, limit` |
-| GET | `/api/pets/my` | 🔒 | owner's own listings |
-| GET | `/api/pets/:id` | public | increments view count |
-| POST | `/api/pets` | 🔒 | create listing |
-| PATCH | `/api/pets/:id` | 🔒 | owner/admin only |
-| DELETE | `/api/pets/:id` | 🔒 | owner/admin only |
-| POST | `/api/pets/:id/images` | 🔒 | add image `{ url, is_primary }` |
-| DELETE | `/api/pets/:id/images/:imageId` | 🔒 | remove image |
-| POST | `/api/pets/:id/adopt` | 🔒 | submit adoption request |
+| Method | Endpoint | Notes |
+|--------|----------|-------|
+| GET | `/api/pets` | Public · query: `type, status, fee_type, gender, search, page, limit` |
+| GET | `/api/pets/my` | 🔒 Your own listings |
+| GET | `/api/pets/:id` | Public |
+| POST | `/api/pets` | 🔒 JSON |
+| PATCH | `/api/pets/:id` | 🔒 Any pet fields |
+| DELETE | `/api/pets/:id` | 🔒 |
+| POST | `/api/pets/:id/images` | 🔒 multipart · file `image`, field `is_primary` |
+| DELETE | `/api/pets/:id/images/:imageId` | 🔒 |
 
-**Create pet body:**
+**Create/update body:**
 ```json
 {
   "pet_type_id": 1,
   "name": "Buddy",
-  "breed": "Golden Retriever",
-  "age_years": 2,
-  "age_months": 3,
+  "breed": "Labrador",
+  "birth_date": "01-01-2022",
+  "is_sure": true,
   "gender": "male",
-  "color": "golden",
-  "weight_kg": 28.5,
-  "description": "Friendly and playful",
-  "health_notes": "Vaccinated, neutered",
+  "color": "black",
+  "weight_kg": 25,
+  "description": "...",
+  "health_notes": "...",
   "is_vaccinated": true,
-  "is_neutered": true,
+  "is_neutered": false,
   "fee_type": "paid",
   "adoption_fee": 50000,
-  "location": "Yangon",
-  "images": [
-    { "url": "https://...", "is_primary": true }
-  ]
+  "location": "Yangon"
 }
 ```
+`fee_type`: `free` or `paid`. If `free`, `adoption_fee` is ignored.  
+`birth_date`: format `DD-MM-YYYY`.  
+`is_sure`: `true` if exact birthday is known, `false` if estimated.
 
 ---
 
-### Adoption Requests 🔒
+## Adoption
 
-| Method | Endpoint | Notes |
-|--------|----------|-------|
-| GET | `/api/adoption-requests/mine` | your outgoing requests |
-| GET | `/api/adoption-requests/received` | requests on your pets |
-| PATCH | `/api/adoption-requests/:id` | owner reviews: `{ status: "approved" \| "rejected" }` |
-| PATCH | `/api/adoption-requests/:id/cancel` | requester cancels |
+| Method | Endpoint | Body | Notes |
+|--------|----------|------|-------|
+| POST | `/api/pets/:id/adopt` | `message?` | 🔒 Returns `paymentRequired` flag |
+| GET | `/api/adoption-requests/mine` | — | 🔒 Requests you sent |
+| GET | `/api/adoption-requests/received` | — | 🔒 Requests on your pets |
+| PATCH | `/api/adoption-requests/:id` | `{ status: "approved" or "rejected" }` | 🔒 Owner reviews |
+| PATCH | `/api/adoption-requests/:id/cancel` | — | 🔒 Requester cancels |
 
-**Free adoption flow:**
-1. Requester sends `POST /api/pets/:id/adopt`
-2. Owner approves via `PATCH /api/adoption-requests/:id`
-3. Pet status → `adopted` automatically
-
-**Paid adoption flow:**
-1. Requester sends `POST /api/pets/:id/adopt`
-2. Owner approves → response includes `requiresPayment: true`
-3. Requester calls `POST /api/payments/initiate` with `adoption_request_id`
-4. Redirect user to `paymentUrl`
-5. Call `POST /api/payments/:id/verify` → pet status → `adopted` automatically
+Free adoption → approve → pet marked adopted automatically.  
+Paid adoption → approve → requester pays → verify → pet marked adopted automatically.
 
 ---
 
-### Payments 🔒
+## Payments 🔒
 
 | Method | Endpoint | Body |
 |--------|----------|------|
@@ -159,78 +102,168 @@ Seeded by default: Dog, Cat, Rabbit, Bird, Fish, Reptile, Hamster, Guinea Pig, O
 | POST | `/api/payments/initiate` | `amount, currency?, description?, adoption_request_id?` |
 | POST | `/api/payments/:id/verify` | — |
 
+`initiate` returns `paymentUrl` — redirect user there. Call `verify` after user returns.
+
 ---
+
+## Favorites 🔒
+
+| Method | Endpoint |
+|--------|----------|
+| GET | `/api/favorites` |
+| POST | `/api/favorites/:petId` |
+| DELETE | `/api/favorites/:petId` |
+
+---
+
+## Monitoring 🔒
+
+Private — only owner, adopter, or admin can access.
+
+| Method | Endpoint | Body | Notes |
+|--------|----------|------|-------|
+| POST | `/api/monitoring/followups/:adoptionRequestId` | `health_status, weight_kg?, notes?` + file `image?` | multipart |
+| GET | `/api/monitoring/followups/:adoptionRequestId` | — | — |
+| POST | `/api/monitoring/pets/:petId/health-logs` | `type, description?, vet_name?, weight_kg?, next_due?` | Owner only |
+| GET | `/api/monitoring/pets/:petId/health-logs` | — | Owner only |
+| DELETE | `/api/monitoring/pets/:petId/health-logs/:logId` | — | Owner only |
+
+`health_status`: `good / fair / poor`  
+`type`: `vaccination / vet_visit / deworming / weight / other`  
+`next_due`: date `YYYY-MM-DD`
+
+---
+
+## Blogs
+
+| Method | Endpoint | Notes |
+|--------|----------|-------|
+| GET | `/api/blogs/categories` | Public |
+| GET | `/api/blogs` | Public · query: `category, pet_type, search, tag, status, page, limit` |
+| GET | `/api/blogs/:slug` | Public |
+| POST | `/api/blogs` | 🔒 multipart · `title, content, summary?, category_id?, status?, tags?` + file `cover?` |
+| PATCH | `/api/blogs/:id` | 🔒 Same fields |
+| DELETE | `/api/blogs/:id` | 🔒 |
+| POST | `/api/blogs/:id/like` | 🔒 Toggle · returns `{ liked: true/false }` |
+| GET | `/api/blogs/:id/comments` | Public |
+| POST | `/api/blogs/:id/comments` | 🔒 `{ content }` |
+| DELETE | `/api/blogs/:id/comments/:commentId` | 🔒 |
+
+Send `tags` as JSON string in multipart: `tags: '["dog","care"]'`  
+`status`: `draft / published / archived`
+
+---
+
+## Reports 🔒
+
+| Method | Endpoint | Body |
+|--------|----------|------|
+| POST | `/api/reports` | `pet_id? or blog_id?, reason, details?` |
+
+`reason`: `spam / abuse / misleading / inappropriate / animal_welfare / other`  
+Provide either `pet_id` or `blog_id`, not both.
+
+---
+
+## Notifications 🔒
+
+| Method | Endpoint |
+|--------|----------|
+| GET | `/api/notifications` |
+| PATCH | `/api/notifications/read-all` |
+| PATCH | `/api/notifications/:id/read` |
+| DELETE | `/api/notifications/:id` |
+
+Response includes `unread` count — use for bell badge.
+
+---
+
+## Chat (PawBot)
+
+| Method | Endpoint | Body | Notes |
+|--------|----------|------|-------|
+| POST | `/api/chat` | `{ message }` | Public · no history |
+| POST | `/api/chat/sessions` | — | Create session |
+| GET | `/api/chat/sessions` | — | 🔒 |
+| GET | `/api/chat/sessions/:id/messages` | — | 🔒 |
+| POST | `/api/chat/sessions/:id/messages` | `{ message }` | History saved |
+| DELETE | `/api/chat/sessions/:id` | — | 🔒 |
+
+---
+
+## Admin 
+
+### Dashboard
+| Method | Endpoint |
+|--------|----------|
+| GET | `/api/admin/stats` |
+
+### Users
+| Method | Endpoint | Body | Notes |
+|--------|----------|------|-------|
+| GET | `/api/admin/users` | — | query: `search, role, suspended, page, limit` |
+| GET | `/api/admin/users/:id` | — | — |
+| PATCH | `/api/admin/users/:id/role` | `{ role }` | `user` or `admin` |
+| PATCH | `/api/admin/users/:id/suspend` | `{ reason? }` | Blocks login immediately |
+| PATCH | `/api/admin/users/:id/unsuspend` | — | — |
+| DELETE | `/api/admin/users/:id` | — | Permanent |
+
+### Pets
+| Method | Endpoint | Body |
+|--------|----------|------|
+| GET | `/api/admin/pets` | — |
+| PATCH | `/api/admin/pets/:id/status` | `{ status }` |
+| DELETE | `/api/admin/pets/:id` | — |
+
+`status`: `available / pending / adopted / withdrawn`
 
 ### Blogs
+| Method | Endpoint | Body |
+|--------|----------|------|
+| GET | `/api/admin/blogs` | — |
+| PATCH | `/api/admin/blogs/:id/status` | `{ status }` |
+| DELETE | `/api/admin/blogs/:id` | — |
 
-| Method | Endpoint | Auth | Notes |
-|--------|----------|------|-------|
-| GET | `/api/blogs/categories` | public | — |
-| POST | `/api/blogs/categories` | 👑 | `name, description?, pet_type_id?` |
-| GET | `/api/blogs` | public | filters: `category, pet_type, status, search, tag, page, limit` |
-| GET | `/api/blogs/:slug` | public | increments views |
-| POST | `/api/blogs` | 🔒 | create blog |
-| PATCH | `/api/blogs/:id` | 🔒 | author/admin |
-| DELETE | `/api/blogs/:id` | 🔒 | author/admin |
-| GET | `/api/blogs/:id/comments` | public | — |
-| POST | `/api/blogs/:id/comments` | 🔒 | `{ content }` |
-| DELETE | `/api/blogs/:id/comments/:commentId` | 🔒 | author/admin |
+### Adoptions
+| Method | Endpoint | Body |
+|--------|----------|------|
+| GET | `/api/admin/adoptions` | — |
+| PATCH | `/api/admin/adoptions/:id/close` | `{ reason? }` |
 
-**Create blog body:**
-```json
-{
-  "title": "How to Care for Your New Rabbit",
-  "content": "Full markdown content here...",
-  "summary": "A beginner's guide to rabbit care",
-  "category_id": 3,
-  "cover_image_url": "https://...",
-  "status": "published",
-  "tags": ["rabbit", "beginner", "care"]
-}
-```
+### Monitoring (platform-wide)
+| Method | Endpoint | Notes |
+|--------|----------|-------|
+| GET | `/api/admin/followups` | query: `health_status, page, limit` |
+| GET | `/api/admin/health-logs` | query: `type, page, limit` |
 
-Seeded categories: Dog Care, Cat Care, Rabbit Care, Bird Care, Fish Care, Reptile Care, General, Health & Vet, Training, Nutrition
+### Reports
+| Method | Endpoint | Body |
+|--------|----------|------|
+| GET | `/api/admin/reports` | — |
+| PATCH | `/api/admin/reports/:id/resolve` | `{ status, action? }` |
 
----
+`status`: `reviewed / dismissed`  
+`action`: `remove_pet / remove_blog / suspend_reporter`
 
-### AI Chatbot (PawBot)
-
-| Method | Endpoint | Auth | Notes |
-|--------|----------|------|-------|
-| POST | `/api/chat` | public | one-shot, no history saved |
-| POST | `/api/chat/sessions` | optional | create session |
-| GET | `/api/chat/sessions` | 🔒 | list your sessions |
-| GET | `/api/chat/sessions/:id/messages` | 🔒 | full history |
-| POST | `/api/chat/sessions/:id/messages` | optional | send + receive, history persisted |
-| DELETE | `/api/chat/sessions/:id` | 🔒 | delete session |
-
-**One-shot example:**
-```json
-POST /api/chat
-{ "message": "What should I feed a 3-month-old kitten?" }
-```
-
-**Session example:**
-```json
-POST /api/chat/sessions/5/messages
-{ "message": "Is my rabbit eating too much?" }
-```
-
-PawBot is powered by Claude and knows about pet care, adoption advice, training, nutrition, and platform guidance. Conversation history is saved per session so it remembers context.
-
----
-
-## Aya Pay Integration
-
-Edit `src/services/ayapay.js` — update endpoint paths and request body shape once you have their API docs. The status mapping (`SUCCESS → completed`) is ready for you to adjust.
+### Audit Log
+| Method | Endpoint | Notes |
+|--------|----------|-------|
+| GET | `/api/admin/audit-log` | query: `admin_id, action, target_type, page, limit` |
 
 ---
 
 ## Notes
 
-- `fee_type: "free"` → `adoption_fee` is forced to 0
-- Approving a free adoption auto-rejects all other pending requests for the same pet
-- Completed payment for paid adoption auto-marks the pet as adopted and rejects other requests
-- Blog slugs are auto-generated from title + timestamp for uniqueness
-- Chat sessions can be created without login (anonymous), but listing/deleting requires auth
-- Set `role = 'admin'` directly in DB for admin users
+**Token storage:** save in `localStorage`, send on every 🔒 request.
+
+**Suspended account:** returns `403 { message: "Your account has been suspended.", reason: "..." }` — clear token and show message.
+
+**Pagination:** all list endpoints return `{ data[], total, page, limit }`.
+
+**Admin setup:** set `ADMIN_EMAIL` + `ADMIN_PASSWORD` in `.env` before first run. Seeds once and locks. Login via `/api/auth/login` normally.
+
+**Image display:**
+```js
+const API = 'http://localhost:3000';
+`${API}${pet.images[0]?.url}`
+`${API}${user.avatar_url}`
