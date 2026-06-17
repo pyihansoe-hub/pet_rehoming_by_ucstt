@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Add these lines if not already there:
+.env
+.env.*
+!.env.example
