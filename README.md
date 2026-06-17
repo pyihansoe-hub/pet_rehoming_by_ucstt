@@ -250,7 +250,7 @@ Response includes `unread` count — use for bell badge.
 |--------|----------|-------|
 | GET | `/api/admin/audit-log` | query: `admin_id, action, target_type, page, limit` |
 
-
+---
 
 ## Notes
 
