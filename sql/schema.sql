@@ -346,3 +346,51 @@ CREATE INDEX IF NOT EXISTS idx_audit_time   ON admin_audit_log(created_at);
 -- ── Add visibility flag to follow-ups ─────────────────────────
 -- (already private by default, this just makes it explicit)
 ALTER TABLE adoption_followups ADD COLUMN IF NOT EXISTS is_visible_to_public BOOLEAN NOT NULL DEFAULT FALSE;
+
+--try debug--
+sudo -u postgres psql -d pet_rehoming << 'EOF'
+-- Create reports table with all columns the controller expects
+CREATE TABLE IF NOT EXISTS reports (
+    id SERIAL PRIMARY KEY,
+    reporter_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    pet_id INTEGER REFERENCES pets(id) ON DELETE CASCADE,
+    blog_id INTEGER REFERENCES blogs(id) ON DELETE CASCADE,
+    reason VARCHAR(50) NOT NULL,
+    details TEXT,
+    status VARCHAR(20) DEFAULT 'pending',
+    action VARCHAR(50),
+    reviewed_by INTEGER REFERENCES users(id),
+    reviewed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT check_report_target CHECK (
+        (pet_id IS NOT NULL AND blog_id IS NULL) OR 
+        (pet_id IS NULL AND blog_id IS NOT NULL)
+    )
+);
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_reports_reporter_id ON reports(reporter_id);
+CREATE INDEX IF NOT EXISTS idx_reports_pet_id ON reports(pet_id);
+CREATE INDEX IF NOT EXISTS idx_reports_blog_id ON reports(blog_id);
+CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
+CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at);
+
+-- Add trigger for updated_at
+CREATE OR REPLACE FUNCTION update_reports_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_reports_updated_at ON reports;
+CREATE TRIGGER update_reports_updated_at
+    BEFORE UPDATE ON reports
+    FOR EACH ROW
+    EXECUTE FUNCTION update_reports_updated_at();
+
+-- Verify
+SELECT 'reports table created successfully!' as status;
+EOF
