@@ -191,6 +191,23 @@ const deleteBlog = async (req, res) => {
     res.json({ message: 'Blog deleted.' });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
+// POST /api/blogs/:id/like  — toggle like
+const toggleLike = async (req, res) => {
+  try {
+    const existing = await pool.query(
+      'SELECT 1 FROM blog_likes WHERE user_id=$1 AND blog_id=$2',
+      [req.user.id, req.params.id]
+    );
+    if (existing.rows.length) {
+      await pool.query('DELETE FROM blog_likes WHERE user_id=$1 AND blog_id=$2', [req.user.id, req.params.id]);
+      res.json({ liked: false });
+    } else {
+      await pool.query('INSERT INTO blog_likes (user_id, blog_id) VALUES ($1,$2)', [req.user.id, req.params.id]);
+      res.json({ liked: true });
+    }
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
 
 // ── Comments ───────────────────────────────────────────────────────────────
 
@@ -232,5 +249,5 @@ const deleteComment = async (req, res) => {
 module.exports = {
   listCategories, createCategory,
   listBlogs, getBlog, createBlog, updateBlog, deleteBlog,
-  getComments, addComment, deleteComment,
+  getComments, addComment, deleteComment, toggleLike,
 };

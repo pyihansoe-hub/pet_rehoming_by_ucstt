@@ -1,5 +1,6 @@
 const pool = require('../db/pool');
-
+const path = require('path');
+const fs   = require('fs');
 // ── helpers ──────────────────────────────────────────────────────────────────
 const PET_SELECT = `
   p.*,
@@ -60,7 +61,6 @@ const listPets = async (req, res) => {
 // GET /api/pets/:id
 const getPet = async (req, res) => {
   try {
-    // increment view count
     await pool.query('UPDATE pets SET views = COALESCE(views,0)+1 WHERE id=$1', [req.params.id]).catch(() => {});
     const { rows } = await pool.query(
       `${PET_SELECT} WHERE p.id=$1 GROUP BY p.id, pt.name, u.name, u.phone`,
@@ -74,11 +74,11 @@ const getPet = async (req, res) => {
 // POST /api/pets
 const createPet = async (req, res) => {
   const {
-    pet_type_id, name, breed, age_years, age_months,
+    pet_type_id, name, breed, birth_date, is_sure,
     gender, color, weight_kg, description, health_notes,
     is_vaccinated = false, is_neutered = false,
     fee_type = 'free', adoption_fee = 0, location,
-    images = [],  // array of { url, is_primary }
+    images = [],
   } = req.body;
 
   if (!pet_type_id || !name) return res.status(400).json({ message: 'pet_type_id and name are required.' });
@@ -89,12 +89,12 @@ const createPet = async (req, res) => {
 
     const { rows } = await client.query(
       `INSERT INTO pets
-         (owner_id, pet_type_id, name, breed, age_years, age_months, gender, color,
-          weight_kg, description, health_notes, is_vaccinated, is_neutered,
-          fee_type, adoption_fee, location)
+         (owner_id, pet_type_id, name, breed, birth_date, is_sure,
+          gender, color, weight_kg, description, health_notes,
+          is_vaccinated, is_neutered, fee_type, adoption_fee, location)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
        RETURNING *`,
-      [req.user.id, pet_type_id, name, breed || null, age_years || null, age_months || null,
+      [req.user.id, pet_type_id, name, breed || null, birth_date || null, is_sure || null,
        gender || null, color || null, weight_kg || null, description || null,
        health_notes || null, is_vaccinated, is_neutered,
        fee_type, fee_type === 'free' ? 0 : adoption_fee, location || null]
@@ -120,7 +120,7 @@ const createPet = async (req, res) => {
 
 // PATCH /api/pets/:id
 const updatePet = async (req, res) => {
-  const allowed = ['name','breed','age_years','age_months','gender','color','weight_kg',
+  const allowed = ['name','breed','birth_date','is_sure','gender','color','weight_kg',
                    'description','health_notes','is_vaccinated','is_neutered',
                    'fee_type','adoption_fee','status','location'];
   const fields = []; const values = []; let i = 1;
@@ -184,12 +184,16 @@ const addPetImage = async (req, res) => {
 const deletePetImage = async (req, res) => {
   try {
     const check = await pool.query(
-      'SELECT p.owner_id FROM pet_images pi JOIN pets p ON p.id=pi.pet_id WHERE pi.id=$1',
+      'SELECT pi.url, p.owner_id FROM pet_images pi JOIN pets p ON p.id=pi.pet_id WHERE pi.id=$1',
       [req.params.imageId]
     );
     if (!check.rows.length) return res.status(404).json({ message: 'Image not found.' });
     if (check.rows[0].owner_id !== req.user.id && req.user.role !== 'admin')
       return res.status(403).json({ message: 'Not authorized.' });
+
+    const filePath = path.join(__dirname, '../../', check.rows[0].url);
+    fs.unlink(filePath, () => {});
+
     await pool.query('DELETE FROM pet_images WHERE id=$1', [req.params.imageId]);
     res.json({ message: 'Image deleted.' });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
