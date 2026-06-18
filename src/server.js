@@ -5,6 +5,7 @@ const helmet     = require('helmet');
 const path       = require('path');
 const rateLimit  = require('express-rate-limit');
 const seedAdmin  = require('./services/seedAdmin');
+const { scheduleReminders } = require('./services/scheduler');
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.use('/api/blogs',             require('./routes/blog'));
 app.use('/api/reports',           require('./routes/report'));
 app.use('/api/notifications',     require('./routes/notification'));
 app.use('/api/favorites',         require('./routes/favorite'));
+app.use('/api/messages',          require('./routes/messages'));
 app.use('/api/chat',     chatLimiter, require('./routes/chat'));
 app.use('/api/admin',             require('./routes/admin'));   // uses updated admin routes
 
@@ -43,4 +45,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   console.log(`Server on port ${PORT}`);
   await seedAdmin(); // runs once, seeds admin from .env, then locks
+  scheduleReminders(); // Start scheduled reminder jobs
 });

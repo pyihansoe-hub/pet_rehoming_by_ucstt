@@ -386,6 +386,35 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 CREATE INDEX IF NOT EXISTS idx_reset_tokens_user ON password_reset_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token);
 
+-- ── Direct Messaging between users ─────────────────────────────
+CREATE TABLE IF NOT EXISTS messages (
+  id          SERIAL PRIMARY KEY,
+  sender_id   INT         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  receiver_id INT         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  adoption_request_id INT REFERENCES adoption_requests(id) ON DELETE SET NULL,
+  content     TEXT        NOT NULL,
+  is_read     BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_messages_adoption ON messages(adoption_request_id);
+CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at);
+
+-- ── Refresh tokens for silent re-login ─────────────────────────
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+  id          SERIAL PRIMARY KEY,
+  user_id     INT         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token       VARCHAR(255) NOT NULL UNIQUE,
+  expires_at  TIMESTAMPTZ NOT NULL,
+  revoked     BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
+
 -- ── Adoption follow-up reminders ───────────────────────────────
 CREATE TABLE IF NOT EXISTS adoption_reminders (
   id                  SERIAL PRIMARY KEY,
