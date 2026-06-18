@@ -24,6 +24,7 @@ const listPets = async (req, res) => {
     status = 'available',
     fee_type,
     gender,
+    city,
     page = 1,
     limit = 20,
     search,
@@ -37,8 +38,9 @@ const listPets = async (req, res) => {
   if (type)     { conditions.push(`p.pet_type_id = $${i++}`);  values.push(type); }
   if (fee_type) { conditions.push(`p.fee_type = $${i++}`);     values.push(fee_type); }
   if (gender)   { conditions.push(`p.gender = $${i++}`);       values.push(gender); }
+  if (city)     { conditions.push(`p.city = $${i++}`);         values.push(city); }
   if (search)   {
-    conditions.push(`(p.name ILIKE $${i} OR p.breed ILIKE $${i} OR p.description ILIKE $${i})`);
+    conditions.push(`(p.name ILIKE $${i} OR p.breed ILIKE $${i} OR p.description ILIKE $${i} OR p.location ILIKE $${i})`);
     values.push(`%${search}%`); i++;
   }
 
@@ -71,13 +73,36 @@ const getPet = async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 
+// GET /api/pets/trending — trending pets by views in last 7 days
+const trendingPets = async (req, res) => {
+  const { limit = 10 } = req.query;
+  
+  try {
+    const { rows } = await pool.query(
+      `SELECT p.*, pt.name AS pet_type_name, u.name AS owner_name,
+              COALESCE(json_agg(pi ORDER BY pi.is_primary DESC, pi.id) FILTER (WHERE pi.id IS NOT NULL), '[]') AS images
+       FROM pets p
+       JOIN pet_types pt ON pt.id = p.pet_type_id
+       JOIN users u ON u.id = p.owner_id
+       LEFT JOIN pet_images pi ON pi.pet_id = p.id
+       WHERE p.status = 'available'
+         AND p.created_at >= NOW() - INTERVAL '7 days'
+       GROUP BY p.id, pt.name, u.name
+       ORDER BY p.views DESC
+       LIMIT $1`,
+      [parseInt(limit)]
+    );
+    res.json({ pets: rows });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
 // POST /api/pets
 const createPet = async (req, res) => {
   const {
     pet_type_id, name, breed, birth_date, is_sure,
     gender, color, weight_kg, description, health_notes,
     is_vaccinated = false, is_neutered = false,
-    fee_type = 'free', adoption_fee = 0, location,
+    fee_type = 'free', adoption_fee = 0, location, city,
     images = [],
   } = req.body;
 
@@ -91,13 +116,13 @@ const createPet = async (req, res) => {
       `INSERT INTO pets
          (owner_id, pet_type_id, name, breed, birth_date, is_sure,
           gender, color, weight_kg, description, health_notes,
-          is_vaccinated, is_neutered, fee_type, adoption_fee, location)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+          is_vaccinated, is_neutered, fee_type, adoption_fee, location, city)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
        RETURNING *`,
       [req.user.id, pet_type_id, name, breed || null, birth_date || null, is_sure || null,
        gender || null, color || null, weight_kg || null, description || null,
        health_notes || null, is_vaccinated, is_neutered,
-       fee_type, fee_type === 'free' ? 0 : adoption_fee, location || null]
+       fee_type, fee_type === 'free' ? 0 : adoption_fee, location || null, city || null]
     );
     const pet = rows[0];
 
@@ -122,7 +147,7 @@ const createPet = async (req, res) => {
 const updatePet = async (req, res) => {
   const allowed = ['name','breed','birth_date','is_sure','gender','color','weight_kg',
                    'description','health_notes','is_vaccinated','is_neutered',
-                   'fee_type','adoption_fee','status','location'];
+                   'fee_type','adoption_fee','status','location','city'];
   const fields = []; const values = []; let i = 1;
 
   for (const key of allowed) {
@@ -136,10 +161,24 @@ const updatePet = async (req, res) => {
     if (check.rows[0].owner_id !== req.user.id && req.user.role !== 'admin')
       return res.status(403).json({ message: 'Not authorized.' });
 
+    // Track status change for history
+    const oldPet = await pool.query('SELECT status FROM pets WHERE id=$1', [req.params.id]);
+    const oldStatus = oldPet.rows[0]?.status;
+    const newStatus = req.body.status;
+
     values.push(req.params.id);
     const { rows } = await pool.query(
       `UPDATE pets SET ${fields.join(',')} WHERE id=$${i} RETURNING *`, values
     );
+
+    // Log status change if status was updated
+    if (newStatus && oldStatus !== newStatus) {
+      await pool.query(
+        'INSERT INTO pet_status_history (pet_id, old_status, new_status) VALUES ($1, $2, $3)',
+        [req.params.id, oldStatus, newStatus]
+      );
+    }
+
     res.json({ message: 'Pet updated.', pet: rows[0] });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
@@ -210,4 +249,15 @@ const myPets = async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 
-module.exports = { listPets, getPet, createPet, updatePet, deletePet, addPetImage, deletePetImage, myPets };
+// GET /api/pets/status-history/:id — get status change history for a pet
+const getStatusHistory = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM pet_status_history WHERE pet_id = $1 ORDER BY changed_at DESC`,
+      [req.params.id]
+    );
+    res.json({ history: rows });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
+module.exports = { listPets, getPet, createPet, updatePet, deletePet, addPetImage, deletePetImage, myPets, trendingPets, getStatusHistory };

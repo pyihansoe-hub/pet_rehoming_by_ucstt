@@ -127,4 +127,4 @@ const deleteHealthLog = async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 
-module.exports = { submitFollowup, getFollowups, addHealthLog, getHealthLogs, deleteHealthLog };
+module.exports = { submitFollowup, getFollowups, addHealthLog, getHealthLogs, deleteHealthLog, sendReminders, sendHealthReminders };
