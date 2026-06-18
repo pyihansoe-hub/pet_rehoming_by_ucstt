@@ -173,7 +173,7 @@ CREATE TABLE pet_status_history (
 
 ---
 
-## 📋 API Route Summary
+## API Route Summary
 
 ### Authentication
 ```
@@ -227,7 +227,7 @@ POST /api/payments/webhook/aya     - Aya Pay webhook (auto)
 
 ---
 
-## 🔧 Database Migration Required
+##  Database Migration Required
 
 Run the updated schema to add new tables:
 
@@ -244,7 +244,7 @@ Run the updated schema to add new tables:
 
 ---
 
-## ⚙️ Configuration Required
+##  Configuration Required
 
 Add to `.env`:
 
@@ -277,7 +277,7 @@ AYAPAY_MERCHANT_ID=your-merchant-id
 
 ---
 
-## 🚀 Usage Examples
+##  Usage Examples
 
 ### Password Reset Flow
 ```javascript
@@ -335,7 +335,7 @@ fetch('/api/pets/trending?limit=10')
 
 ---
 
-## 📝 Notes
+## Notes
 
 1. **Scheduler**: Runs automatically when server starts (`scheduleReminders()` in `server.js`)
 2. **Message Security**: Users can only message after adoption approval
