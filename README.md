@@ -1,155 +1,344 @@
-#  Pet Rehoming API
+# Backend Features Implementation Summary
 
-**Base URL:** `http://localhost:3000`
-**Auth Header:** `Authorization: Bearer <token>`
-**File Uploads:** Use `multipart/form-data`. Do **not** set `Content-Type` manually.
-**Image URLs:** Combine Base URL + Path (e.g., `http://localhost:3000/uploads/pets/file.jpg`)
+## Completed Features
 
+### 1. Password Reset via Email
+**Files Modified/Created:**
+- `src/controllers/authController.js` - Already had `forgotPassword` and `resetPassword` functions
+- `src/routes/auth.js` - Routes already configured
+- `sql/schema.sql` - `password_reset_tokens` table already exists
 
----
-
-## 1. Auth & Users
-
-| Method | Endpoint | Body / Notes |
-| :--- | :--- | :--- |
-| **POST** | `/api/auth/register` | `name, email, password, phone?, address?` |
-| **POST** | `/api/auth/login` | `email, password` → Returns `{ token, user }` |
-| **POST** | `/api/auth/forgot-password` | `{ email }` (Always returns success for security) |
-| **POST** | `/api/auth/reset-password` | `{ token, newPassword }` |
-| **GET** | `/api/user/profile` | Get current user info |
-| **PATCH** | `/api/user/profile` |  Update `name, phone, address` + file `avatar` |
-| **PATCH** | `/api/user/change-password` |  `currentPassword, newPassword` |
+**Endpoints:**
+- `POST /api/auth/forgot-password` - Send reset link email
+- `POST /api/auth/reset-password` - Reset password with token
 
 ---
 
-## 2. Pets
+### 2. Search Pets by Location (City)
+**Files Modified:**
+- `sql/schema.sql` - `city` field already exists as `pet_city` ENUM
+- `src/controllers/petController.js` - `listPets` already supports city filtering
+- `src/routes/pet.js` - GET `/api/pets?city=Yangon`
 
-**Seeded Pet Type IDs:** `1=Dog`, `2=Cat`, `3=Rabbit`, `4=Bird`, `5=Fish`, `6=Reptile`, `7=Hamster`, `8=Guinea Pig`, `9=Other`
-
-| Method | Endpoint | Notes |
-| :--- | :--- | :--- |
-| **GET** | `/api/pets` | Public. Filters: `type, status, fee_type, gender, search, page, limit` |
-| **GET** | `/api/pets/trending` | Public. Top viewed pets in last 30 days. |
-| **GET** | `/api/pets/cities` | Public. List of cities for filters. |
-| **GET** | `/api/pets/my` |  Your listings. |
-| **GET** | `/api/pets/:id` | Public. Includes `age_display` and `status_history`. |
-| **POST** | `/api/pets` |  See JSON body below. |
-| **PATCH** | `/api/pets/:id` |  Update pet details. |
-| **DELETE** | `/api/pets/:id` |  Delete listing. |
-| **POST** | `/api/pets/:id/images` |  Multipart. Fields: `image` (file), `is_primary` (boolean). |
-
-**Create Pet Body:**
-```json
-{
-  "pet_type_id": 1,
-  "name": "Buddy",
-  "birth_date": "2022-01-01",
-  "is_sure": true, 
-  "gender": "male",
-  "fee_type": "paid", 
-  "adoption_fee": 50000,
-  "location": "Yangon",
-  "description": "Friendly dog..."
-}
+**Usage:**
+```javascript
+GET /api/pets?city=Yangon
+GET /api/pets?city=Mandalay&status=available
 ```
-*Note: `is_sure: false` means age is estimated.*
 
 ---
 
-## 3. Adoption Flow
+### 3. Adoption Contract/Agreement
+**Files Modified:**
+- `src/controllers/adoptionController.js` - Already has `agreeContract` and `getContract`
+- `sql/schema.sql` - Tables already have `contract_agreed`, `contract_text`, `contract_signed_at`
 
-| Method | Endpoint | Notes |
-| :--- | :--- | :--- |
-| **POST** | `/api/pets/:id/adopt` |  Submit request with optional `message`. Returns `paymentRequired`. |
-| **GET** | `/api/adoption-requests/mine` |  Requests you sent. |
-| **GET** | `/api/adoption-requests/received` | Requests on your pets. |
-| **PATCH** | `/api/adoption-requests/:id` | Owner sets `status`: `approved` or `rejected`. |
-| **PATCH** | `/api/adoption-requests/:id/agreement/agree` | Both parties must sign to finalize. |
-| **GET** | `/api/adoption-requests/:id/agreement` |  View the adoption contract. |
-
-**Logic:**
-*   **Free:** Approve → Pet status becomes `adopted`.
-*   **Paid:** Approve → Initiate Payment → Verify → Pet status becomes `adopted`.
+**Endpoints:**
+- `POST /api/adoption-requests/:id/agree-contract` - Adopter agrees to contract
+- `GET /api/adoption-requests/:id/contract` - Retrieve agreed contract
 
 ---
 
-## 4. Payments
+### 4. Pet Views Tracking & Trending Pets
+**Files Modified:**
+- `src/controllers/petController.js` - Added `trendingPets` function
+- `src/routes/pet.js` - Added route
 
-| Method | Endpoint | Notes |
-| :--- | :--- | :--- |
-| **POST** | `/api/payments/initiate` |  `amount, adoption_request_id`. Returns `paymentUrl`. |
-| **POST** | `/api/payments/webhook` | Called by Aya Pay automatically. No auth needed. |
-| **GET** | `/api/payments` | Your payment history. |
-
-*Note: In production, the webhook handles verification. For demo, use `/verify` if webhook isn't configured.*
+**Endpoints:**
+- `GET /api/pets/trending?limit=10` - Returns pets sorted by views in last 7 days
 
 ---
 
-## 5. Monitoring & Health
+### 5. Direct Messaging Between Owner and Adopter
+**Files Created:**
+- `src/controllers/messageController.js` - Complete messaging system
+- `src/routes/messages.js` - Message routes
+- `sql/schema.sql` - Added `messages` table
 
-| Method | Endpoint | Body / Notes |
-| :--- | :--- | :--- |
-| **POST** | `/api/monitoring/followups/:reqId` |  `health_status` (good/fair/poor), `notes`, file `image`. |
-| **GET** | `/api/monitoring/followups/:reqId` |  View welfare updates for an adoption. |
-| **POST** | `/api/monitoring/pets/:id/health-logs` |  `type` (vaccination/vet_visit), `weight_kg`, `next_due`. |
-| **GET** | `/api/monitoring/pets/:id/health-logs` | Public. View medical history. |
+**Database Schema:**
+```sql
+CREATE TABLE messages (
+  id SERIAL PRIMARY KEY,
+  sender_id INT REFERENCES users(id),
+  receiver_id INT REFERENCES users(id),
+  adoption_request_id INT REFERENCES adoption_requests(id),
+  content TEXT NOT NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
 
----
+**Endpoints:**
+- `POST /api/messages/send` - Send message (requires approved adoption)
+- `GET /api/messages/conversations` - Get all conversations
+- `GET /api/messages/:userId` - Get messages with specific user
+- `PATCH /api/messages/:id/read` - Mark message as read
+- `GET /api/messages/unread/count` - Get unread count
 
-## 6. Community (Blogs & Chat)
-
-| Method | Endpoint | Notes |
-| :--- | :--- | :--- |
-| **GET** | `/api/blogs` | Public. Filters: `category, search, tag`. |
-| **POST** | `/api/blogs` |  Multipart. `title, content, tags` (JSON string), file `cover`. |
-| **POST** | `/api/blogs/:id/like` |  Toggle like. |
-| **POST** | `/api/blogs/:id/comments` |  `{ content }`. |
-| **POST** | `/api/chat` | Public. One-shot AI question. |
-| **POST** | `/api/chat/sessions` |  Start a saved chat session with PawBot. |
-| **POST** | `/api/chat/sessions/:id/messages` | Send message in context. |
-
----
-
-## 7. Messages (Direct Chat)
-
-*Only available after adoption is approved.*
-
-| Method | Endpoint | Notes |
-| :--- | :--- | :--- |
-| **GET** | `/api/messages/conversations` |  List all your chats. |
-| **POST** | `/api/messages/conversations` |  `{ adoption_request_id }` to start/open a chat. |
-| **GET** | `/api/messages/conversations/:id` |  Get messages (auto-marks as read). |
-| **POST** | `/api/messages/conversations/:id` |  `{ content }` to send a message. |
-| **GET** | `/api/messages/unread-count` |  For notification badge. |
+**Security:** Messages only unlocked after adoption approval
 
 ---
 
-## 8. Admin Panel 
+### 6. Aya Pay Webhook
+**Files Modified:**
+- `src/controllers/paymentController.js` - Added `ayaWebhook` function
+- `src/routes/payment.js` - Added webhook route
 
-| Method | Endpoint | Notes |
-| :--- | :--- | :--- |
-| **GET** | `/api/admin/stats` | Dashboard numbers (Users, Pets, Revenue). |
-| **GET** | `/api/admin/users` | List users. Search by email/name. |
-| **PATCH** | `/api/admin/users/:id/role` | Change to `admin` or `user`. |
-| **PATCH** | `/api/admin/users/:id/suspend` | Suspend a user account. |
-| **GET** | `/api/admin/reports` | View pending reports. |
-| **PATCH** | `/api/admin/reports/:id/resolve` | `action`: `remove_pet`, `remove_blog`, or `suspend_reporter`. |
-| **GET** | `/api/admin/audit-log` | Track admin actions. |
+**Endpoint:**
+- `POST /api/payments/webhook/aya` - Called by Aya Pay directly (no auth required)
 
----
-
-## 9. Utilities
-
-| Feature | Endpoint | Notes |
-| :--- | :--- | :--- |
-| **Favorites** | `GET/POST/DELETE /api/favorites/:petId` |  Save pets for later. |
-| **Reports** | `POST /api/reports` |  Report bad content. `reason`: `spam`, `abuse`, etc. |
-| **Notifications** | `GET /api/notifications` |  Returns `{ notifications[], unread }`. |
-| **Mark Read** | `PATCH /api/notifications/read-all` |  Clear unread badge. |
+**Features:**
+- Automatic payment status update
+- Auto-marks pet as adopted on successful payment
+- Creates follow-up reminders automatically
+- Sends notification to adopter
 
 ---
 
-1.  **Images:** Always prepend `http://localhost:3000` to image paths from the API.
-2.  **Pagination:** List endpoints return `{ data: [], total: 100, page: 1, limit: 10 }`.
-3.  **Errors:** `401` means token expired (redirect to login). `403` means suspended or wrong role.
-4.  **Demo Mode:** If Aya Pay isn't configured, use the "Simulate Payment" button in your UI to call the backend verify logic manually.
+### 7. Refresh Tokens (Silent Re-login)
+**Files Created:**
+- `src/controllers/tokenController.js` - Refresh token logic
+- `sql/schema.sql` - Added `refresh_tokens` table
+
+**Database Schema:**
+```sql
+CREATE TABLE refresh_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id),
+  token VARCHAR(255) UNIQUE,
+  expires_at TIMESTAMPTZ,
+  revoked BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+**Endpoints:**
+- `POST /api/auth/refresh-token` - Exchange refresh token for new access token
+- `POST /api/auth/logout` - Revoke refresh token
+
+**Flow:**
+1. Login returns both accessToken and refreshToken
+2. When accessToken expires, call `/api/auth/refresh-token` with refreshToken
+3. Receive new accessToken and new refreshToken (old one revoked)
+4. Store tokens securely on frontend
+
+---
+
+### 8. Follow-up Reminders (Automated Emails)
+**Files Created:**
+- `src/services/scheduler.js` - Cron job scheduler
+- `src/services/email.js` - Added `followUpReminder` template
+
+**Database:**
+- `adoption_reminders` table already exists in schema
+
+**Schedule:** Runs daily at 9 AM
+- Sends emails at 1 week, 1 month, and 3 months post-adoption
+- Automatically tracks sent reminders
+
+---
+
+### 9. Health Log Reminders
+**Files Modified:**
+- `src/services/scheduler.js` - Added health reminder processing
+- `src/services/email.js` - Added `healthReminder` template
+
+**Features:**
+- Scans `pet_health_logs` for upcoming `next_due` dates
+- Sends email 3 days before due date
+- Covers vaccinations, vet visits, deworming, etc.
+
+---
+
+### 10. Pet Status History
+**Files Modified:**
+- `src/controllers/petController.js` - Updated `updatePet` to log status changes
+- `sql/schema.sql` - `pet_status_history` table already exists
+
+**Database Schema:**
+```sql
+CREATE TABLE pet_status_history (
+  id SERIAL PRIMARY KEY,
+  pet_id INT REFERENCES pets(id),
+  old_status adoption_status,
+  new_status adoption_status,
+  changed_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+**Endpoints:**
+- `GET /api/pets/status-history/:id` - Get status change history
+
+**Automatic Logging:** Every time pet status changes (available → pending → adopted)
+
+---
+
+## 📋 API Route Summary
+
+### Authentication
+```
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
+POST /api/auth/refresh-token
+POST /api/auth/logout
+```
+
+### Pets
+```
+GET  /api/pets                  - List with filters (city, status, type, etc.)
+GET  /api/pets/trending         - Trending pets by views (last 7 days)
+GET  /api/pets/:id              - Get pet details
+GET  /api/pets/status-history/:id - Get status change history
+POST /api/pets                  - Create pet listing
+PATCH /api/pets/:id             - Update pet
+DELETE /api/pets/:id            - Delete pet
+```
+
+### Adoption
+```
+POST   /api/pets/:id/adopt                - Request adoption
+GET    /api/adoption-requests/mine        - My requests (as requester)
+GET    /api/adoption-requests/received    - Requests on my pets (as owner)
+PATCH  /api/adoption-requests/:id         - Approve/reject request
+PATCH  /api/adoption-requests/:id/cancel  - Cancel request
+POST   /api/adoption-requests/:id/agree-contract - Agree to contract
+GET    /api/adoption-requests/:id/contract - Get contract
+```
+
+### Messages
+```
+POST /api/messages/send           - Send message
+GET  /api/messages/conversations  - Get all conversations
+GET  /api/messages/:userId        - Get messages with user
+PATCH /api/messages/:id/read      - Mark as read
+GET  /api/messages/unread/count   - Unread count
+```
+
+### Payments
+```
+GET  /api/payments                 - List payments
+GET  /api/payments/:id             - Get payment
+POST /api/payments/initiate        - Initiate payment
+POST /api/payments/:id/verify      - Verify payment (manual)
+POST /api/payments/webhook/aya     - Aya Pay webhook (auto)
+```
+
+---
+
+## 🔧 Database Migration Required
+
+Run the updated schema to add new tables:
+
+```bash
+# The schema includes these NEW tables:
+# - messages (direct messaging)
+# - refresh_tokens (silent re-login)
+
+# Existing tables used by new features:
+# - password_reset_tokens (password reset)
+# - pet_status_history (status tracking)
+# - adoption_reminders (follow-up reminders)
+```
+
+---
+
+## ⚙️ Configuration Required
+
+Add to `.env`:
+
+```env
+# Email (for password reset & reminders)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+EMAIL_FROM=noreply@yourapp.com
+
+# Frontend URL (for password reset links)
+FRONTEND_URL=http://localhost:3000
+
+# JWT
+JWT_SECRET=your-super-secret-key
+JWT_EXPIRES_IN=7d
+
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=pet_rehoming
+DB_USER=postgres
+DB_PASSWORD=your-password
+
+# Aya Pay
+AYAPAY_API_KEY=your-api-key
+AYAPAY_MERCHANT_ID=your-merchant-id
+```
+
+---
+
+## 🚀 Usage Examples
+
+### Password Reset Flow
+```javascript
+// 1. Request reset link
+fetch('/api/auth/forgot-password', {
+  method: 'POST',
+  body: JSON.stringify({ email: 'user@example.com' })
+});
+
+// 2. User clicks email link → /reset-password?token=abc123
+// 3. Submit new password
+fetch('/api/auth/reset-password', {
+  method: 'POST',
+  body: JSON.stringify({ token: 'abc123', newPassword: 'newpass123' })
+});
+```
+
+### Refresh Token Flow
+```javascript
+// Login
+const { accessToken, refreshToken } = await login();
+
+// Store both tokens
+localStorage.setItem('accessToken', accessToken);
+localStorage.setItem('refreshToken', refreshToken);
+
+// When API call returns 401 (expired):
+const newTokens = await fetch('/api/auth/refresh-token', {
+  method: 'POST',
+  body: JSON.stringify({ refreshToken })
+});
+// Use new accessToken for subsequent requests
+```
+
+### Send Message
+```javascript
+// Only works after adoption is approved
+fetch('/api/messages/send', {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${token}` },
+  body: JSON.stringify({
+    receiverId: 5,
+    adoptionRequestId: 12,
+    content: 'Hi! When can we arrange pickup?'
+  })
+});
+```
+
+### Get Trending Pets
+```javascript
+fetch('/api/pets/trending?limit=10')
+  .then(res => res.json())
+  .then(({ pets }) => console.log(pets));
+```
+
+---
+
+## 📝 Notes
+
+1. **Scheduler**: Runs automatically when server starts (`scheduleReminders()` in `server.js`)
+2. **Message Security**: Users can only message after adoption approval
+3. **Webhook Security**: Consider adding signature verification for Aya Pay webhook in production
+4. **Refresh Tokens**: 30-day expiry, single-use (rotated on each refresh)
+5. **Status History**: Automatically logged on every pet status change
