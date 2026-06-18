@@ -1,4 +1,4 @@
-#  Pet Rehoming API — Quick Reference
+#  Pet Rehoming API
 
 **Base URL:** `http://localhost:3000`
 **Auth Header:** `Authorization: Bearer <token>`
