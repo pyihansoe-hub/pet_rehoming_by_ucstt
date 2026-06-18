@@ -1,6 +1,31 @@
 const pool = require('../db/pool');
 const notify = require('../services/notify');
 
+// Standard adoption contract template
+const ADOPTION_CONTRACT_TEMPLATE = (petName, adopterName, ownerName, date) => `
+ADOPTION AGREEMENT
+
+Date: ${date}
+
+Pet Name: ${petName}
+Current Owner: ${ownerName}
+Adopter: ${adopterName}
+
+TERMS AND CONDITIONS:
+
+1. The adopter agrees to provide proper care, including adequate food, water, shelter, and veterinary care for the pet.
+
+2. The adopter understands that this is a permanent commitment and agrees not to abandon the pet.
+
+3. The current owner confirms that to the best of their knowledge, the pet's health information provided is accurate.
+
+4. Both parties agree to maintain communication for follow-up checks as reasonably requested.
+
+5. The adopter acknowledges receiving any relevant pet documentation (vaccination records, etc.).
+
+By agreeing to this contract, both parties confirm they understand and accept these terms.
+`;
+
 // POST /api/pets/:id/adopt  — submit adoption request
 const requestAdoption = async (req, res) => {
   const petId = req.params.id;
@@ -91,7 +116,7 @@ const reviewRequest = async (req, res) => {
     await client.query('BEGIN');
 
     const { rows } = await client.query(
-      `SELECT ar.*, p.owner_id, p.fee_type FROM adoption_requests ar
+      `SELECT ar.*, p.owner_id, p.fee_type, p.name AS pet_name FROM adoption_requests ar
        JOIN pets p ON p.id=ar.pet_id WHERE ar.id=$1`,
       [req.params.id]
     );
@@ -113,6 +138,17 @@ const reviewRequest = async (req, res) => {
         `UPDATE adoption_requests SET status='rejected', reviewed_at=NOW()
          WHERE pet_id=$1 AND id<>$2 AND status='pending'`,
         [req_.pet_id, req.params.id]
+      );
+      
+      // Create follow-up reminders (1 week, 1 month, 3 months)
+      const now = new Date();
+      await client.query(
+        `INSERT INTO adoption_reminders (adoption_request_id, reminder_type, due_at) 
+         VALUES ($1, '1_week', $2), ($1, '1_month', $3), ($1, '3_months', $4)`,
+        [req.params.id, 
+         new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+         new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+         new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)]
       );
     }
 
@@ -173,4 +209,180 @@ const cancelRequest = async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 
-module.exports = { requestAdoption, myRequests, receivedRequests, reviewRequest, cancelRequest };
+// POST /api/adoption-requests/:id/agree-contract — adopter agrees to contract after approval
+const agreeContract = async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query(
+      `SELECT ar.*, p.name AS pet_name, p.owner_id, u.name AS owner_name, u2.name AS adopter_name
+       FROM adoption_requests ar
+       JOIN pets p ON p.id = ar.pet_id
+       JOIN users u ON u.id = p.owner_id
+       JOIN users u2 ON u2.id = ar.requester_id
+       WHERE ar.id = $1`,
+      [req.params.id]
+    );
+    
+    if (!rows.length) return res.status(404).json({ message: 'Request not found.' });
+    const req_ = rows[0];
+    
+    // Only the approved requester can agree
+    if (req_.requester_id !== req.user.id || req_.status !== 'approved') {
+      return res.status(403).json({ message: 'Not authorized or request not approved.' });
+    }
+    
+    if (req_.contract_agreed) {
+      return res.status(400).json({ message: 'Contract already agreed.' });
+    }
+    
+    const contractText = ADOPTION_CONTRACT_TEMPLATE(
+      req_.pet_name,
+      req_.adopter_name,
+      req_.owner_name,
+      new Date().toISOString()
+    );
+    
+    await client.query('BEGIN');
+    await client.query(
+      `UPDATE adoption_requests 
+       SET contract_agreed = TRUE, contract_text = $1, contract_signed_at = NOW() 
+       WHERE id = $2`,
+      [contractText, req.params.id]
+    );
+    await client.query('COMMIT');
+    
+    res.json({ message: 'Contract agreed successfully.', contract: contractText });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  } finally {
+    client.release();
+  }
+};
+
+// GET /api/adoption-requests/:id/contract — get the agreed contract
+const getContract = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT ar.contract_text, ar.contract_signed_at, ar.contract_agreed,
+              p.name AS pet_name, u.name AS owner_name, u2.name AS adopter_name
+       FROM adoption_requests ar
+       JOIN pets p ON p.id = ar.pet_id
+       JOIN users u ON u.id = p.owner_id
+       JOIN users u2 ON u2.id = ar.requester_id
+       WHERE ar.id = $1`,
+      [req.params.id]
+    );
+    
+    if (!rows.length) return res.status(404).json({ message: 'Request not found.' });
+    const data = rows[0];
+    
+    if (!data.contract_agreed) {
+      return res.status(404).json({ message: 'No contract agreed yet.' });
+    }
+    
+    // Check authorization (owner or adopter only)
+    const auth = await pool.query(
+      'SELECT requester_id FROM adoption_requests WHERE id = $1',
+      [req.params.id]
+    );
+    const adoptionReq = auth.rows[0];
+    
+    // Get pet owner to check
+    const petOwner = await pool.query(
+      'SELECT p.owner_id FROM pets p JOIN adoption_requests ar ON ar.pet_id = p.id WHERE ar.id = $1',
+      [req.params.id]
+    );
+    
+    if (req.user.id !== adoptionReq.requester_id && req.user.id !== petOwner.rows[0].owner_id && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized.' });
+    }
+    
+    res.json({ 
+      contract: data.contract_text,
+      signedAt: data.contract_signed_at,
+      petName: data.pet_name,
+      ownerName: data.owner_name,
+      adopterName: data.adopter_name
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
+};
+
+// GET /api/adoption-requests/:id/contact-info — Get contact info (revealed only after contract signed + payment complete)
+const getContactInfo = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT ar.status, ar.contract_agreed, ar.contract_signed_at, p.owner_id, p.fee_type,
+              u.name AS owner_name, u.phone AS owner_phone, u.address AS owner_address,
+              u2.name AS adopter_name, u2.phone AS adopter_phone, u2.address AS adopter_address
+       FROM adoption_requests ar
+       JOIN pets p ON p.id = ar.pet_id
+       JOIN users u ON u.id = p.owner_id
+       JOIN users u2 ON u2.id = ar.requester_id
+       WHERE ar.id = $1`,
+      [req.params.id]
+    );
+    
+    if (!rows.length) return res.status(404).json({ message: 'Request not found.' });
+    const data = rows[0];
+    
+    // Check authorization (owner or adopter only)
+    if (req.user.id !== data.owner_id && req.user.id !== data.adopter_name && req.user.role !== 'admin') {
+      // Need to check adopter ID properly
+      const adopterCheck = await pool.query(
+        'SELECT requester_id FROM adoption_requests WHERE id = $1',
+        [req.params.id]
+      );
+      if (req.user.id !== adopterCheck.rows[0].requester_id && req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Not authorized.' });
+      }
+    }
+    
+    // Contact info is revealed only when:
+    // 1. Adoption is approved/completed
+    // 2. Contract is signed (if required)
+    // 3. Payment is complete (if paid adoption)
+    const isApproved = ['approved', 'completed'].includes(data.status);
+    const isContractSigned = data.contract_agreed || data.fee_type === 'free';
+    
+    // Check payment status for paid adoptions
+    let isPaymentComplete = true;
+    if (data.fee_type === 'paid') {
+      const { rows: paymentRows } = await pool.query(
+        `SELECT status FROM payments WHERE adoption_request_id = $1 ORDER BY created_at DESC LIMIT 1`,
+        [req.params.id]
+      );
+      isPaymentComplete = paymentRows.length > 0 && paymentRows[0].status === 'completed';
+    }
+    
+    const shouldReveal = isApproved && isContractSigned && isPaymentComplete;
+    
+    res.json({
+      revealed: shouldReveal,
+      message: shouldReveal ? 'Contact information unlocked.' : 'Contact information will be revealed after contract signing and payment completion.',
+      requirements: {
+        approved: isApproved,
+        contractSigned: isContractSigned,
+        paymentComplete: isPaymentComplete
+      },
+      contact: shouldReveal ? {
+        owner: {
+          name: data.owner_name,
+          phone: data.owner_phone,
+          address: data.owner_address
+        },
+        adopter: {
+          name: data.adopter_name,
+          phone: data.adopter_phone,
+          address: data.adopter_address
+        }
+      } : null
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
+};
+
+module.exports = { requestAdoption, myRequests, receivedRequests, reviewRequest, cancelRequest, agreeContract, getContract, getContactInfo };

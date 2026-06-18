@@ -15,6 +15,24 @@ const canAccessAdoption = async (adoptionRequestId, userId, role) => {
   return rows[0].requester_id === userId || rows[0].owner_id === userId;
 };
 
+// GET /api/monitoring/followups/my-due — Get upcoming follow-up reminders for current user
+const getMyDueFollowups = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT ar.id AS adoption_request_id, p.name AS pet_name, r.reminder_type, r.due_at, r.sent
+       FROM adoption_reminders r
+       JOIN adoption_requests ar ON ar.id = r.adoption_request_id
+       JOIN pets p ON p.id = ar.pet_id
+       WHERE ar.requester_id = $1 AND r.sent = FALSE AND r.due_at >= NOW()
+       ORDER BY r.due_at ASC`,
+      [req.user.id]
+    );
+    res.json({ dueFollowups: rows });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
+};
+
 // POST /api/monitoring/followups/:adoptionRequestId
 const submitFollowup = async (req, res) => {
   const { health_status = 'good', weight_kg, notes } = req.body;
@@ -127,4 +145,4 @@ const deleteHealthLog = async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 
-module.exports = { submitFollowup, getFollowups, addHealthLog, getHealthLogs, deleteHealthLog };
+module.exports = { submitFollowup, getFollowups, getMyDueFollowups, addHealthLog, getHealthLogs, deleteHealthLog };

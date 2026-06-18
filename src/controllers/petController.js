@@ -24,6 +24,7 @@ const listPets = async (req, res) => {
     status = 'available',
     fee_type,
     gender,
+    city,
     page = 1,
     limit = 20,
     search,
@@ -37,8 +38,9 @@ const listPets = async (req, res) => {
   if (type)     { conditions.push(`p.pet_type_id = $${i++}`);  values.push(type); }
   if (fee_type) { conditions.push(`p.fee_type = $${i++}`);     values.push(fee_type); }
   if (gender)   { conditions.push(`p.gender = $${i++}`);       values.push(gender); }
+  if (city)     { conditions.push(`p.city = $${i++}`);         values.push(city); }
   if (search)   {
-    conditions.push(`(p.name ILIKE $${i} OR p.breed ILIKE $${i} OR p.description ILIKE $${i})`);
+    conditions.push(`(p.name ILIKE $${i} OR p.breed ILIKE $${i} OR p.description ILIKE $${i} OR p.location ILIKE $${i})`);
     values.push(`%${search}%`); i++;
   }
 
@@ -71,13 +73,36 @@ const getPet = async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 
+// GET /api/pets/trending — trending pets by views in last 7 days
+const trendingPets = async (req, res) => {
+  const { limit = 10 } = req.query;
+  
+  try {
+    const { rows } = await pool.query(
+      `SELECT p.*, pt.name AS pet_type_name, u.name AS owner_name,
+              COALESCE(json_agg(pi ORDER BY pi.is_primary DESC, pi.id) FILTER (WHERE pi.id IS NOT NULL), '[]') AS images
+       FROM pets p
+       JOIN pet_types pt ON pt.id = p.pet_type_id
+       JOIN users u ON u.id = p.owner_id
+       LEFT JOIN pet_images pi ON pi.pet_id = p.id
+       WHERE p.status = 'available'
+         AND p.created_at >= NOW() - INTERVAL '7 days'
+       GROUP BY p.id, pt.name, u.name
+       ORDER BY p.views DESC
+       LIMIT $1`,
+      [parseInt(limit)]
+    );
+    res.json({ pets: rows });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
 // POST /api/pets
 const createPet = async (req, res) => {
   const {
     pet_type_id, name, breed, birth_date, is_sure,
     gender, color, weight_kg, description, health_notes,
     is_vaccinated = false, is_neutered = false,
-    fee_type = 'free', adoption_fee = 0, location,
+    fee_type = 'free', adoption_fee = 0, location, city,
     images = [],
   } = req.body;
 
@@ -91,13 +116,13 @@ const createPet = async (req, res) => {
       `INSERT INTO pets
          (owner_id, pet_type_id, name, breed, birth_date, is_sure,
           gender, color, weight_kg, description, health_notes,
-          is_vaccinated, is_neutered, fee_type, adoption_fee, location)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+          is_vaccinated, is_neutered, fee_type, adoption_fee, location, city)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
        RETURNING *`,
       [req.user.id, pet_type_id, name, breed || null, birth_date || null, is_sure || null,
        gender || null, color || null, weight_kg || null, description || null,
        health_notes || null, is_vaccinated, is_neutered,
-       fee_type, fee_type === 'free' ? 0 : adoption_fee, location || null]
+       fee_type, fee_type === 'free' ? 0 : adoption_fee, location || null, city || null]
     );
     const pet = rows[0];
 
@@ -122,7 +147,7 @@ const createPet = async (req, res) => {
 const updatePet = async (req, res) => {
   const allowed = ['name','breed','birth_date','is_sure','gender','color','weight_kg',
                    'description','health_notes','is_vaccinated','is_neutered',
-                   'fee_type','adoption_fee','status','location'];
+                   'fee_type','adoption_fee','status','location','city'];
   const fields = []; const values = []; let i = 1;
 
   for (const key of allowed) {
@@ -136,10 +161,24 @@ const updatePet = async (req, res) => {
     if (check.rows[0].owner_id !== req.user.id && req.user.role !== 'admin')
       return res.status(403).json({ message: 'Not authorized.' });
 
+    // Track status change for history
+    const oldPet = await pool.query('SELECT status FROM pets WHERE id=$1', [req.params.id]);
+    const oldStatus = oldPet.rows[0]?.status;
+    const newStatus = req.body.status;
+
     values.push(req.params.id);
     const { rows } = await pool.query(
       `UPDATE pets SET ${fields.join(',')} WHERE id=$${i} RETURNING *`, values
     );
+
+    // Log status change if status was updated
+    if (newStatus && oldStatus !== newStatus) {
+      await pool.query(
+        'INSERT INTO pet_status_history (pet_id, old_status, new_status) VALUES ($1, $2, $3)',
+        [req.params.id, oldStatus, newStatus]
+      );
+    }
+
     res.json({ message: 'Pet updated.', pet: rows[0] });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
@@ -210,4 +249,83 @@ const myPets = async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 
-module.exports = { listPets, getPet, createPet, updatePet, deletePet, addPetImage, deletePetImage, myPets };
+// GET /api/pets/status-history/:id — get status change history for a pet
+const getStatusHistory = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM pet_status_history WHERE pet_id = $1 ORDER BY changed_at DESC`,
+      [req.params.id]
+    );
+    res.json({ history: rows });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
+// GET /api/pets/:id/timeline — Welfare timeline combining health logs, follow-ups, and status changes
+const getWelfareTimeline = async (req, res) => {
+  try {
+    // Check if user has access (owner, adopter, or admin)
+    const { rows: petRows } = await pool.query('SELECT owner_id FROM pets WHERE id=$1', [req.params.id]);
+    if (!petRows.length) return res.status(404).json({ message: 'Pet not found.' });
+    
+    const petOwnerId = petRows[0].owner_id;
+    const isOwner = req.user?.id === petOwnerId;
+    const isAdmin = req.user?.role === 'admin';
+    
+    // Get adopter if exists
+    let isAdopter = false;
+    if (!isOwner && !isAdmin) {
+      const { rows: adoptionRows } = await pool.query(
+        `SELECT requester_id FROM adoption_requests ar 
+         JOIN pets p ON p.id = ar.pet_id 
+         WHERE p.id = $1 AND ar.requester_id = $2 AND ar.status = 'approved'`,
+        [req.params.id, req.user?.id || -1]
+      );
+      isAdopter = adoptionRows.length > 0;
+    }
+    
+    if (!isOwner && !isAdopter && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to view welfare timeline.' });
+    }
+    
+    // Get health logs
+    const { rows: healthLogs } = await pool.query(
+      `SELECT hl.created_at, 'health_log' AS event_type, hl.type, hl.description, hl.vet_name, hl.weight_kg, hl.next_due, u.name AS logged_by
+       FROM pet_health_logs hl
+       JOIN users u ON u.id = hl.logged_by
+       WHERE hl.pet_id = $1
+       ORDER BY hl.created_at DESC`,
+      [req.params.id]
+    );
+    
+    // Get follow-ups
+    const { rows: followups } = await pool.query(
+      `SELECT af.created_at, 'followup' AS event_type, af.health_status, af.weight_kg, af.notes, af.image_url, u.name AS submitted_by
+       FROM adoption_followups af
+       JOIN adoption_requests ar ON ar.id = af.adoption_request_id
+       JOIN users u ON u.id = af.submitted_by
+       WHERE ar.pet_id = $1
+       ORDER BY af.created_at DESC`,
+      [req.params.id]
+    );
+    
+    // Get status changes
+    const { rows: statusChanges } = await pool.query(
+      `SELECT psh.changed_at AS created_at, 'status_change' AS event_type, 
+              psh.old_status, psh.new_status, 'System' AS logged_by
+       FROM pet_status_history psh
+       WHERE psh.pet_id = $1
+       ORDER BY psh.changed_at DESC`,
+      [req.params.id]
+    );
+    
+    // Combine and sort all events
+    const timeline = [...healthLogs, ...followups, ...statusChanges]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    res.json({ timeline });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
+};
+
+module.exports = { listPets, getPet, createPet, updatePet, deletePet, addPetImage, deletePetImage, myPets, trendingPets, getStatusHistory, getWelfareTimeline };

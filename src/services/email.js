@@ -46,6 +46,26 @@ const emails = {
            <p>Your payment of <strong>${amount} ${currency}</strong> for adopting <strong>${petName}</strong> has been confirmed.</p>
            <p>The owner will be in touch to arrange the handover.</p>`,
   }),
+
+  followUpReminder: (adopterName, petName, period) => ({
+    subject: `Follow-up: How's ${petName} doing after ${period}?`,
+    html: `<p>Hi ${adopterName},</p>
+           <p>It's been <strong>${period}</strong> since you adopted <strong>${petName}</strong>. We'd love to hear how things are going!</p>
+           <p>Please consider submitting a follow-up report with any updates on ${petName}'s health and well-being.</p>
+           <p>Your feedback helps us improve our adoption process and ensures pets are going to loving homes.</p>
+           <p>Thank you for being a wonderful pet parent!</p>`,
+  }),
+
+  healthReminder: (ownerName, petName, type, description, daysUntilDue, dueDate) => ({
+    subject: `Health reminder for ${petName}`,
+    html: `<p>Hi ${ownerName},</p>
+           <p>This is a friendly reminder that <strong>${petName}</strong> has an upcoming health event:</p>
+           <p><strong>Type:</strong> ${type}</p>
+           ${description ? `<p><strong>Details:</strong> ${description}</p>` : ''}
+           <p><strong>Due date:</strong> ${new Date(dueDate).toLocaleDateString()}</p>
+           <p><strong>Time remaining:</strong> ${daysUntilDue} day(s)</p>
+           <p>Please make sure to schedule or complete this health activity on time.</p>`,
+  }),
 };
 
 module.exports = { send, emails };
