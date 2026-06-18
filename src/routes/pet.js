@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { protect, optionalAuth } = require('../middleware/auth');
-const { listPets, getPet, createPet, updatePet, deletePet, addPetImage, deletePetImage, myPets, trendingPets, getStatusHistory } = require('../controllers/petController');
+const { listPets, getPet, createPet, updatePet, deletePet, addPetImage, deletePetImage, myPets, trendingPets, getStatusHistory, getWelfareTimeline } = require('../controllers/petController');
 const { requestAdoption } = require('../controllers/adoptionController');
 const { petImageUploader } = require('../services/upload');
 const { validate, rules } = require('../middleware/validate');
@@ -9,6 +9,7 @@ router.get('/my',                         protect,      myPets);
 router.get('/trending',                   optionalAuth, trendingPets);
 router.get('/',                           optionalAuth, listPets);
 router.get('/:id',                        optionalAuth, getPet);
+router.get('/:id/timeline',               protect,      getWelfareTimeline);
 router.get('/status-history/:id',         protect,      getStatusHistory);
 router.post('/',                          protect, validate(rules.createPet), createPet);
 router.patch('/:id',                      protect, updatePet);

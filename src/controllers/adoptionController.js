@@ -310,4 +310,79 @@ const getContract = async (req, res) => {
   }
 };
 
-module.exports = { requestAdoption, myRequests, receivedRequests, reviewRequest, cancelRequest, agreeContract, getContract };
+// GET /api/adoption-requests/:id/contact-info — Get contact info (revealed only after contract signed + payment complete)
+const getContactInfo = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT ar.status, ar.contract_agreed, ar.contract_signed_at, p.owner_id, p.fee_type,
+              u.name AS owner_name, u.phone AS owner_phone, u.address AS owner_address,
+              u2.name AS adopter_name, u2.phone AS adopter_phone, u2.address AS adopter_address
+       FROM adoption_requests ar
+       JOIN pets p ON p.id = ar.pet_id
+       JOIN users u ON u.id = p.owner_id
+       JOIN users u2 ON u2.id = ar.requester_id
+       WHERE ar.id = $1`,
+      [req.params.id]
+    );
+    
+    if (!rows.length) return res.status(404).json({ message: 'Request not found.' });
+    const data = rows[0];
+    
+    // Check authorization (owner or adopter only)
+    if (req.user.id !== data.owner_id && req.user.id !== data.adopter_name && req.user.role !== 'admin') {
+      // Need to check adopter ID properly
+      const adopterCheck = await pool.query(
+        'SELECT requester_id FROM adoption_requests WHERE id = $1',
+        [req.params.id]
+      );
+      if (req.user.id !== adopterCheck.rows[0].requester_id && req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Not authorized.' });
+      }
+    }
+    
+    // Contact info is revealed only when:
+    // 1. Adoption is approved/completed
+    // 2. Contract is signed (if required)
+    // 3. Payment is complete (if paid adoption)
+    const isApproved = ['approved', 'completed'].includes(data.status);
+    const isContractSigned = data.contract_agreed || data.fee_type === 'free';
+    
+    // Check payment status for paid adoptions
+    let isPaymentComplete = true;
+    if (data.fee_type === 'paid') {
+      const { rows: paymentRows } = await pool.query(
+        `SELECT status FROM payments WHERE adoption_request_id = $1 ORDER BY created_at DESC LIMIT 1`,
+        [req.params.id]
+      );
+      isPaymentComplete = paymentRows.length > 0 && paymentRows[0].status === 'completed';
+    }
+    
+    const shouldReveal = isApproved && isContractSigned && isPaymentComplete;
+    
+    res.json({
+      revealed: shouldReveal,
+      message: shouldReveal ? 'Contact information unlocked.' : 'Contact information will be revealed after contract signing and payment completion.',
+      requirements: {
+        approved: isApproved,
+        contractSigned: isContractSigned,
+        paymentComplete: isPaymentComplete
+      },
+      contact: shouldReveal ? {
+        owner: {
+          name: data.owner_name,
+          phone: data.owner_phone,
+          address: data.owner_address
+        },
+        adopter: {
+          name: data.adopter_name,
+          phone: data.adopter_phone,
+          address: data.adopter_address
+        }
+      } : null
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
+};
+
+module.exports = { requestAdoption, myRequests, receivedRequests, reviewRequest, cancelRequest, agreeContract, getContract, getContactInfo };

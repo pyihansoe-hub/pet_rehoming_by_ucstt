@@ -260,4 +260,72 @@ const getStatusHistory = async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 
-module.exports = { listPets, getPet, createPet, updatePet, deletePet, addPetImage, deletePetImage, myPets, trendingPets, getStatusHistory };
+// GET /api/pets/:id/timeline — Welfare timeline combining health logs, follow-ups, and status changes
+const getWelfareTimeline = async (req, res) => {
+  try {
+    // Check if user has access (owner, adopter, or admin)
+    const { rows: petRows } = await pool.query('SELECT owner_id FROM pets WHERE id=$1', [req.params.id]);
+    if (!petRows.length) return res.status(404).json({ message: 'Pet not found.' });
+    
+    const petOwnerId = petRows[0].owner_id;
+    const isOwner = req.user?.id === petOwnerId;
+    const isAdmin = req.user?.role === 'admin';
+    
+    // Get adopter if exists
+    let isAdopter = false;
+    if (!isOwner && !isAdmin) {
+      const { rows: adoptionRows } = await pool.query(
+        `SELECT requester_id FROM adoption_requests ar 
+         JOIN pets p ON p.id = ar.pet_id 
+         WHERE p.id = $1 AND ar.requester_id = $2 AND ar.status = 'approved'`,
+        [req.params.id, req.user?.id || -1]
+      );
+      isAdopter = adoptionRows.length > 0;
+    }
+    
+    if (!isOwner && !isAdopter && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to view welfare timeline.' });
+    }
+    
+    // Get health logs
+    const { rows: healthLogs } = await pool.query(
+      `SELECT hl.created_at, 'health_log' AS event_type, hl.type, hl.description, hl.vet_name, hl.weight_kg, hl.next_due, u.name AS logged_by
+       FROM pet_health_logs hl
+       JOIN users u ON u.id = hl.logged_by
+       WHERE hl.pet_id = $1
+       ORDER BY hl.created_at DESC`,
+      [req.params.id]
+    );
+    
+    // Get follow-ups
+    const { rows: followups } = await pool.query(
+      `SELECT af.created_at, 'followup' AS event_type, af.health_status, af.weight_kg, af.notes, af.image_url, u.name AS submitted_by
+       FROM adoption_followups af
+       JOIN adoption_requests ar ON ar.id = af.adoption_request_id
+       JOIN users u ON u.id = af.submitted_by
+       WHERE ar.pet_id = $1
+       ORDER BY af.created_at DESC`,
+      [req.params.id]
+    );
+    
+    // Get status changes
+    const { rows: statusChanges } = await pool.query(
+      `SELECT psh.changed_at AS created_at, 'status_change' AS event_type, 
+              psh.old_status, psh.new_status, 'System' AS logged_by
+       FROM pet_status_history psh
+       WHERE psh.pet_id = $1
+       ORDER BY psh.changed_at DESC`,
+      [req.params.id]
+    );
+    
+    // Combine and sort all events
+    const timeline = [...healthLogs, ...followups, ...statusChanges]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    res.json({ timeline });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
+};
+
+module.exports = { listPets, getPet, createPet, updatePet, deletePet, addPetImage, deletePetImage, myPets, trendingPets, getStatusHistory, getWelfareTimeline };
