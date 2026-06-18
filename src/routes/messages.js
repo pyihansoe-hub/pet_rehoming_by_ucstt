@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { sendMessage, getConversations, getMessagesWithUser, markAsRead, getUnreadCount } = require('../controllers/messageController');
-const auth = require('../middleware/auth');
+const { protect: auth } = require('../middleware/auth');
 
 // All message routes require authentication
 router.use(auth);

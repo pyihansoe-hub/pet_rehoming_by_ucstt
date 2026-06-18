@@ -1,1 +1,15 @@
-Nothing should be ignored based on the provided file changes, as they only include source code files (.js, .md) and no build artifacts, dependencies, or temporary files.
+```
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Logs
+*.log
+
+# Package lock
+package-lock.json
+```

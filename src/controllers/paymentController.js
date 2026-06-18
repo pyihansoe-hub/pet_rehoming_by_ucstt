@@ -186,12 +186,80 @@ const ayaWebhook = async (req, res) => {
   }
 };
 
-// POST /api/payments/simulate/:id — Sandbox payment simulation for demo\nconst simulatePayment = async (req, res) => {\n  try {\n    const { rows } = await pool.query(\n      'SELECT * FROM payments WHERE id=$1 AND user_id=$2',\n      [req.params.id, req.user.id]\n    );\n    if (!rows.length) return res.status(404).json({ message: 'Payment not found.' });\n    \n    const payment = rows[0];\n    if (!payment.ayapay_reference) {\n      return res.status(400).json({ message: 'Payment not initiated yet.' });\n    }\n\n    // Simulate successful payment\n    const { rows: updated } = await pool.query(\n      `UPDATE payments SET status='completed', metadata=jsonb_set(metadata, '{simulated}', 'true') \n       WHERE id=$1 RETURNING *`,\n      [payment.id]\n    );\n\n    // If linked to adoption → mark pet as adopted (same as webhook)\n    if (payment.adoption_request_id) {\n      const client = await pool.connect();\n      try {\n        await client.query('BEGIN');\n        const { rows: req_ } = await client.query(\n          'SELECT pet_id, requester_id FROM adoption_requests WHERE id=$1',\n          [payment.adoption_request_id]\n        );\n        \n        if (req_.length) {\n          const petId = req_[0].pet_id;\n          await client.query(`UPDATE pets SET status='adopted' WHERE id=$1`, [petId]);\n          await client.query(\n            `UPDATE adoption_requests SET status='rejected', reviewed_at=NOW()\n             WHERE pet_id=$1 AND id<>$2 AND status='pending'`,\n            [petId, payment.adoption_request_id]\n          );\n          \n          // Create follow-up reminders\n          const now = new Date();\n          await client.query(\n            `INSERT INTO adoption_reminders (adoption_request_id, reminder_type, due_at) \n             VALUES ($1, '1_week', $2), ($1, '1_month', $3), ($1, '3_months', $4)`,\n            [payment.adoption_request_id,\n             new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),\n             new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),\n             new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)]\n          );\n        }\n        await client.query('COMMIT');\n      } catch (err) {\n        await client.query('ROLLBACK');\n        console.error('Simulated payment adoption processing error:', err);\n      } finally {\n        client.release();\n      }\n    }\n\n    res.json({ message: 'Payment simulated successfully.', payment: updated[0] });\n  } catch (err) {\n    res.status(500).json({ message: 'Simulation failed.', error: err.message });\n  }\n};\n\nconst listPayments = async (req, res) => {
+// POST /api/payments/simulate/:id — Sandbox payment simulation for demo
+const simulatePayment = async (req, res) => {
   try {
-    const { rows } = await pool.query(\n      `SELECT p.*, ar.pet_id FROM payments p
+    const { rows } = await pool.query(
+      'SELECT * FROM payments WHERE id=$1 AND user_id=$2',
+      [req.params.id, req.user.id]
+    );
+    if (!rows.length) return res.status(404).json({ message: 'Payment not found.' });
+    
+    const payment = rows[0];
+    if (!payment.ayapay_reference) {
+      return res.status(400).json({ message: 'Payment not initiated yet.' });
+    }
+
+    // Simulate successful payment
+    const { rows: updated } = await pool.query(
+      `UPDATE payments SET status='completed', metadata=jsonb_set(metadata, '{simulated}', 'true') 
+       WHERE id=$1 RETURNING *`,
+      [payment.id]
+    );
+
+    // If linked to adoption → mark pet as adopted (same as webhook)
+    if (payment.adoption_request_id) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const { rows: req_ } = await client.query(
+          'SELECT pet_id, requester_id FROM adoption_requests WHERE id=$1',
+          [payment.adoption_request_id]
+        );
+        
+        if (req_.length) {
+          const petId = req_[0].pet_id;
+          await client.query(`UPDATE pets SET status='adopted' WHERE id=$1`, [petId]);
+          await client.query(
+            `UPDATE adoption_requests SET status='rejected', reviewed_at=NOW()
+             WHERE pet_id=$1 AND id<>$2 AND status='pending'`,
+            [petId, payment.adoption_request_id]
+          );
+          
+          // Create follow-up reminders
+          const now = new Date();
+          await client.query(
+            `INSERT INTO adoption_reminders (adoption_request_id, reminder_type, due_at) 
+             VALUES ($1, '1_week', $2), ($1, '1_month', $3), ($1, '3_months', $4)`,
+            [payment.adoption_request_id,
+             new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+             new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+             new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)]
+          );
+        }
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Simulated payment adoption processing error:', err);
+      } finally {
+        client.release();
+      }
+    }
+
+    res.json({ message: 'Payment simulated successfully.', payment: updated[0] });
+  } catch (err) {
+    res.status(500).json({ message: 'Simulation failed.', error: err.message });
+  }
+};
+
+const listPayments = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT p.*, ar.pet_id FROM payments p
        LEFT JOIN adoption_requests ar ON ar.id=p.adoption_request_id
        WHERE p.user_id=$1 ORDER BY p.created_at DESC`,
-      [req.user.id]\n    );
+      [req.user.id]
+    );
     res.json({ payments: rows });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
