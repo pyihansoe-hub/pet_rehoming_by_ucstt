@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - PetLink</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="../index.html" class="logo">🐾 PetLink</a>
+            <button class="nav-toggle" id="navToggle">☰</button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="pets.html">Pets</a></li>
+                <li><a href="blog.html">Blog</a></li>
+                <li class="auth-only"><a href="dashboard.html" class="active">Dashboard</a></li>
+                <li class="auth-only"><a href="messages.html">Messages</a></li>
+                <li class="admin-only"><a href="admin.html">Admin</a></li>
+                <li class="auth-only"><a href="#" id="logoutBtn">Logout</a></li>
+            </ul>
+            <div class="nav-icons">
+                <a href="favorites.html" class="icon-btn">❤️</a>
+                <div class="user-avatar auth-only" id="userAvatar"></div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="section">
+        <div class="container">
+            <h2 class="section-title">My Dashboard</h2>
+            
+            <div class="dashboard-grid">
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <ul class="sidebar-menu">
+                        <li><a href="#" class="active" data-tab="overview">Overview</a></li>
+                        <li><a href="#" data-tab="my-pets">My Pets</a></li>
+                        <li><a href="#" data-tab="adoptions">Adoptions</a></li>
+                        <li><a href="#" data-tab="favorites">Favorites</a></li>
+                        <li><a href="#" data-tab="profile">Profile</a></li>
+                        <li class="admin-only"><a href="admin.html">Admin Panel</a></li>
+                    </ul>
+                </aside>
+
+                <!-- Content -->
+                <div class="dashboard-content">
+                    <!-- Overview Tab -->
+                    <div id="overview-tab" class="tab-content">
+                        <div class="stats-grid" id="statsGrid">
+                            <div class="stat-card">
+                                <div class="stat-number" id="myPetsCount">0</div>
+                                <div class="stat-label">My Pets</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="requestsSentCount">0</div>
+                                <div class="stat-label">Requests Sent</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="requestsReceivedCount">0</div>
+                                <div class="stat-label">Requests Received</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="favoritesCount">0</div>
+                                <div class="stat-label">Favorites</div>
+                            </div>
+                        </div>
+                        
+                        <h3>Recent Activity</h3>
+                        <div id="recentActivity" class="mt-20">
+                            <div class="loading">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- My Pets Tab -->
+                    <div id="my-pets-tab" class="tab-content hidden">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3>My Pet Listings</h3>
+                            <button class="btn btn-primary btn-sm" onclick="showCreatePetModal()">+ Add New Pet</button>
+                        </div>
+                        <div id="myPetsContainer" class="pet-grid">
+                            <div class="loading">Loading your pets...</div>
+                        </div>
+                    </div>
+
+                    <!-- Adoptions Tab -->
+                    <div id="adoptions-tab" class="tab-content hidden">
+                        <h3>Adoption Requests</h3>
+                        <div class="mt-20">
+                            <h4>Requests I Sent</h4>
+                            <div id="sentRequests" class="table-responsive">
+                                <div class="loading">Loading...</div>
+                            </div>
+                        </div>
+                        <div class="mt-20">
+                            <h4>Requests I Received</h4>
+                            <div id="receivedRequests" class="table-responsive">
+                                <div class="loading">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Favorites Tab -->
+                    <div id="favorites-tab" class="tab-content hidden">
+                        <h3>My Favorite Pets</h3>
+                        <div id="favoritesContainer" class="pet-grid mt-20">
+                            <div class="loading">Loading favorites...</div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Tab -->
+                    <div id="profile-tab" class="tab-content hidden">
+                        <h3>Edit Profile</h3>
+                        <form id="profileForm" class="mt-20" style="max-width: 500px;">
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" id="profileName" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="profileEmail" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="tel" id="profilePhone" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>Address</label>
+                                <textarea id="profileAddress" class="form-control" rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Profile</button>
+                        </form>
+                        
+                        <h4 class="mt-20">Change Password</h4>
+                        <form id="passwordForm" class="mt-20" style="max-width: 500px;">
+                            <div class="form-group">
+                                <label>Current Password</label>
+                                <input type="password" id="currentPassword" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>New Password</label>
+                                <input type="password" id="newPassword" class="form-control" required minlength="6">
+                            </div>
+                            <button type="submit" class="btn btn-secondary">Change Password</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create/Edit Pet Modal -->
+    <div id="petModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="petModalTitle">Add New Pet</h3>
+                <button class="modal-close" onclick="closePetModal()">&times;</button>
+            </div>
+            <form id="petForm">
+                <input type="hidden" id="petId">
+                <div class="form-group">
+                    <label>Pet Type *</label>
+                    <select id="petType" class="form-control" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="petName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Breed</label>
+                    <input type="text" id="petBreed" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Age (Years)</label>
+                    <input type="number" id="petAgeYears" class="form-control" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Age (Months)</label>
+                    <input type="number" id="petAgeMonths" class="form-control" min="0" max="11" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="petGender" class="form-control">
+                        <option value="">Unknown</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="text" id="petColor" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Weight (kg)</label>
+                    <input type="number" id="petWeight" class="form-control" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="petDescription" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>City</label>
+                    <select id="petCity" class="form-control">
+                        <option value="Yangon">Yangon</option>
+                        <option value="Mandalay">Mandalay</option>
+                        <option value="Naypyidaw">Naypyidaw</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Fee Type</label>
+                    <select id="petFeeType" class="form-control">
+                        <option value="free">Free</option>
+                        <option value="paid">Paid</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Adoption Fee (if paid)</label>
+                    <input type="number" id="petFee" class="form-control" min="0" value="0">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Pet</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/dashboard.js"></script>
+</body>
+</html>

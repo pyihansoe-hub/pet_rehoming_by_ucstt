@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - PetLink</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="../index.html" class="logo">🐾 PetLink</a>
+            <ul class="nav-menu">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="admin.html" class="active">Admin</a></li>
+                <li><a href="#" id="logoutBtn">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="section">
+        <div class="container">
+            <h2 class="section-title">Admin Panel</h2>
+            
+            <div class="dashboard-grid">
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <ul class="sidebar-menu">
+                        <li><a href="#" class="active" data-tab="stats">Overview</a></li>
+                        <li><a href="#" data-tab="users">Users</a></li>
+                        <li><a href="#" data-tab="pets">Pets</a></li>
+                        <li><a href="#" data-tab="adoptions">Adoptions</a></li>
+                        <li><a href="#" data-tab="reports">Reports</a></li>
+                        <li><a href="#" data-tab="audit">Audit Log</a></li>
+                    </ul>
+                </aside>
+
+                <!-- Content -->
+                <div class="dashboard-content">
+                    <!-- Stats Tab -->
+                    <div id="stats-tab" class="tab-content">
+                        <div class="stats-grid" id="adminStats">
+                            <div class="loading">Loading stats...</div>
+                        </div>
+                    </div>
+
+                    <!-- Users Tab -->
+                    <div id="users-tab" class="tab-content hidden">
+                        <h3>User Management</h3>
+                        <div class="filters mt-20">
+                            <div class="filter-group">
+                                <label>Search</label>
+                                <input type="text" id="userSearch" class="form-control" placeholder="Name or email">
+                            </div>
+                            <div class="filter-group">
+                                <label>Role</label>
+                                <select id="userRole" class="form-control">
+                                    <option value="">All</option>
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div class="filter-group" style="display: flex; align-items: flex-end;">
+                                <button class="btn btn-primary" onclick="loadUsers()">Search</button>
+                            </div>
+                        </div>
+                        <div id="usersTable" class="table-responsive">
+                            <div class="loading">Loading users...</div>
+                        </div>
+                    </div>
+
+                    <!-- Pets Tab -->
+                    <div id="pets-tab" class="tab-content hidden">
+                        <h3>Pet Management</h3>
+                        <div id="adminPetsTable" class="table-responsive">
+                            <div class="loading">Loading pets...</div>
+                        </div>
+                    </div>
+
+                    <!-- Adoptions Tab -->
+                    <div id="adoptions-tab" class="tab-content hidden">
+                        <h3>Adoption Management</h3>
+                        <div id="adminAdoptionsTable" class="table-responsive">
+                            <div class="loading">Loading adoptions...</div>
+                        </div>
+                    </div>
+
+                    <!-- Reports Tab -->
+                    <div id="reports-tab" class="tab-content hidden">
+                        <h3>Reported Content</h3>
+                        <div id="reportsTable" class="table-responsive">
+                            <div class="loading">Loading reports...</div>
+                        </div>
+                    </div>
+
+                    <!-- Audit Log Tab -->
+                    <div id="audit-tab" class="tab-content hidden">
+                        <h3>Admin Audit Log</h3>
+                        <div id="auditTable" class="table-responsive">
+                            <div class="loading">Loading audit log...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+</body>
+</html>

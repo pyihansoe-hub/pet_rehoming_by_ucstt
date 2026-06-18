@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Pets - PetLink</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="../index.html" class="logo">🐾 PetLink</a>
+            <button class="nav-toggle" id="navToggle">☰</button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="pets.html" class="active">Pets</a></li>
+                <li><a href="blog.html">Blog</a></li>
+                <li class="auth-only"><a href="dashboard.html">Dashboard</a></li>
+                <li class="auth-only"><a href="messages.html">Messages</a></li>
+                <li class="admin-only"><a href="admin.html">Admin</a></li>
+                <li class="guest-only"><a href="login.html">Login</a></li>
+                <li class="guest-only"><a href="register.html">Register</a></li>
+                <li class="auth-only"><a href="#" id="logoutBtn">Logout</a></li>
+            </ul>
+            <div class="nav-icons">
+                <a href="favorites.html" class="icon-btn" title="Favorites">❤️</a>
+                <div class="user-avatar auth-only" id="userAvatar"></div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="section">
+        <div class="container">
+            <h2 class="section-title">Find Your Perfect Companion</h2>
+            
+            <!-- Filters -->
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="typeFilter">Pet Type</label>
+                    <select id="typeFilter" class="form-control">
+                        <option value="">All Types</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="cityFilter">City</label>
+                    <select id="cityFilter" class="form-control">
+                        <option value="">All Cities</option>
+                        <option value="Yangon">Yangon</option>
+                        <option value="Mandalay">Mandalay</option>
+                        <option value="Naypyidaw">Naypyidaw</option>
+                        <option value="Mawlamyine">Mawlamyine</option>
+                        <option value="Bagan">Bagan</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="statusFilter">Status</label>
+                    <select id="statusFilter" class="form-control">
+                        <option value="available">Available</option>
+                        <option value="pending">Pending</option>
+                        <option value="adopted">Adopted</option>
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="feeTypeFilter">Fee Type</label>
+                    <select id="feeTypeFilter" class="form-control">
+                        <option value="">All</option>
+                        <option value="free">Free</option>
+                        <option value="paid">Paid</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="genderFilter">Gender</label>
+                    <select id="genderFilter" class="form-control">
+                        <option value="">All</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="searchInput">Search</label>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Name, breed...">
+                </div>
+                <div class="filter-group" style="display: flex; align-items: flex-end;">
+                    <button id="applyFilters" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div id="petsContainer" class="pet-grid">
+                <div class="loading">Loading pets...</div>
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="text-center mt-20"></div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 PetLink. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/pets.js"></script>
+</body>
+</html>

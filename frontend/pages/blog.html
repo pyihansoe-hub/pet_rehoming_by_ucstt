@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - PetLink</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="../index.html" class="logo">🐾 PetLink</a>
+            <ul class="nav-menu">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="pets.html">Pets</a></li>
+                <li><a href="blog.html" class="active">Blog</a></li>
+                <li class="auth-only"><a href="dashboard.html">Dashboard</a></li>
+                <li class="auth-only"><a href="#" id="logoutBtn">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="section">
+        <div class="container">
+            <h2 class="section-title">Pet Care Blog</h2>
+            
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Category</label>
+                    <select id="categoryFilter" class="form-control">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="display: flex; align-items: flex-end;">
+                    <button class="btn btn-primary" onclick="loadBlogPosts()">Filter</button>
+                </div>
+            </div>
+            
+            <div id="blogContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px;">
+                <div class="loading">Loading blog posts...</div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 PetLink. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/blog.js"></script>
+</body>
+</html>

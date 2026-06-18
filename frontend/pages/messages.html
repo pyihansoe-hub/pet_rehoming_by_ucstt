@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - PetLink</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="../index.html" class="logo">🐾 PetLink</a>
+            <ul class="nav-menu">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="pets.html">Pets</a></li>
+                <li><a href="blog.html">Blog</a></li>
+                <li class="auth-only"><a href="dashboard.html">Dashboard</a></li>
+                <li class="auth-only"><a href="messages.html" class="active">Messages</a></li>
+                <li class="auth-only"><a href="#" id="logoutBtn">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="section">
+        <div class="container">
+            <h2 class="section-title">Messages</h2>
+            
+            <div class="messages-container">
+                <!-- Conversations List -->
+                <div class="conversations-list" id="conversationsList">
+                    <div class="loading">Loading conversations...</div>
+                </div>
+                
+                <!-- Chat Window -->
+                <div class="chat-window">
+                    <div class="chat-header" id="chatHeader" style="padding: 15px; border-bottom: 1px solid #eee;">
+                        <h3>Select a conversation</h3>
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        <p style="text-align: center; color: #999; margin-top: 50px;">Select a conversation to start chatting</p>
+                    </div>
+                    <div class="chat-input" id="chatInput" style="display: none;">
+                        <input type="text" id="messageInput" placeholder="Type a message..." onkeypress="handleKeyPress(event)">
+                        <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/messages.js"></script>
+</body>
+</html>
