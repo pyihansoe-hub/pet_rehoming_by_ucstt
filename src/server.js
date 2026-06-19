@@ -10,6 +10,10 @@ const app = express();
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ origin: process.env.CLIENT_URL || '*', credentials: true }));
+
+const { handleWebhook } = require('./controllers/webhookController');
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
@@ -31,7 +35,8 @@ app.use('/api/reports',           require('./routes/report'));
 app.use('/api/notifications',     require('./routes/notification'));
 app.use('/api/favorites',         require('./routes/favorite'));
 app.use('/api/chat',     chatLimiter, require('./routes/chat'));
-app.use('/api/admin',             require('./routes/admin'));   // uses updated admin routes
+app.use('/api/admin',             require('./routes/admin'));
+app.use('/api/messages', require('./routes/messages'));
 
 app.use((err, _req, res, _next) => {
   console.error(err);
@@ -42,5 +47,10 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, async () => {
   console.log(`Server on port ${PORT}`);
-  await seedAdmin(); // runs once, seeds admin from .env, then locks
+  await seedAdmin();
+  const { processDueReminders, processHealthLogReminders } = require('./services/reminderScheduler');
+  setInterval(processDueReminders, 60 * 60 * 1000);
+  processDueReminders();
+  setInterval(processHealthLogReminders, 24 * 60 * 60 * 1000);
+  processHealthLogReminders();
 });
