@@ -1,163 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pet Rehoming & Monitoring System</title>
-  <link rel="stylesheet" href="/css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Rehoming & Monitoring System</title>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-
-<nav class="navbar" id="navbar"></nav>
-<div id="mobile-menu" class="mobile-menu"></div>
-<div id="toast-container" class="toast-container"></div>
-
-<!-- HERO -->
-<div class="hero">
-  <div class="container">
-    <h1>Find a Pet a <span>Loving Home</span></h1>
-    <p>Connect pets who need homes with families who need pets. Monitor their welfare every step of the way.</p>
-    <div class="hero-actions">
-      <a href="/pages/pets.html" class="btn btn-amber btn-lg">Browse Pets</a>
-      <a href="/pages/register.html" class="btn btn-outline btn-lg" style="color:#fff;border-color:rgba(255,255,255,0.4)">List a Pet</a>
+    <div id="app">
+        <header id="header"></header>
+        <main id="main-content"></main>
+        <footer id="footer"></footer>
     </div>
-    <div class="hero-stats">
-      <div>
-        <div class="hero-stat-value" id="stat-pets">—</div>
-        <div class="hero-stat-label">Pets Available</div>
-      </div>
-      <div>
-        <div class="hero-stat-value" id="stat-adopted">—</div>
-        <div class="hero-stat-label">Successfully Adopted</div>
-      </div>
-      <div>
-        <div class="hero-stat-value" id="stat-users">—</div>
-        <div class="hero-stat-label">Registered Users</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- PET TYPES -->
-<div style="background:#fff;padding:32px 0;border-bottom:1px solid #e5e7eb">
-  <div class="container">
-    <div id="type-chips" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"></div>
-  </div>
-</div>
-
-<!-- TRENDING PETS -->
-<div style="padding:48px 0">
-  <div class="container">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
-      <h2>🔥 Trending Pets</h2>
-      <a href="/pages/pets.html" class="btn btn-outline btn-sm">View All</a>
-    </div>
-    <div id="trending-grid" class="grid-4">
-      <div class="loading-wrap"><div class="spinner"></div></div>
-    </div>
-  </div>
-</div>
-
-<!-- HOW IT WORKS -->
-<div style="background:#f3f3ef;padding:48px 0">
-  <div class="container">
-    <h2 style="text-align:center;margin-bottom:32px">How It Works</h2>
-    <div class="grid-3">
-      <div class="card" style="text-align:center">
-        <div style="font-size:2.4rem;margin-bottom:12px">📋</div>
-        <h3 style="margin-bottom:8px">List Your Pet</h3>
-        <p style="color:#6b7a8d;font-size:0.88rem">Create a listing with photos, health info, and set free or paid adoption.</p>
-      </div>
-      <div class="card" style="text-align:center">
-        <div style="font-size:2.4rem;margin-bottom:12px">🤝</div>
-        <h3 style="margin-bottom:8px">Get Matched</h3>
-        <p style="color:#6b7a8d;font-size:0.88rem">Receive adoption requests, review applicants, and approve the right home.</p>
-      </div>
-      <div class="card" style="text-align:center">
-        <div style="font-size:2.4rem;margin-bottom:12px">📊</div>
-        <h3 style="margin-bottom:8px">Monitor Welfare</h3>
-        <p style="color:#6b7a8d;font-size:0.88rem">Track post-adoption follow-ups and health logs to ensure pets are thriving.</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- LATEST BLOGS -->
-<div style="padding:48px 0">
-  <div class="container">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
-      <h2>📝 Latest Guides</h2>
-      <a href="/pages/blogs.html" class="btn btn-outline btn-sm">All Blogs</a>
-    </div>
-    <div id="blogs-grid" class="grid-3">
-      <div class="loading-wrap"><div class="spinner"></div></div>
-    </div>
-  </div>
-</div>
-
-<!-- CTA -->
-<div style="background:#1c2b3a;padding:56px 0;text-align:center">
-  <div class="container">
-    <h2 style="color:#fff;margin-bottom:12px">Have a pet that needs a new home?</h2>
-    <p style="color:rgba(255,255,255,0.65);margin-bottom:24px">List for free and find a loving family in your area.</p>
-    <a href="/pages/register.html" class="btn btn-amber btn-lg">Get Started</a>
-  </div>
-</div>
-
-<footer class="footer" id="footer"></footer>
-
-<script src="/js/api.js"></script>
-<script src="/js/app.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', async function() {
-
-  // load stats
-  try {
-    var res = await Pets.list({ status: 'available', limit: 1 });
-    if (res && res.ok) document.getElementById('stat-pets').textContent = res.data.total || 0;
-    var res2 = await Pets.list({ status: 'adopted', limit: 1 });
-    if (res2 && res2.ok) document.getElementById('stat-adopted').textContent = res2.data.total || 0;
-  } catch(e) {}
-
-  // load pet types as chips
-  try {
-    var typesRes = await PetTypes.list();
-    if (typesRes && typesRes.ok) {
-      var types = typesRes.data.petTypes || [];
-      var icons = { Dog:'🐕', Cat:'🐈', Rabbit:'🐇', Bird:'🦜', Fish:'🐟', Reptile:'🦎', Hamster:'🐹', 'Guinea Pig':'🐾', Other:'🐾' };
-      document.getElementById('type-chips').innerHTML = types.map(function(t) {
-        return '<a href="/pages/pets.html?type=' + t.id + '" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f3ef;border-radius:999px;font-size:0.86rem;font-weight:bold;color:#1c2b3a;text-decoration:none;border:1.5px solid #e5e7eb" onmouseover="this.style.borderColor=\'#2a9d8f\';this.style.color=\'#2a9d8f\'" onmouseout="this.style.borderColor=\'#e5e7eb\';this.style.color=\'#1c2b3a\'">' +
-          (icons[t.name]||'🐾') + ' ' + t.name + '</a>';
-      }).join('');
-    }
-  } catch(e) {}
-
-  // load trending pets
-  try {
-    var trendRes = await Pets.trending(8);
-    var grid = document.getElementById('trending-grid');
-    if (trendRes && trendRes.ok && trendRes.data.pets.length) {
-      grid.innerHTML = trendRes.data.pets.map(petCardHtml).join('');
-    } else {
-      grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🐾</div><p>No pets listed yet.</p></div>';
-    }
-  } catch(e) {
-    document.getElementById('trending-grid').innerHTML = '<p style="color:#e76f51">Could not load pets.</p>';
-  }
-
-  // load latest blogs
-  try {
-    var blogRes = await Blogs.list({ status: 'published', limit: 3 });
-    var blogGrid = document.getElementById('blogs-grid');
-    if (blogRes && blogRes.ok && blogRes.data.blogs.length) {
-      blogGrid.innerHTML = blogRes.data.blogs.map(blogCardHtml).join('');
-    } else {
-      blogGrid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📝</div><p>No blogs yet.</p></div>';
-    }
-  } catch(e) {
-    document.getElementById('blogs-grid').innerHTML = '<p style="color:#e76f51">Could not load blogs.</p>';
-  }
-});
-</script>
+    
+    <div id="modal-container"></div>
+    <div id="toast-container"></div>
+    
+    <!-- 1. Utilities & API first -->
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    
+    <!-- 2. Components -->
+    <script src="js/components/header.js"></script>
+    <script src="js/components/footer.js"></script>
+    
+    <!-- 3. Page Logic (Functions like renderLogin, renderHome must exist before router runs) -->
+    <script src="js/auth.js"></script>
+    <script src="js/pages/home.js"></script>
+    <script src="js/pages/browse.js"></script>
+    <script src="js/pages/pet-detail.js"></script>
+    <script src="js/pages/add-edit-pet.js"></script>
+    <script src="js/pages/my-pets.js"></script>
+    <script src="js/pages/adoptions.js"></script>
+    <script src="js/pages/payment.js"></script>
+    <script src="js/pages/monitoring.js"></script>
+    <script src="js/pages/blog-list.js"></script>
+    <script src="js/pages/blog-detail.js"></script>
+    <script src="js/pages/write-blog.js"></script>
+    <script src="js/pages/messages.js"></script>
+    <script src="js/pages/notifications.js"></script>
+    <script src="js/pages/profile.js"></script>
+    <script src="js/pages/chat.js"></script>
+    <script src="js/pages/admin.js"></script>
+    
+    <!-- 4. Router LAST -->
+    <script src="js/router.js"></script>
+    
+    <!-- 5. App Init -->
+    <script src="js/app.js"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@ const seedAdmin  = require('./services/seedAdmin');
 
 const app = express();
 
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+//app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ origin: process.env.CLIENT_URL || '*', credentials: true }));
 
 const { handleWebhook } = require('./controllers/webhookController');
@@ -45,8 +45,8 @@ app.use((err, _req, res, _next) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, async () => {
-  console.log(`Server on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', async () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
   await seedAdmin();
   const { processDueReminders, processHealthLogReminders } = require('./services/reminderScheduler');
   setInterval(processDueReminders, 60 * 60 * 1000);

@@ -1,193 +1,220 @@
-const API = 'http://localhost:3000';
+// js/api.js - API Helper Functions
 
-function getToken() {
-  return localStorage.getItem('token');
+async function apiRequest(endpoint, options = {}) {
+    const token = localStorage.getItem('token');
+    const url = `${API_BASE}${endpoint}`;
+    
+    const config = {
+        ...options,
+        headers: {
+            ...options.headers
+        }
+    };
+    
+    // Add auth token if available
+    if (token && !options.skipAuth) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // Don't set Content-Type for multipart/form-data
+    if (!(options.body instanceof FormData)) {
+        config.headers['Content-Type'] = 'application/json';
+    }
+    
+    try {
+        const response = await fetch(url, config);
+        
+        // Handle suspended account
+        if (response.status === 403) {
+            const data = await response.json();
+            if (data.message && data.message.includes('suspended')) {
+                handleSuspendedAccount(data.reason);
+                throw new Error('Account suspended');
+            }
+        }
+        
+        // Handle token expired
+        if (response.status === 401) {
+            handleTokenExpired();
+            throw new Error('Token expired');
+        }
+        
+        // Parse response
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            data = await response.text();
+        }
+                if (!response.ok) {
+            throw new Error(data.message || data.error || 'Request failed');
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+    }
 }
 
-function getUser() {
-  try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
+// Handle suspended account
+function handleSuspendedAccount(reason) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.utils.showToast(`Your account has been suspended. Reason: ${reason}`, 'error');
+    setTimeout(() => {
+        window.location.hash = '/login.html';
+    }, 2000);
 }
 
-function saveAuth(token, user) {
-  localStorage.setItem('token', token);
-  localStorage.setItem('user', JSON.stringify(user));
+// Handle token expired
+function handleTokenExpired() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.utils.showToast('Session expired. Please login again.', 'info');
+    setTimeout(() => {
+        window.location.hash = '/login.html';
+    }, 2000);
 }
 
-function clearAuth() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-}
-
-async function request(method, path, body, isFormData) {
-  const headers = {};
-  const token = getToken();
-  if (token) headers['Authorization'] = 'Bearer ' + token;
-  if (!isFormData) headers['Content-Type'] = 'application/json';
-
-  const opts = { method, headers };
-  if (body) opts.body = isFormData ? body : JSON.stringify(body);
-
-  const res = await fetch(API + path, opts);
-  const data = await res.json();
-
-  if (res.status === 401) { clearAuth(); window.location.href = '/pages/login.html'; return; }
-  if (res.status === 403 && data.message && data.message.includes('suspended')) {
-    clearAuth();
-    alert('Your account has been suspended. Reason: ' + (data.reason || 'Contact support.'));
-    window.location.href = '/pages/login.html';
-    return;
-  }
-
-  return { ok: res.ok, status: res.status, data };
-}
-
-// shorthand helpers
-const get  = (path)         => request('GET',    path);
-const post = (path, body)   => request('POST',   path, body);
-const patch= (path, body)   => request('PATCH',  path, body);
-const del  = (path)         => request('DELETE', path);
-const postForm = (path, fd) => request('POST',   path, fd, true);
-const patchForm= (path, fd) => request('PATCH',  path, fd, true);
-
-// ── Auth ──────────────────────────────────────────────────────
-const Auth = {
-  register: (b)  => post('/api/auth/register', b),
-  login:    (b)  => post('/api/auth/login', b),
-  forgotPassword:(b) => post('/api/auth/forgot-password', b),
-  verifyResetToken:(token) => get('/api/auth/verify-reset-token?token=' + token),
-  resetPassword: (b) => post('/api/auth/reset-password', b),
+// API endpoints
+const API = {
+    // Auth
+    register: (data) => apiRequest('/api/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+    login: (data) => apiRequest('/api/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+    forgotPassword: (data) => apiRequest('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify(data) }),
+    verifyResetToken: (token) => apiRequest(`/api/auth/verify-reset-token?token=${token}`),
+    resetPassword: (data) => apiRequest('/api/auth/reset-password', { method: 'POST', body: JSON.stringify(data) }),
+    
+    // User Profile
+    getProfile: () => apiRequest('/api/user/profile'),
+    updateProfile: (formData) => apiRequest('/api/user/profile', { method: 'POST', body: formData }),
+    changePassword: (data) => apiRequest('/api/user/change-password', { method: 'PATCH', body: JSON.stringify(data) }),
+    
+    // Pets
+    getPets: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/pets?${query}`);
+    },    getTrendingPets: (limit = 8) => apiRequest(`/api/pets/trending?limit=${limit}`),
+    getPetById: (id) => apiRequest(`/api/pets/${id}`),
+    createPet: (data) => apiRequest('/api/pets', { method: 'POST', body: JSON.stringify(data) }),
+    updatePet: (id, data) => apiRequest(`/api/pets/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    deletePet: (id) => apiRequest(`/api/pets/${id}`, { method: 'DELETE' }),
+    getMyPets: () => apiRequest('/api/pets/my'),
+    uploadPetImage: (petId, formData) => apiRequest(`/api/pets/${petId}/images`, { method: 'POST', body: formData }),
+    deletePetImage: (petId, imageId) => apiRequest(`/api/pets/${petId}/images/${imageId}`, { method: 'DELETE' }),
+    getPetStatusHistory: (id) => apiRequest(`/api/pets/${id}/status-history`),
+    adoptPet: (id) => apiRequest(`/api/pets/${id}/adopt`, { method: 'POST' }),
+    getPetTypes: () => apiRequest('/api/pet-types'),
+    getCities: () => apiRequest('/api/pets/cities'),
+    
+    // Favorites
+    getFavorites: () => apiRequest('/api/favorites'),
+    addFavorite: (petId) => apiRequest(`/api/favorites/${petId}`, { method: 'POST' }),
+    removeFavorite: (petId) => apiRequest(`/api/favorites/${petId}`, { method: 'DELETE' }),
+    
+    // Adoption Requests
+    getMyAdoptionRequests: () => apiRequest('/api/adoption-requests/mine'),
+    getReceivedAdoptionRequests: () => apiRequest('/api/adoption-requests/received'),
+    updateAdoptionRequest: (id, data) => apiRequest(`/api/adoption-requests/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    cancelAdoptionRequest: (id) => apiRequest(`/api/adoption-requests/${id}/cancel`, { method: 'PATCH' }),
+    getAgreement: (id) => apiRequest(`/api/adoption-requests/${id}/agreement`),
+    signAgreement: (id) => apiRequest(`/api/adoption-requests/${id}/agreement/agree`, { method: 'PATCH' }),
+    
+    // Payments
+    initiatePayment: (data) => apiRequest('/api/payments/initiate', { method: 'POST', body: JSON.stringify(data) }),
+    verifyPayment: (id) => apiRequest(`/api/payments/${id}/verify`, { method: 'POST' }),
+    getPayments: () => apiRequest('/api/payments'),
+    getPaymentById: (id) => apiRequest(`/api/payments/${id}`),
+    
+    // Monitoring - Follow-ups
+    getFollowups: (adoptionRequestId) => apiRequest(`/api/monitoring/followups/${adoptionRequestId}`),
+    createFollowup: (adoptionRequestId, formData) => apiRequest(`/api/monitoring/followups/${adoptionRequestId}`, { method: 'POST', body: formData }),
+    
+    // Monitoring - Health Logs
+    getHealthLogs: (petId) => apiRequest(`/api/monitoring/pets/${petId}/health-logs`),
+    createHealthLog: (petId, data) => apiRequest(`/api/monitoring/pets/${petId}/health-logs`, { method: 'POST', body: JSON.stringify(data) }),
+    deleteHealthLog: (petId, logId) => apiRequest(`/api/monitoring/pets/${petId}/health-logs/${logId}`, { method: 'DELETE' }),
+    
+    // Blogs
+    getBlogs: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/blogs?${query}`);
+    },
+    getBlogBySlug: (slug) => apiRequest(`/api/blogs/${slug}`),
+    createBlog: (formData) => apiRequest('/api/blogs', { method: 'POST', body: formData }),
+    updateBlog: (id, formData) => apiRequest(`/api/blogs/${id}`, { method: 'PATCH', body: formData }),
+    deleteBlog: (id) => apiRequest(`/api/blogs/${id}`, { method: 'DELETE' }),    likeBlog: (id) => apiRequest(`/api/blogs/${id}/like`, { method: 'POST' }),
+    getBlogComments: (id) => apiRequest(`/api/blogs/${id}/comments`),
+    addComment: (id, data) => apiRequest(`/api/blogs/${id}/comments`, { method: 'POST', body: JSON.stringify(data) }),
+    deleteComment: (blogId, commentId) => apiRequest(`/api/blogs/${blogId}/comments/${commentId}`, { method: 'DELETE' }),
+    getBlogCategories: () => apiRequest('/api/blogs/categories'),
+    
+    // Messages
+    getConversations: () => apiRequest('/api/messages/conversations'),
+    createConversation: (data) => apiRequest('/api/messages/conversations', { method: 'POST', body: JSON.stringify(data) }),
+    getMessages: (conversationId) => apiRequest(`/api/messages/conversations/${conversationId}`),
+    sendMessage: (conversationId, data) => apiRequest(`/api/messages/conversations/${conversationId}`, { method: 'POST', body: JSON.stringify(data) }),
+    getUnreadCount: () => apiRequest('/api/messages/unread-count'),
+    
+    // Notifications
+    getNotifications: () => apiRequest('/api/notifications'),
+    markNotificationRead: (id) => apiRequest(`/api/notifications/${id}/read`, { method: 'PATCH' }),
+    markAllNotificationsRead: () => apiRequest('/api/notifications/read-all', { method: 'PATCH' }),
+    deleteNotification: (id) => apiRequest(`/api/notifications/${id}`, { method: 'DELETE' }),
+    
+    // Chat
+    chatOneShot: (message) => apiRequest('/api/chat', { method: 'POST', body: JSON.stringify({ message }) }),
+    createChatSession: () => apiRequest('/api/chat/sessions', { method: 'POST' }),
+    sendChatMessage: (sessionId, message) => apiRequest(`/api/chat/sessions/${sessionId}/messages`, { method: 'POST', body: JSON.stringify({ message }) }),
+    getChatHistory: (sessionId) => apiRequest(`/api/chat/sessions/${sessionId}/messages`),
+    getChatSessions: () => apiRequest('/api/chat/sessions'),
+    deleteChatSession: (sessionId) => apiRequest(`/api/chat/sessions/${sessionId}`, { method: 'DELETE' }),
+    
+    // Admin
+    getAdminStats: () => apiRequest('/api/admin/stats'),
+    getAdminUsers: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/admin/users?${query}`);
+    },
+    suspendUser: (id, reason) => apiRequest(`/api/admin/users/${id}/suspend`, { method: 'PATCH', body: JSON.stringify({ reason }) }),
+    unsuspendUser: (id) => apiRequest(`/api/admin/users/${id}/unsuspend`, { method: 'PATCH' }),
+    changeUserRole: (id, role) => apiRequest(`/api/admin/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
+    deleteUser: (id) => apiRequest(`/api/admin/users/${id}`, { method: 'DELETE' }),
+    getAdminPets: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/admin/pets?${query}`);
+    },
+    updatePetStatus: (id, status) => apiRequest(`/api/admin/pets/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    deleteAdminPet: (id) => apiRequest(`/api/admin/pets/${id}`, { method: 'DELETE' }),
+    getAdminBlogs: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/admin/blogs?${query}`);
+    },
+    updateBlogStatus: (id, status) => apiRequest(`/api/admin/blogs/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    deleteAdminBlog: (id) => apiRequest(`/api/admin/blogs/${id}`, { method: 'DELETE' }),
+    getAdminAdoptions: (params = {}) => {        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/admin/adoptions?${query}`);
+    },
+    closeAdoption: (id, reason) => apiRequest(`/api/admin/adoptions/${id}/close`, { method: 'PATCH', body: JSON.stringify({ reason }) }),
+    getAdminReports: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/admin/reports?${query}`);
+    },
+    resolveReport: (id, data) => apiRequest(`/api/admin/reports/${id}/resolve`, { method: 'PATCH', body: JSON.stringify(data) }),
+    getAdminFollowups: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/admin/followups?${query}`);
+    },
+    getAdminHealthLogs: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/admin/health-logs?${query}`);
+    },
+    getAuditLog: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/admin/audit-log?${query}`);
+    }
 };
 
-// ── User ──────────────────────────────────────────────────────
-const User = {
-  getProfile:    ()  => get('/api/user/profile'),
-  updateProfile: (fd)=> patchForm('/api/user/profile', fd),
-  changePassword:(b) => patch('/api/user/change-password', b),
-};
-
-// ── Pet Types ─────────────────────────────────────────────────
-const PetTypes = {
-  list:   () => get('/api/pet-types'),
-  create: (b)=> post('/api/pet-types', b),
-  delete: (id)=>del('/api/pet-types/' + id),
-};
-
-// ── Pets ──────────────────────────────────────────────────────
-const Pets = {
-  list:     (q)   => get('/api/pets?' + new URLSearchParams(q)),
-  my:       ()    => get('/api/pets/my'),
-  trending: (l)   => get('/api/pets/trending?limit=' + (l||8)),
-  cities:   ()    => get('/api/pets/cities'),
-  get:      (id)  => get('/api/pets/' + id),
-  create:   (b)   => post('/api/pets', b),
-  update:   (id,b)=> patch('/api/pets/' + id, b),
-  delete:   (id)  => del('/api/pets/' + id),
-  addImage: (id,fd)   => postForm('/api/pets/' + id + '/images', fd),
-  deleteImage:(id,imgId) => del('/api/pets/' + id + '/images/' + imgId),
-  statusHistory:(id) => get('/api/pets/' + id + '/status-history'),
-};
-
-// ── Adoption ──────────────────────────────────────────────────
-const Adoption = {
-  request:   (petId, b) => post('/api/pets/' + petId + '/adopt', b),
-  mine:      ()         => get('/api/adoption-requests/mine'),
-  received:  ()         => get('/api/adoption-requests/received'),
-  review:    (id, b)    => patch('/api/adoption-requests/' + id, b),
-  cancel:    (id)       => patch('/api/adoption-requests/' + id + '/cancel'),
-  getAgreement: (id)    => get('/api/adoption-requests/' + id + '/agreement'),
-  agree:     (id)       => patch('/api/adoption-requests/' + id + '/agreement/agree'),
-};
-
-// ── Payments ──────────────────────────────────────────────────
-const Payments = {
-  list:     () => get('/api/payments'),
-  get:      (id) => get('/api/payments/' + id),
-  initiate: (b)  => post('/api/payments/initiate', b),
-  verify:   (id) => post('/api/payments/' + id + '/verify'),
-};
-
-// ── Favorites ─────────────────────────────────────────────────
-const Favorites = {
-  list:   ()    => get('/api/favorites'),
-  add:    (id)  => post('/api/favorites/' + id),
-  remove: (id)  => del('/api/favorites/' + id),
-};
-
-// ── Monitoring ────────────────────────────────────────────────
-const Monitoring = {
-  submitFollowup: (arId, fd) => postForm('/api/monitoring/followups/' + arId, fd),
-  getFollowups:   (arId)     => get('/api/monitoring/followups/' + arId),
-  addHealthLog:   (petId, b) => post('/api/monitoring/pets/' + petId + '/health-logs', b),
-  getHealthLogs:  (petId)    => get('/api/monitoring/pets/' + petId + '/health-logs'),
-  deleteHealthLog:(petId, logId) => del('/api/monitoring/pets/' + petId + '/health-logs/' + logId),
-};
-
-// ── Blogs ─────────────────────────────────────────────────────
-const Blogs = {
-  categories: ()    => get('/api/blogs/categories'),
-  list:       (q)   => get('/api/blogs?' + new URLSearchParams(q)),
-  get:        (slug)=> get('/api/blogs/' + slug),
-  create:     (fd)  => postForm('/api/blogs', fd),
-  update:     (id,fd)=> patchForm('/api/blogs/' + id, fd),
-  delete:     (id)  => del('/api/blogs/' + id),
-  like:       (id)  => post('/api/blogs/' + id + '/like'),
-  getComments:(id)  => get('/api/blogs/' + id + '/comments'),
-  addComment: (id,b)=> post('/api/blogs/' + id + '/comments', b),
-  deleteComment:(id,cid)=> del('/api/blogs/' + id + '/comments/' + cid),
-};
-
-// ── Reports ───────────────────────────────────────────────────
-const Reports = {
-  submit: (b) => post('/api/reports', b),
-};
-
-// ── Notifications ─────────────────────────────────────────────
-const Notifications = {
-  list:       ()    => get('/api/notifications'),
-  readAll:    ()    => patch('/api/notifications/read-all'),
-  read:       (id)  => patch('/api/notifications/' + id + '/read'),
-  delete:     (id)  => del('/api/notifications/' + id),
-};
-
-// ── Chat ──────────────────────────────────────────────────────
-const Chat = {
-  oneShot:       (b)    => post('/api/chat', b),
-  createSession: ()     => post('/api/chat/sessions'),
-  listSessions:  ()     => get('/api/chat/sessions'),
-  getMessages:   (sid)  => get('/api/chat/sessions/' + sid + '/messages'),
-  send:          (sid,b)=> post('/api/chat/sessions/' + sid + '/messages', b),
-  deleteSession: (sid)  => del('/api/chat/sessions/' + sid),
-};
-
-// ── Messages ──────────────────────────────────────────────────
-const Messages = {
-  unreadCount:     ()      => get('/api/messages/unread-count'),
-  conversations:   ()      => get('/api/messages/conversations'),
-  getOrCreate:     (b)     => post('/api/messages/conversations', b),
-  getMessages:     (cid)   => get('/api/messages/conversations/' + cid),
-  send:            (cid,b) => post('/api/messages/conversations/' + cid, b),
-};
-
-// ── Admin ─────────────────────────────────────────────────────
-const Admin = {
-  stats:          ()       => get('/api/admin/stats'),
-  users:          (q)      => get('/api/admin/users?' + new URLSearchParams(q)),
-  getUser:        (id)     => get('/api/admin/users/' + id),
-  changeRole:     (id,b)   => patch('/api/admin/users/' + id + '/role', b),
-  suspend:        (id,b)   => patch('/api/admin/users/' + id + '/suspend', b),
-  unsuspend:      (id)     => patch('/api/admin/users/' + id + '/unsuspend'),
-  deleteUser:     (id)     => del('/api/admin/users/' + id),
-  pets:           (q)      => get('/api/admin/pets?' + new URLSearchParams(q)),
-  updatePetStatus:(id,b)   => patch('/api/admin/pets/' + id + '/status', b),
-  deletePet:      (id)     => del('/api/admin/pets/' + id),
-  blogs:          (q)      => get('/api/admin/blogs?' + new URLSearchParams(q)),
-  updateBlogStatus:(id,b)  => patch('/api/admin/blogs/' + id + '/status', b),
-  deleteBlog:     (id)     => del('/api/admin/blogs/' + id),
-  adoptions:      (q)      => get('/api/admin/adoptions?' + new URLSearchParams(q)),
-  closeAdoption:  (id,b)   => patch('/api/admin/adoptions/' + id + '/close', b),
-  followups:      (q)      => get('/api/admin/followups?' + new URLSearchParams(q)),
-  healthLogs:     (q)      => get('/api/admin/health-logs?' + new URLSearchParams(q)),
-  reports:        (q)      => get('/api/admin/reports?' + new URLSearchParams(q)),
-  resolveReport:  (id,b)   => patch('/api/admin/reports/' + id + '/resolve', b),
-  auditLog:       (q)      => get('/api/admin/audit-log?' + new URLSearchParams(q)),
-};
+window.API = API;

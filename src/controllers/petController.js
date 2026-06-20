@@ -2,6 +2,7 @@ const pool = require('../db/pool');
 const path = require('path');
 const fs   = require('fs');
 // ── helpers ──────────────────────────────────────────────────────────────────
+
 const PET_SELECT = `
   p.*,
   pt.name  AS pet_type_name,

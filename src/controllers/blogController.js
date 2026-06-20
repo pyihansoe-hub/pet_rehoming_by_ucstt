@@ -4,8 +4,6 @@ const slugify = (text) =>
   text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') +
   '-' + Date.now();
 
-// ── Blog Categories ────────────────────────────────────────────────────────
-
 const listCategories = async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -32,8 +30,6 @@ const createCategory = async (req, res) => {
   }
 };
 
-// ── Blogs ──────────────────────────────────────────────────────────────────
-
 const BLOG_SELECT = `
   b.*,
   u.name  AS author_name,
@@ -50,8 +46,6 @@ LEFT JOIN blog_categories bc ON bc.id=b.category_id
 LEFT JOIN blog_tags bt ON bt.blog_id=b.id
 LEFT JOIN tags t ON t.id=bt.tag_id
 `;
-
-// GET /api/blogs
 const listBlogs = async (req, res) => {
   const { category, pet_type, status = 'published', search, page = 1, limit = 20, tag } = req.query;
   const conditions = ['b.status = $1'];
@@ -67,28 +61,49 @@ const listBlogs = async (req, res) => {
   const offset = (Math.max(1, page) - 1) * limit;
 
   try {
+    // Simplified query without complex aggregation
     const { rows } = await pool.query(
-      `${BLOG_SELECT} ${WHERE} GROUP BY b.id, u.name, u.avatar_url, bc.name, bc.slug
+      `SELECT b.*, 
+              u.name AS author_name,
+              u.avatar_url AS author_avatar,
+              bc.name AS category_name,
+              bc.slug AS category_slug
+       FROM blogs b
+       JOIN users u ON u.id = b.author_id
+       LEFT JOIN blog_categories bc ON bc.id = b.category_id
+       ${WHERE}
        ORDER BY b.published_at DESC NULLS LAST, b.created_at DESC
        LIMIT $${i++} OFFSET $${i}`,
       [...values, limit, offset]
     );
+    
+    // Add empty tags array to each blog
+    const blogsWithTags = rows.map(blog => ({ ...blog, tags: [] }));
+    
     const count = await pool.query(
-      `SELECT COUNT(DISTINCT b.id) FROM blogs b
-       LEFT JOIN blog_categories bc ON bc.id=b.category_id
-       LEFT JOIN blog_tags bt ON bt.blog_id=b.id
-       LEFT JOIN tags t ON t.id=bt.tag_id ${WHERE}`, values
+      `SELECT COUNT(*) FROM blogs b
+       LEFT JOIN blog_categories bc ON bc.id = b.category_id
+       ${WHERE}`, values
     );
-    res.json({ blogs: rows, total: parseInt(count.rows[0].count), page: +page, limit: +limit });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+    
+    res.json({ 
+      blogs: blogsWithTags, 
+      total: parseInt(count.rows[0].count), 
+      page: +page, 
+      limit: +limit 
+    });
+  } catch (err) {
+    console.error('Blog query error:', err.message);
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
 };
 
-// GET /api/blogs/:slug
 const getBlog = async (req, res) => {
   try {
     await pool.query('UPDATE blogs SET views=views+1 WHERE slug=$1', [req.params.slug]).catch(() => {});
     const { rows } = await pool.query(
-      `${BLOG_SELECT} WHERE b.slug=$1 GROUP BY b.id, u.name, u.avatar_url, bc.name, bc.slug`,
+      `${BLOG_SELECT} WHERE b.slug=$1 
+       GROUP BY b.id, u.id, u.name, u.avatar_url, bc.id, bc.name, bc.slug`,
       [req.params.slug]
     );
     if (!rows.length) return res.status(404).json({ message: 'Blog not found.' });
@@ -96,14 +111,12 @@ const getBlog = async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 
-// POST /api/blogs
 const createBlog = async (req, res) => {
   const { title, content, summary, category_id, status = 'draft', tags = [] } = req.body;
   const cover_image_url = req.file ? '/uploads/blogs/${req.file.filename}' : null;
   if (!title || !content) return res.status(400).json({ message: 'Title and content are required.' });
 
-  const client = await pool.connect();
-  try {
+  const client = await pool.connect();  try {
     await client.query('BEGIN');
     const { rows } = await client.query(
       `INSERT INTO blogs (author_id, category_id, title, slug, summary, content, cover_image_url, status, published_at)
@@ -114,7 +127,6 @@ const createBlog = async (req, res) => {
     );
     const blog = rows[0];
 
-    // Handle tags
     for (const tagName of tags) {
       const trimmed = tagName.trim().toLowerCase();
       if (!trimmed) continue;
@@ -134,7 +146,6 @@ const createBlog = async (req, res) => {
   } finally { client.release(); }
 };
 
-// PATCH /api/blogs/:id
 const updateBlog = async (req, res) => {
   const { title, content, summary, category_id, status, tags } = req.body;
   const cover_image_url = req.file ? '/uploads/blogs/${req.file.filename}' : undefined;
@@ -150,13 +161,11 @@ const updateBlog = async (req, res) => {
     if (content)        { fields.push(`content=$${i++}`);         values.push(content); }
     if (summary)        { fields.push(`summary=$${i++}`);         values.push(summary); }
     if (category_id)    { fields.push(`category_id=$${i++}`);     values.push(category_id); }
-    if (cover_image_url !== undefined) { fields.push('cover_image_url=$${i++}'); values.push(cover_image_url); }
-    // if (cover_image_url){ fields.push(`cover_image_url=$${i++}`); values.push(cover_image_url); }
+    if (cover_image_url !== undefined) { fields.push(`cover_image_url=$${i++}`); values.push(cover_image_url); }
     if (status) {
       fields.push(`status=$${i++}`); values.push(status);
       if (status === 'published' && check.rows[0].status !== 'published') {
-        fields.push(`published_at=$${i++}`); values.push(new Date());
-      }
+        fields.push(`published_at=$${i++}`); values.push(new Date());      }
     }
 
     if (fields.length) {
@@ -180,7 +189,6 @@ const updateBlog = async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 
-// DELETE /api/blogs/:id
 const deleteBlog = async (req, res) => {
   try {
     const check = await pool.query('SELECT author_id FROM blogs WHERE id=$1', [req.params.id]);
@@ -191,7 +199,7 @@ const deleteBlog = async (req, res) => {
     res.json({ message: 'Blog deleted.' });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
-// POST /api/blogs/:id/like  — toggle like
+
 const toggleLike = async (req, res) => {
   try {
     const existing = await pool.query(
@@ -207,10 +215,6 @@ const toggleLike = async (req, res) => {
     }
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
-
-
-// ── Comments ───────────────────────────────────────────────────────────────
-
 const getComments = async (req, res) => {
   try {
     const { rows } = await pool.query(

@@ -4,10 +4,10 @@
   "description": "Pet Rehoming REST API — PostgreSQL, Aya Pay, AI Chatbot",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "db:migrate": "node sql/migrate.js"
-  },
+  "dev": "node src/server.js", 
+  "start": "npx http-server ./frontend -p 8080 -c-1",
+  "db:migrate": "node sql/migrate.js"
+},
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.9",
     "@google/generative-ai": "^0.24.1",
