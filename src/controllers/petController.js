@@ -3,14 +3,14 @@ const path = require('path');
 const fs   = require('fs');
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-const PET_SELECT = `
+const PET_SELECT = `SELECT
   p.*,
   pt.name  AS pet_type_name,
   u.name   AS owner_name,
   u.phone  AS owner_phone,
   COALESCE(
-    json_agg(pi ORDER BY pi.is_primary DESC, pi.id) FILTER (WHERE pi.id IS NOT NULL),
-    '[]'
+    json_agg(to_jsonb(pi) ORDER BY pi.is_primary DESC, pi.id) FILTER (WHERE pi.id IS NOT NULL),
+    '[]'::json
   ) AS images
 FROM pets p
 JOIN pet_types pt ON pt.id = p.pet_type_id
@@ -25,6 +25,7 @@ const listPets = async (req, res) => {
     status = 'available',
     fee_type,
     gender,
+    city,
     page = 1,
     limit = 20,
     search,
@@ -38,6 +39,7 @@ const listPets = async (req, res) => {
   if (type)     { conditions.push(`p.pet_type_id = $${i++}`);  values.push(type); }
   if (fee_type) { conditions.push(`p.fee_type = $${i++}`);     values.push(fee_type); }
   if (gender)   { conditions.push(`p.gender = $${i++}`);       values.push(gender); }
+  if (city)     { conditions.push(`p.city = $${i++}`);         values.push(city); }
   if (search)   {
     conditions.push(`(p.name ILIKE $${i} OR p.breed ILIKE $${i} OR p.description ILIKE $${i})`);
     values.push(`%${search}%`); i++;
@@ -78,7 +80,7 @@ const createPet = async (req, res) => {
     pet_type_id, name, breed, birth_date, is_sure,
     gender, color, weight_kg, description, health_notes,
     is_vaccinated = false, is_neutered = false,
-    fee_type = 'free', adoption_fee = 0, location,
+    fee_type = 'free', adoption_fee = 0, city, location,
     images = [],
   } = req.body;
 
@@ -92,13 +94,13 @@ const createPet = async (req, res) => {
       `INSERT INTO pets
          (owner_id, pet_type_id, name, breed, birth_date, is_sure,
           gender, color, weight_kg, description, health_notes,
-          is_vaccinated, is_neutered, fee_type, adoption_fee, location)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+          is_vaccinated, is_neutered, fee_type, adoption_fee, city, location)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
        RETURNING *`,
       [req.user.id, pet_type_id, name, breed || null, birth_date || null, is_sure || null,
        gender || null, color || null, weight_kg || null, description || null,
        health_notes || null, is_vaccinated, is_neutered,
-       fee_type, fee_type === 'free' ? 0 : adoption_fee, location || null]
+       fee_type, fee_type === 'free' ? 0 : adoption_fee, city || null, location || null]
     );
     const pet = rows[0];
 
@@ -123,7 +125,7 @@ const createPet = async (req, res) => {
 const updatePet = async (req, res) => {
   const allowed = ['name','breed','birth_date','is_sure','gender','color','weight_kg',
                    'description','health_notes','is_vaccinated','is_neutered',
-                   'fee_type','adoption_fee','status','location'];
+                   'fee_type','adoption_fee','status','city','location'];
   const fields = []; const values = []; let i = 1;
 
   for (const key of allowed) {
@@ -161,7 +163,7 @@ const deletePet = async (req, res) => {
 const addPetImage = async (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'Image file is required.' });
 
-  const url        = '/uploads/pets/${req.file.filename}';
+  const url        = `/uploads/pets/${req.file.filename}`;
   const is_primary = req.body.is_primary === 'true';
 
   try {
@@ -211,4 +213,33 @@ const myPets = async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 
-module.exports = { listPets, getPet, createPet, updatePet, deletePet, addPetImage, deletePetImage, myPets };
+const getTrendingPets = async (req, res) => {
+  const limit = Math.max(1, Math.min(parseInt(req.query.limit, 10) || 8, 50));
+  try {
+    const { rows } = await pool.query(
+      `${PET_SELECT}
+       WHERE p.status='available'
+       GROUP BY p.id, pt.name, u.name, u.phone
+       ORDER BY COALESCE(p.views, 0) DESC, p.created_at DESC
+       LIMIT $1`,
+      [limit]
+    );
+    res.json({ pets: rows });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
+const getCities = async (_req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT DISTINCT city FROM pets
+       WHERE city IS NOT NULL AND city <> '' AND status='available'
+       ORDER BY city`
+    );
+    res.json({ cities: rows.map(r => r.city) });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
+module.exports = {
+  listPets, getPet, createPet, updatePet, deletePet,
+  addPetImage, deletePetImage, myPets, getTrendingPets, getCities
+};

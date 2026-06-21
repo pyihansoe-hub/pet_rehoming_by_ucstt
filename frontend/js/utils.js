@@ -1,6 +1,9 @@
 // js/utils.js - Utility Functions
 
-const API_BASE = 'http://192.168.100.49:3000';
+const DEFAULT_API_BASE = window.location.port === '8080'
+    ? `${window.location.protocol}//${window.location.hostname}:3000`
+    : window.location.origin;
+const API_BASE = window.API_BASE || localStorage.getItem('API_BASE') || DEFAULT_API_BASE;
 // Format date to DD-MM-YYYY
 function formatDate(dateString) {
     if (!dateString) return 'N/A';

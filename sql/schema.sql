@@ -2,10 +2,25 @@
 -- ENUMS
 -- ============================================================
 
-CREATE TYPE payment_status AS ENUM ('pending', 'completed', 'failed', 'refunded');
-CREATE TYPE adoption_status AS ENUM ('available', 'pending', 'adopted', 'withdrawn');
-CREATE TYPE adoption_fee_type AS ENUM ('free', 'paid');
-CREATE TYPE blog_status AS ENUM ('draft', 'published', 'archived');
+DO $$ BEGIN
+  CREATE TYPE payment_status AS ENUM ('pending', 'completed', 'failed', 'refunded');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE adoption_status AS ENUM ('available', 'pending', 'adopted', 'withdrawn');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE adoption_fee_type AS ENUM ('free', 'paid');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE blog_status AS ENUM ('draft', 'published', 'archived');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- ============================================================
 -- TRIGGER FUNCTION: auto update updated_at
@@ -36,6 +51,7 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS users_updated_at ON users;
 CREATE TRIGGER users_updated_at
   BEFORE UPDATE ON users
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -77,6 +93,8 @@ CREATE TABLE IF NOT EXISTS pets (
   breed           VARCHAR(100),
   age_years       INT,
   age_months      INT,
+  birth_date      DATE,
+  is_sure         BOOLEAN,
   gender          VARCHAR(10),           -- male | female | unknown
   color           VARCHAR(100),
   weight_kg       NUMERIC(5,2),
@@ -87,11 +105,19 @@ CREATE TABLE IF NOT EXISTS pets (
   fee_type        adoption_fee_type NOT NULL DEFAULT 'free',
   adoption_fee    NUMERIC(12,2) NOT NULL DEFAULT 0,  -- 0 if free
   status          adoption_status NOT NULL DEFAULT 'available',
+  city            VARCHAR(100),
   location        VARCHAR(255),
+  views           INT           NOT NULL DEFAULT 0,
   created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE pets ADD COLUMN IF NOT EXISTS birth_date DATE;
+ALTER TABLE pets ADD COLUMN IF NOT EXISTS is_sure BOOLEAN;
+ALTER TABLE pets ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+ALTER TABLE pets ADD COLUMN IF NOT EXISTS views INT NOT NULL DEFAULT 0;
+
+DROP TRIGGER IF EXISTS pets_updated_at ON pets;
 CREATE TRIGGER pets_updated_at
   BEFORE UPDATE ON pets
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -100,6 +126,7 @@ CREATE INDEX IF NOT EXISTS idx_pets_owner      ON pets(owner_id);
 CREATE INDEX IF NOT EXISTS idx_pets_type       ON pets(pet_type_id);
 CREATE INDEX IF NOT EXISTS idx_pets_status     ON pets(status);
 CREATE INDEX IF NOT EXISTS idx_pets_fee_type   ON pets(fee_type);
+CREATE INDEX IF NOT EXISTS idx_pets_city       ON pets(city);
 
 -- ============================================================
 -- PET IMAGES
@@ -119,7 +146,10 @@ CREATE INDEX IF NOT EXISTS idx_pet_images_pet ON pet_images(pet_id);
 -- ADOPTION REQUESTS
 -- ============================================================
 
-CREATE TYPE request_status AS ENUM ('pending', 'approved', 'rejected', 'cancelled');
+DO $$ BEGIN
+  CREATE TYPE request_status AS ENUM ('pending', 'approved', 'rejected', 'cancelled');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS adoption_requests (
   id              SERIAL PRIMARY KEY,
@@ -133,6 +163,7 @@ CREATE TABLE IF NOT EXISTS adoption_requests (
   UNIQUE(pet_id, requester_id)   -- one request per user per pet
 );
 
+DROP TRIGGER IF EXISTS adoption_requests_updated_at ON adoption_requests;
 CREATE TRIGGER adoption_requests_updated_at
   BEFORE UPDATE ON adoption_requests
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -158,6 +189,7 @@ CREATE TABLE IF NOT EXISTS payments (
   updated_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS payments_updated_at ON payments;
 CREATE TRIGGER payments_updated_at
   BEFORE UPDATE ON payments
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -212,6 +244,7 @@ CREATE TABLE IF NOT EXISTS blogs (
   updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS blogs_updated_at ON blogs;
 CREATE TRIGGER blogs_updated_at
   BEFORE UPDATE ON blogs
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -248,6 +281,7 @@ CREATE TABLE IF NOT EXISTS blog_comments (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS blog_comments_updated_at ON blog_comments;
 CREATE TRIGGER blog_comments_updated_at
   BEFORE UPDATE ON blog_comments
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -266,6 +300,7 @@ CREATE TABLE IF NOT EXISTS chat_sessions (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS chat_sessions_updated_at ON chat_sessions;
 CREATE TRIGGER chat_sessions_updated_at
   BEFORE UPDATE ON chat_sessions
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -347,8 +382,6 @@ CREATE INDEX IF NOT EXISTS idx_audit_time   ON admin_audit_log(created_at);
 -- (already private by default, this just makes it explicit)
 ALTER TABLE adoption_followups ADD COLUMN IF NOT EXISTS is_visible_to_public BOOLEAN NOT NULL DEFAULT FALSE;
 
---try debug--
-sudo -u postgres psql -d pet_rehoming << 'EOF'
 -- Create reports table with all columns the controller expects
 CREATE TABLE IF NOT EXISTS reports (
     id SERIAL PRIMARY KEY,
@@ -393,4 +426,3 @@ CREATE TRIGGER update_reports_updated_at
 
 -- Verify
 SELECT 'reports table created successfully!' as status;
-EOF

@@ -78,6 +78,38 @@ function handleTokenExpired() {
     }, 2000);
 }
 
+function normalizePet(pet) {
+    if (!pet) return pet;
+    return {
+        ...pet,
+        pet_type: pet.pet_type || (pet.pet_type_name ? { id: pet.pet_type_id, name: pet.pet_type_name } : undefined),
+        images: pet.images || (pet.primary_image ? [{ url: pet.primary_image, is_primary: true }] : [])
+    };
+}
+
+function normalizeBlog(blog) {
+    if (!blog) return blog;
+    const tags = Array.isArray(blog.tags)
+        ? blog.tags.map(tag => typeof tag === 'string' ? tag : tag.name).filter(Boolean)
+        : [];
+
+    return {
+        ...blog,
+        cover_image: blog.cover_image || blog.cover_image_url,
+        category: blog.category || (blog.category_name ? {
+            id: blog.category_id,
+            name: blog.category_name,
+            slug: blog.category_slug
+        } : undefined),
+        author: blog.author || (blog.author_name ? {
+            id: blog.author_id,
+            name: blog.author_name,
+            avatar_url: blog.author_avatar
+        } : undefined),
+        tags
+    };
+}
+
 // API endpoints
 const API = {
     // Auth
@@ -95,19 +127,26 @@ const API = {
     // Pets
     getPets: (params = {}) => {
         const query = new URLSearchParams(params).toString();
-        return apiRequest(`/api/pets?${query}`);
-    },    getTrendingPets: (limit = 8) => apiRequest(`/api/pets/trending?limit=${limit}`),
-    getPetById: (id) => apiRequest(`/api/pets/${id}`),
-    createPet: (data) => apiRequest('/api/pets', { method: 'POST', body: JSON.stringify(data) }),
-    updatePet: (id, data) => apiRequest(`/api/pets/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+        return apiRequest(`/api/pets?${query}`).then(data => ({
+            ...data,
+            pets: (data.pets || []).map(normalizePet)
+        }));
+    },
+    getTrendingPets: (limit = 8) => apiRequest(`/api/pets/trending?limit=${limit}`).then(data => ({
+        ...data,
+        pets: (data.pets || []).map(normalizePet)
+    })),
+    getPetById: (id) => apiRequest(`/api/pets/${id}`).then(data => normalizePet(data.pet || data)),
+    createPet: (data) => apiRequest('/api/pets', { method: 'POST', body: JSON.stringify(data) }).then(data => normalizePet(data.pet || data)),
+    updatePet: (id, data) => apiRequest(`/api/pets/${id}`, { method: 'PATCH', body: JSON.stringify(data) }).then(data => normalizePet(data.pet || data)),
     deletePet: (id) => apiRequest(`/api/pets/${id}`, { method: 'DELETE' }),
-    getMyPets: () => apiRequest('/api/pets/my'),
+    getMyPets: () => apiRequest('/api/pets/my').then(data => (data.pets || data || []).map(normalizePet)),
     uploadPetImage: (petId, formData) => apiRequest(`/api/pets/${petId}/images`, { method: 'POST', body: formData }),
     deletePetImage: (petId, imageId) => apiRequest(`/api/pets/${petId}/images/${imageId}`, { method: 'DELETE' }),
     getPetStatusHistory: (id) => apiRequest(`/api/pets/${id}/status-history`),
     adoptPet: (id) => apiRequest(`/api/pets/${id}/adopt`, { method: 'POST' }),
-    getPetTypes: () => apiRequest('/api/pet-types'),
-    getCities: () => apiRequest('/api/pets/cities'),
+    getPetTypes: () => apiRequest('/api/pet-types').then(data => data.petTypes || data),
+    getCities: () => apiRequest('/api/pets/cities').then(data => data.cities || data),
     
     // Favorites
     getFavorites: () => apiRequest('/api/favorites'),
@@ -140,16 +179,30 @@ const API = {
     // Blogs
     getBlogs: (params = {}) => {
         const query = new URLSearchParams(params).toString();
-        return apiRequest(`/api/blogs?${query}`);
+        return apiRequest(`/api/blogs?${query}`).then(data => ({
+            ...data,
+            data: (data.blogs || data.data || []).map(normalizeBlog),
+            blogs: (data.blogs || data.data || []).map(normalizeBlog)
+        }));
     },
-    getBlogBySlug: (slug) => apiRequest(`/api/blogs/${slug}`),
-    createBlog: (formData) => apiRequest('/api/blogs', { method: 'POST', body: formData }),
+    getBlogBySlug: async (slug) => {
+        const data = await apiRequest(`/api/blogs/${slug}`);
+        const blog = normalizeBlog(data.blog || data);
+        try {
+            const commentsData = await apiRequest(`/api/blogs/${blog.id}/comments`);
+            blog.comments = commentsData.comments || commentsData || [];
+        } catch (_error) {
+            blog.comments = [];
+        }
+        return blog;
+    },
+    createBlog: (formData) => apiRequest('/api/blogs', { method: 'POST', body: formData }).then(data => normalizeBlog(data.blog || data)),
     updateBlog: (id, formData) => apiRequest(`/api/blogs/${id}`, { method: 'PATCH', body: formData }),
     deleteBlog: (id) => apiRequest(`/api/blogs/${id}`, { method: 'DELETE' }),    likeBlog: (id) => apiRequest(`/api/blogs/${id}/like`, { method: 'POST' }),
     getBlogComments: (id) => apiRequest(`/api/blogs/${id}/comments`),
     addComment: (id, data) => apiRequest(`/api/blogs/${id}/comments`, { method: 'POST', body: JSON.stringify(data) }),
     deleteComment: (blogId, commentId) => apiRequest(`/api/blogs/${blogId}/comments/${commentId}`, { method: 'DELETE' }),
-    getBlogCategories: () => apiRequest('/api/blogs/categories'),
+    getBlogCategories: () => apiRequest('/api/blogs/categories').then(data => data.categories || data),
     
     // Messages
     getConversations: () => apiRequest('/api/messages/conversations'),

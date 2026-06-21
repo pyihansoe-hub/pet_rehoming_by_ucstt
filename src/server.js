@@ -19,7 +19,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 const authLimiter = rateLimit({ windowMs: 15*60*1000, max: 10, message: { message: 'Too many attempts, try again in 15 minutes.' } });
 const chatLimiter = rateLimit({ windowMs: 60*1000,    max: 20, message: { message: 'Chat limit: 20 messages per minute.' } });
-app.use(rateLimit({ windowMs: 15*60*1000, max: 100,   message: { message: 'Too many requests.' } }));
+//app.use(rateLimit({ windowMs: 15*60*1000, max: 1000,   message: { message: 'Too many requests.' } }));
 
 app.get('/', (_req, res) => res.json({ message: '🐾 Pet Rehoming & Monitoring System' }));
 

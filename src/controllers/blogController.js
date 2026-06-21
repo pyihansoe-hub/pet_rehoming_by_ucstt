@@ -30,7 +30,7 @@ const createCategory = async (req, res) => {
   }
 };
 
-const BLOG_SELECT = `
+const BLOG_SELECT = `SELECT
   b.*,
   u.name  AS author_name,
   u.avatar_url AS author_avatar,
@@ -112,8 +112,9 @@ const getBlog = async (req, res) => {
 };
 
 const createBlog = async (req, res) => {
-  const { title, content, summary, category_id, status = 'draft', tags = [] } = req.body;
-  const cover_image_url = req.file ? '/uploads/blogs/${req.file.filename}' : null;
+  const { title, content, summary, category_id, status = 'draft' } = req.body;
+  const tags = parseTags(req.body.tags) || [];
+  const cover_image_url = req.file ? `/uploads/blogs/${req.file.filename}` : null;
   if (!title || !content) return res.status(400).json({ message: 'Title and content are required.' });
 
   const client = await pool.connect();  try {
@@ -148,7 +149,7 @@ const createBlog = async (req, res) => {
 
 const updateBlog = async (req, res) => {
   const { title, content, summary, category_id, status, tags } = req.body;
-  const cover_image_url = req.file ? '/uploads/blogs/${req.file.filename}' : undefined;
+  const cover_image_url = req.file ? `/uploads/blogs/${req.file.filename}` : undefined;
 
   try {
     const check = await pool.query('SELECT author_id, status FROM blogs WHERE id=$1', [req.params.id]);
@@ -173,9 +174,10 @@ const updateBlog = async (req, res) => {
       await pool.query(`UPDATE blogs SET ${fields.join(',')} WHERE id=$${i}`, values);
     }
 
-    if (Array.isArray(tags)) {
+    const parsedTags = parseTags(tags);
+    if (parsedTags) {
       await pool.query('DELETE FROM blog_tags WHERE blog_id=$1', [req.params.id]);
-      for (const tagName of tags) {
+      for (const tagName of parsedTags) {
         const trimmed = tagName.trim().toLowerCase();
         if (!trimmed) continue;
         let tagRow = await pool.query('SELECT id FROM tags WHERE name=$1', [trimmed]);
@@ -188,6 +190,18 @@ const updateBlog = async (req, res) => {
     res.json({ message: 'Blog updated.' });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
+
+function parseTags(tags) {
+  if (tags === undefined || tags === null || tags === '') return tags === undefined ? undefined : [];
+  if (Array.isArray(tags)) return tags;
+  if (typeof tags !== 'string') return [];
+  try {
+    const parsed = JSON.parse(tags);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_error) {
+    return tags.split(',').map(tag => tag.trim()).filter(Boolean);
+  }
+}
 
 const deleteBlog = async (req, res) => {
   try {
