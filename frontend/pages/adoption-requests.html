@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adoption Requests — Pet Rehoming</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+
+    <div class="page-header">
+      <h1>Adoption Requests</h1>
+      <p style="color:#6b7a8d;margin-top:4px">Manage requests you sent and requests on your pets</p>
+    </div>
+
+    <div id="tabs-wrap">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="tab-mine">Sent by Me</button>
+        <button class="tab-btn" data-tab="tab-received">Received</button>
+      </div>
+
+      <!-- SENT -->
+      <div class="tab-panel active" id="tab-mine">
+        <div id="mine-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      </div>
+
+      <!-- RECEIVED -->
+      <div class="tab-panel" id="tab-received">
+        <div id="received-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="payment-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Complete Payment</h3>
+      <button class="modal-close" onclick="closeModal('payment-modal')">✕</button>
+    </div>
+    <div id="payment-alert"></div>
+    <p style="color:#6b7a8d;font-size:0.88rem;margin-bottom:16px">Your adoption request has been approved. Complete the payment to finalise adoption.</p>
+    <div id="payment-info" style="background:#f3f3ef;border-radius:8px;padding:14px;margin-bottom:16px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('payment-modal')">Cancel</button>
+      <button class="btn btn-primary" id="pay-btn" onclick="initiatePayment()">Proceed to Pay</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOLLOW-UP MODAL -->
+<div class="modal-overlay" id="followup-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Submit Follow-up</h3>
+      <button class="modal-close" onclick="closeModal('followup-modal')">✕</button>
+    </div>
+    <div id="followup-alert"></div>
+    <div class="form-group">
+      <label>How is the pet doing?</label>
+      <select id="fu-health" class="form-control">
+        <option value="good">Good — healthy and happy</option>
+        <option value="fair">Fair — some concerns</option>
+        <option value="poor">Poor — needs attention</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Current Weight (kg)</label>
+        <input type="number" id="fu-weight" class="form-control" placeholder="Optional" step="0.1" min="0">
+      </div>
+      <div class="form-group">
+        <label>Photo</label>
+        <input type="file" id="fu-image" class="form-control" accept="image/*">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="fu-notes" class="form-control" rows="3" placeholder="Share how the pet is settling in..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('followup-modal')">Cancel</button>
+      <button class="btn btn-primary" id="fu-submit-btn" onclick="submitFollowup()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- AGREEMENT MODAL -->
+<div class="modal-overlay" id="agreement-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Adoption Agreement</h3>
+      <button class="modal-close" onclick="closeModal('agreement-modal')">✕</button>
+    </div>
+    <div id="agreement-content"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('agreement-modal')">Close</button>
+      <button class="btn btn-primary" id="agree-btn" onclick="signAgreement()">I Agree</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/app.js"></script>
+<script>
+var activePaymentRequest = null;
+var activeFollowupId = null;
+var activeAgreementId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (!requireAuth()) return;
+  initTabs('tabs-wrap');
+
+  // check URL for tab param
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('tab') === 'received') {
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelector('[data-tab="tab-received"]').classList.add('active');
+    document.getElementById('tab-received').classList.add('active');
+  }
+
+  loadMine();
+  loadReceived();
+});
+
+async function loadMine() {
+  var el = document.getElementById('mine-list');
+  try {
+    var res = await Adoption.mine();
+    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger">Failed to load.</div>'; return; }
+    var reqs = res.data.requests || [];
+    if (!reqs.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h3>No requests sent</h3><p>Browse pets and submit an adoption request.</p><a href="/pages/pets.html" class="btn btn-primary">Browse Pets</a></div>';
+      return;
+    }
+    el.innerHTML = reqs.map(function(r) {
+      var actions = '';
+      if (r.status === 'pending') {
+        actions += '<button onclick="cancelRequest(' + r.id + ')" class="btn btn-danger btn-sm">Cancel</button>';
+      }
+      if (r.status === 'approved' && r.fee_type === 'paid') {
+        actions += '<button onclick="openPaymentModal(' + r.id + ',\'' + r.pet_name + '\',' + r.adoption_fee + ')" class="btn btn-amber btn-sm">Pay Now</button>';
+      }
+      if (r.status === 'approved') {
+        actions += '<button onclick="openFollowupModal(' + r.id + ')" class="btn btn-outline btn-sm">Follow-up</button>';
+        actions += '<button onclick="openAgreementModal(' + r.id + ')" class="btn btn-outline btn-sm">Agreement</button>';
+      }
+
+      return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:12px">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
+          '<div>' +
+            '<div style="font-weight:bold;margin-bottom:2px">' + (r.pet_name||'Pet') + '</div>' +
+            '<div style="font-size:0.8rem;color:#6b7a8d">' + (r.pet_type||'') + ' · ' + fmtDate(r.created_at) + '</div>' +
+          '</div>' +
+          pill(r.status) +
+        '</div>' +
+        (r.message ? '<div style="font-size:0.85rem;color:#6b7a8d;background:#f9f9f7;padding:8px 12px;border-radius:6px;margin-bottom:10px">"' + r.message + '"</div>' : '') +
+        (r.fee_type === 'paid' && r.status === 'approved' ? '<div class="alert alert-warning" style="margin-bottom:10px;font-size:0.84rem">Payment required: ' + fmtMoney(r.adoption_fee) + '</div>' : '') +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">' + actions + '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e) { el.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>'; }
+}
+
+async function loadReceived() {
+  var el = document.getElementById('received-list');
+  try {
+    var res = await Adoption.received();
+    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger">Failed to load.</div>'; return; }
+    var reqs = res.data.requests || [];
+    if (!reqs.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📬</div><h3>No requests received</h3><p>Requests from adopters will appear here.</p></div>';
+      return;
+    }
+    el.innerHTML = reqs.map(function(r) {
+      var actions = '';
+      if (r.status === 'pending') {
+        actions += '<button onclick="reviewRequest(' + r.id + ',\'approved\')" class="btn btn-primary btn-sm">Approve</button>';
+        actions += '<button onclick="reviewRequest(' + r.id + ',\'rejected\')" class="btn btn-danger btn-sm">Reject</button>';
+      }
+      if (r.status === 'approved') {
+        actions += '<button onclick="openAgreementModal(' + r.id + ')" class="btn btn-outline btn-sm">Agreement</button>';
+        actions += '<button onclick="openFollowupModal(' + r.id + ')" class="btn btn-outline btn-sm">Follow-up</button>';
+      }
+
+      return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:12px">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
+          '<div>' +
+            '<div style="font-weight:bold;margin-bottom:2px">' + (r.pet_name||'Pet') + '</div>' +
+            '<div style="font-size:0.8rem;color:#6b7a8d">From: ' + (r.requester_name||'') + (r.requester_email ? ' · ' + r.requester_email : '') + '</div>' +
+            (r.requester_phone ? '<div style="font-size:0.8rem;color:#6b7a8d">📞 ' + r.requester_phone + '</div>' : '') +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            pill(r.status) +
+            '<span style="font-size:0.76rem;color:#9baab8">' + timeAgo(r.created_at) + '</span>' +
+          '</div>' +
+        '</div>' +
+        (r.message ? '<div style="font-size:0.85rem;color:#6b7a8d;background:#f9f9f7;padding:8px 12px;border-radius:6px;margin-bottom:10px">"' + r.message + '"</div>' : '') +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">' + actions + '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e) { el.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>'; }
+}
+
+async function cancelRequest(id) {
+  if (!confirm('Cancel this adoption request?')) return;
+  try {
+    var res = await Adoption.cancel(id);
+    if (res && res.ok) { showToast('Request cancelled.', 'success'); loadMine(); }
+    else showToast(res.data.message || 'Failed.', 'error');
+  } catch(e) { showToast('Something went wrong.', 'error'); }
+}
+
+async function reviewRequest(id, status) {
+  var label = status === 'approved' ? 'approve' : 'reject';
+  if (!confirm('Are you sure you want to ' + label + ' this request?')) return;
+  try {
+    var res = await Adoption.review(id, { status: status });
+    if (res && res.ok) {
+      showToast('Request ' + status + '.', 'success');
+      if (res.data.requiresPayment) showToast('Adopter will need to complete payment.', 'info');
+      loadReceived();
+    } else showToast(res.data.message || 'Failed.', 'error');
+  } catch(e) { showToast('Something went wrong.', 'error'); }
+}
+
+function openPaymentModal(requestId, petName, fee) {
+  activePaymentRequest = { id: requestId, petName: petName, fee: fee };
+  document.getElementById('payment-info').innerHTML =
+    '<div style="margin-bottom:6px"><strong>Pet:</strong> ' + petName + '</div>' +
+    '<div><strong>Amount:</strong> ' + fmtMoney(fee) + '</div>';
+  document.getElementById('payment-alert').innerHTML = '';
+  openModal('payment-modal');
+}
+
+async function initiatePayment() {
+  if (!activePaymentRequest) return;
+  var btn = document.getElementById('pay-btn');
+  var alertEl = document.getElementById('payment-alert');
+  btn.disabled = true; btn.textContent = 'Processing...';
+  try {
+    var res = await Payments.initiate({
+      amount: activePaymentRequest.fee,
+      currency: 'MMK',
+      description: 'Adoption fee for ' + activePaymentRequest.petName,
+      adoption_request_id: activePaymentRequest.id,
+    });
+    if (res && res.ok) {
+      if (res.data.paymentUrl) {
+        window.location.href = res.data.paymentUrl;
+      } else {
+        showToast('Payment initiated. Check your payment history.', 'info');
+        closeModal('payment-modal');
+      }
+    } else {
+      alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Payment failed.') + '</div>';
+    }
+  } catch(e) { alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>'; }
+  btn.disabled = false; btn.textContent = 'Proceed to Pay';
+}
+
+function openFollowupModal(requestId) {
+  activeFollowupId = requestId;
+  document.getElementById('fu-health').value = 'good';
+  document.getElementById('fu-weight').value = '';
+  document.getElementById('fu-notes').value  = '';
+  document.getElementById('fu-image').value  = '';
+  document.getElementById('followup-alert').innerHTML = '';
+  openModal('followup-modal');
+}
+
+async function submitFollowup() {
+  if (!activeFollowupId) return;
+  var btn = document.getElementById('fu-submit-btn');
+  var alertEl = document.getElementById('followup-alert');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+
+  var fd = new FormData();
+  fd.append('health_status', document.getElementById('fu-health').value);
+  var w = document.getElementById('fu-weight').value;
+  var n = document.getElementById('fu-notes').value.trim();
+  var img = document.getElementById('fu-image').files[0];
+  if (w) fd.append('weight_kg', w);
+  if (n) fd.append('notes', n);
+  if (img) fd.append('image', img);
+
+  try {
+    var res = await Monitoring.submitFollowup(activeFollowupId, fd);
+    if (res && res.ok) {
+      closeModal('followup-modal');
+      showToast('Follow-up submitted. Thank you!', 'success');
+    } else {
+      alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed.') + '</div>';
+    }
+  } catch(e) { alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>'; }
+  btn.disabled = false; btn.textContent = 'Submit';
+}
+
+async function openAgreementModal(requestId) {
+  activeAgreementId = requestId;
+  var content = document.getElementById('agreement-content');
+  var agreeBtn = document.getElementById('agree-btn');
+  content.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  agreeBtn.style.display = 'inline-block';
+  openModal('agreement-modal');
+
+  try {
+    var res = await Adoption.getAgreement(requestId);
+    if (!res || !res.ok) {
+      content.innerHTML = '<div class="alert alert-info">Agreement not created yet. It will appear after approval.</div>';
+      agreeBtn.style.display = 'none';
+      return;
+    }
+    var a = res.data.agreement;
+    var user = getUser();
+
+    content.innerHTML =
+      '<div style="background:#f9f9f7;padding:14px;border-radius:8px;margin-bottom:16px;font-size:0.88rem;color:#6b7a8d;line-height:1.7">' +
+        (a.terms || 'By signing this agreement, both parties agree to the adoption terms. The adopter agrees to provide a safe and loving home. The owner agrees to accurately represent the pet.') +
+      '</div>' +
+      '<div style="display:flex;gap:20px;flex-wrap:wrap">' +
+        '<div style="display:flex;align-items:center;gap:6px;font-size:0.86rem">' +
+          (a.owner_agreed ? '✅' : '⬜') + ' <strong>Owner signed</strong>' +
+          (a.owner_agreed_at ? ' <span style="color:#9baab8">· ' + fmtDate(a.owner_agreed_at) + '</span>' : '') +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;font-size:0.86rem">' +
+          (a.adopter_agreed ? '✅' : '⬜') + ' <strong>Adopter signed</strong>' +
+          (a.adopter_agreed_at ? ' <span style="color:#9baab8">· ' + fmtDate(a.adopter_agreed_at) + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+      (a.owner_agreed && a.adopter_agreed ? '<div class="alert alert-success" style="margin-top:14px">✅ Both parties have signed. Adoption is finalised.</div>' : '');
+
+    // hide sign button if already signed or both signed
+    if (a.owner_agreed && a.adopter_agreed) agreeBtn.style.display = 'none';
+  } catch(e) {
+    content.innerHTML = '<div class="alert alert-danger">Failed to load agreement.</div>';
+    agreeBtn.style.display = 'none';
+  }
+}
+
+async function signAgreement() {
+  if (!activeAgreementId) return;
+  var btn = document.getElementById('agree-btn');
+  btn.disabled = true; btn.textContent = 'Signing...';
+  try {
+    var res = await Adoption.agree(activeAgreementId);
+    if (res && res.ok) {
+      showToast('You signed the agreement.', 'success');
+      openAgreementModal(activeAgreementId); // refresh
+    } else showToast(res.data.message || 'Failed.', 'error');
+  } catch(e) { showToast('Something went wrong.', 'error'); }
+  btn.disabled = false; btn.textContent = 'I Agree';
+}
+</script>
+</body>
+</html>
