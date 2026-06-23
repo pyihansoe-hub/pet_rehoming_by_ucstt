@@ -4,7 +4,12 @@ const { listPets, getPet, createPet, updatePet, deletePet, addPetImage, deletePe
 const { requestAdoption } = require('../controllers/adoptionController');
 const { petImageUploader } = require('../services/upload');
 const { validate, rules } = require('../middleware/validate');
+const { getTrendingPets, getCities } = require('../controllers/trendingController');
+const { getPetStatusHistory }        = require('../services/petStatusHistory');
 
+router.get('/trending',         getTrendingPets);          // public
+router.get('/cities',           getCities);                // public
+router.get('/:id/status-history', protect, getPetStatusHistory);
 router.get('/my',                         protect,      myPets);
 router.get('/',                           optionalAuth, listPets);
 router.get('/:id',                        optionalAuth, getPet);

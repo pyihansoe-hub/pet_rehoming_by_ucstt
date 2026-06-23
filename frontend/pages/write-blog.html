@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Write Blog — Pet Rehoming</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .editor-toolbar { display:flex; gap:6px; flex-wrap:wrap; padding:10px 12px; background:#f9f9f7; border:1.5px solid #e5e7eb; border-bottom:none; border-radius:8px 8px 0 0; }
+    .editor-toolbar button { padding:4px 10px; background:#fff; border:1.5px solid #e5e7eb; border-radius:5px; font-size:0.8rem; cursor:pointer; color:#1c2b3a; }
+    .editor-toolbar button:hover { background:#e6f5f3; border-color:#2a9d8f; color:#2a9d8f; }
+    #content { border-radius:0 0 8px 8px; min-height:340px; font-size:0.93rem; line-height:1.8; }
+    .tag-input-wrap { display:flex; flex-wrap:wrap; gap:6px; padding:8px 10px; border:1.5px solid #e5e7eb; border-radius:8px; cursor:text; min-height:42px; align-items:center; }
+    .tag-input-wrap:focus-within { border-color:#2a9d8f; }
+    .tag-chip { display:inline-flex; align-items:center; gap:4px; background:#e6f5f3; color:#21867a; border-radius:999px; padding:2px 10px; font-size:0.8rem; font-weight:bold; }
+    .tag-chip button { background:none; border:none; color:#21867a; cursor:pointer; font-size:0.9rem; line-height:1; padding:0; }
+    #tag-input { border:none; outline:none; font-size:0.86rem; font-family:Arial,sans-serif; min-width:100px; flex:1; }
+    .preview-cover { width:100%; max-height:280px; object-fit:cover; border-radius:8px; margin-top:10px; }
+    .preview-content p  { margin-bottom:14px; color:#374151; }
+    .preview-content h2 { font-size:1.2rem; margin:20px 0 8px; }
+    .preview-content h3 { font-size:1.05rem; margin:16px 0 6px; }
+    .preview-content ul { margin:0 0 14px 22px; }
+    .preview-content li { margin-bottom:4px; color:#374151; }
+    .preview-content blockquote { border-left:3px solid #2a9d8f; padding:8px 14px; background:#e6f5f3; border-radius:0 6px 6px 0; margin:14px 0; color:#21867a; font-style:italic; }
+    .preview-content hr { border:none; border-top:1px solid #e5e7eb; margin:18px 0; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+    <div style="max-width:800px;margin:0 auto">
+
+      <div class="page-header">
+        <a href="/pages/blogs.html" style="font-size:0.86rem;color:#6b7a8d">← Back to Blogs</a>
+        <h1 style="margin-top:8px" id="page-title">Write a Blog</h1>
+      </div>
+
+      <div id="alert-area"></div>
+
+      <!-- TITLE + META -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="form-group">
+          <label for="title">Title <span style="color:#e76f51">*</span></label>
+          <input type="text" id="title" class="form-control" placeholder="Write a helpful, descriptive title...">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="category">Category</label>
+            <select id="category" class="form-control">
+              <option value="">No category</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <div style="display:flex;gap:20px;padding-top:8px">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem">
+                <input type="radio" name="status" value="draft" checked> Save as Draft
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem">
+                <input type="radio" name="status" value="published"> Publish Now
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="summary">Summary</label>
+          <textarea id="summary" class="form-control" rows="2" placeholder="Short description shown on blog cards (optional)..."></textarea>
+        </div>
+      </div>
+
+      <!-- CONTENT EDITOR -->
+      <div class="card" style="margin-bottom:20px">
+        <label style="font-size:0.86rem;font-weight:bold;margin-bottom:8px;display:block">
+          Content <span style="color:#e76f51">*</span>
+        </label>
+        <div class="editor-toolbar">
+          <button onclick="fmt('**','**')" title="Bold"><b>B</b></button>
+          <button onclick="fmt('*','*')" title="Italic"><i>I</i></button>
+          <button onclick="fmtLine('## ')" title="Heading 2">H2</button>
+          <button onclick="fmtLine('### ')" title="Heading 3">H3</button>
+          <button onclick="fmtLine('- ')" title="Bullet">• List</button>
+          <button onclick="fmtLine('> ')" title="Quote">❝ Quote</button>
+          <button onclick="insertDivider()" title="Divider">— Line</button>
+          <span style="flex:1"></span>
+          <button onclick="togglePreview()" id="preview-btn">👁 Preview</button>
+        </div>
+        <textarea id="content" class="form-control" placeholder="Write your blog here...&#10;&#10;**bold**  *italic*  ## Heading  - bullet  > quote"></textarea>
+
+        <div id="preview-panel" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid #e5e7eb">
+          <div style="font-size:0.76rem;font-weight:bold;color:#9baab8;text-transform:uppercase;margin-bottom:10px">Preview</div>
+          <div id="preview-content" class="preview-content"></div>
+        </div>
+      </div>
+
+      <!-- COVER + TAGS -->
+      <div class="card" style="margin-bottom:24px">
+        <div class="form-group">
+          <label>Cover Image</label>
+          <div class="file-upload" onclick="document.getElementById('cover-input').click()">
+            <input type="file" id="cover-input" accept="image/*" onchange="previewCover(this)">
+            <div style="font-size:1.8rem;margin-bottom:6px">🖼️</div>
+            <div style="font-size:0.86rem;color:#6b7a8d">
+              <span style="color:#2a9d8f;font-weight:bold">Click to upload</span> a cover image
+            </div>
+            <div style="font-size:0.76rem;color:#9baab8;margin-top:3px">JPG, PNG, WEBP · max 5MB</div>
+          </div>
+          <div id="cover-preview-area"></div>
+          <div id="existing-cover-area"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Tags</label>
+          <div class="tag-input-wrap" id="tag-wrap" onclick="document.getElementById('tag-input').focus()">
+            <input type="text" id="tag-input" placeholder="Type a tag, press Enter...">
+          </div>
+          <span class="form-hint">Press Enter or comma to add · max 10 tags</span>
+        </div>
+      </div>
+
+      <!-- SAVE ACTIONS -->
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+        <a href="/pages/blogs.html" class="btn btn-secondary">Cancel</a>
+        <button class="btn btn-outline" id="draft-btn" onclick="saveBlog('draft')">Save Draft</button>
+        <button class="btn btn-primary" id="publish-btn" onclick="saveBlog('published')">Publish</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/app.js"></script>
+<script>
+var editId = null;
+var tags   = [];
+var previewVisible = false;
+
+document.addEventListener('DOMContentLoaded', async function() {
+  if (!requireAuth()) return;
+
+  // load categories
+  try {
+    var res = await Blogs.categories();
+    if (res && res.ok) {
+      var sel = document.getElementById('category');
+      res.data.categories.forEach(function(c) {
+        var o = document.createElement('option');
+        o.value = c.id; o.textContent = c.name;
+        sel.appendChild(o);
+      });
+    }
+  } catch(e) {}
+
+  // tag input events
+  var tagInput = document.getElementById('tag-input');
+  tagInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag(this.value.trim());
+      this.value = '';
+    }
+    if (e.key === 'Backspace' && !this.value && tags.length) {
+      removeTag(tags[tags.length - 1]);
+    }
+  });
+
+  // check if editing
+  var params = new URLSearchParams(window.location.search);
+  editId = params.get('id');
+  if (editId) {
+    document.getElementById('page-title').textContent = 'Edit Blog';
+    document.getElementById('publish-btn').textContent = 'Update';
+    loadForEdit(editId);
+  }
+});
+
+// ── LOAD FOR EDIT ─────────────────────────────────────────────
+async function loadForEdit(id) {
+  // search published then draft to find blog by id
+  var blog = null;
+  try {
+    var statuses = ['published', 'draft', 'archived'];
+    for (var si = 0; si < statuses.length && !blog; si++) {
+      var r = await Blogs.list({ status: statuses[si], limit: 100, page: 1 });
+      if (r && r.ok) {
+        blog = (r.data.blogs || []).find(function(b){ return String(b.id) === String(id); });
+      }
+    }
+  } catch(e) {}
+
+  if (!blog) { showToast('Blog not found.', 'error'); return; }
+
+  document.getElementById('title').value   = blog.title   || '';
+  document.getElementById('summary').value = blog.summary || '';
+  document.getElementById('content').value = blog.content || '';
+  if (blog.category_id) document.getElementById('category').value = blog.category_id;
+
+  document.querySelectorAll('input[name="status"]').forEach(function(r) {
+    r.checked = r.value === (blog.status || 'draft');
+  });
+
+  // tags
+  if (blog.tags && blog.tags.length) {
+    blog.tags.forEach(function(t){ addTag(t.name || t); });
+  }
+
+  // existing cover
+  if (blog.cover_image_url) {
+    document.getElementById('existing-cover-area').innerHTML =
+      '<div style="margin-top:8px">' +
+        '<img src="' + imgUrl(blog.cover_image_url) + '" class="preview-cover">' +
+        '<p style="font-size:0.78rem;color:#9baab8;margin-top:4px">Upload a new image to replace this cover.</p>' +
+      '</div>';
+  }
+}
+
+// ── TAGS ──────────────────────────────────────────────────────
+function addTag(val) {
+  val = val.replace(/,/g,'').trim().toLowerCase();
+  if (!val || tags.indexOf(val) !== -1 || tags.length >= 10) return;
+  tags.push(val);
+  renderTags();
+}
+
+function removeTag(val) {
+  tags = tags.filter(function(t){ return t !== val; });
+  renderTags();
+}
+
+function renderTags() {
+  var wrap  = document.getElementById('tag-wrap');
+  var input = document.getElementById('tag-input');
+  wrap.querySelectorAll('.tag-chip').forEach(function(c){ c.remove(); });
+  tags.forEach(function(t) {
+    var chip = document.createElement('span');
+    chip.className = 'tag-chip';
+    chip.innerHTML = t + '<button type="button" onclick="removeTag(\'' + t + '\')">✕</button>';
+    wrap.insertBefore(chip, input);
+  });
+}
+
+// ── EDITOR HELPERS ────────────────────────────────────────────
+function fmt(before, after) {
+  var ta    = document.getElementById('content');
+  var start = ta.selectionStart;
+  var end   = ta.selectionEnd;
+  var sel   = ta.value.substring(start, end);
+  ta.value  = ta.value.substring(0,start) + before + sel + after + ta.value.substring(end);
+  ta.focus();
+  ta.setSelectionRange(start + before.length, end + before.length);
+}
+
+function fmtLine(prefix) {
+  var ta        = document.getElementById('content');
+  var start     = ta.selectionStart;
+  var lineStart = ta.value.lastIndexOf('\n', start - 1) + 1;
+  ta.value      = ta.value.substring(0, lineStart) + prefix + ta.value.substring(lineStart);
+  ta.focus();
+  var pos = start + prefix.length;
+  ta.setSelectionRange(pos, pos);
+}
+
+function insertDivider() {
+  var ta  = document.getElementById('content');
+  var pos = ta.selectionStart;
+  var ins = '\n\n---\n\n';
+  ta.value = ta.value.substring(0, pos) + ins + ta.value.substring(pos);
+  ta.focus();
+  ta.setSelectionRange(pos + ins.length, pos + ins.length);
+}
+
+// ── PREVIEW ───────────────────────────────────────────────────
+function togglePreview() {
+  previewVisible = !previewVisible;
+  document.getElementById('preview-panel').style.display = previewVisible ? 'block' : 'none';
+  document.getElementById('preview-btn').textContent = previewVisible ? '✏️ Edit' : '👁 Preview';
+  if (previewVisible) renderPreview();
+}
+
+function renderPreview() {
+  var raw  = document.getElementById('content').value;
+  var safe = raw
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  var html = safe
+    .replace(/^### (.+)$/gm,  '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,   '<h2>$1</h2>')
+    .replace(/^> (.+)$/gm,    '<blockquote>$1</blockquote>')
+    .replace(/^- (.+)$/gm,    '<li>$1</li>')
+    .replace(/((<li>.*\n?)+)/g,'<ul>$1</ul>')
+    .replace(/^---$/gm,       '<hr>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,    '<em>$1</em>');
+
+  var paragraphs = html.split('\n\n').map(function(p) {
+    p = p.trim();
+    if (!p) return '';
+    if (/^<(h[23]|ul|blockquote|hr)/.test(p)) return p;
+    return '<p>' + p.replace(/\n/g,'<br>') + '</p>';
+  }).join('');
+
+  document.getElementById('preview-content').innerHTML = paragraphs;
+}
+
+// ── COVER PREVIEW ─────────────────────────────────────────────
+function previewCover(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('cover-preview-area').innerHTML =
+      '<img src="' + e.target.result + '" class="preview-cover">' +
+      '<button type="button" onclick="removeCoverPreview()" class="btn btn-secondary btn-sm" style="margin-top:6px">Remove</button>';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeCoverPreview() {
+  document.getElementById('cover-input').value = '';
+  document.getElementById('cover-preview-area').innerHTML = '';
+}
+
+// ── SAVE ──────────────────────────────────────────────────────
+async function saveBlog(forceStatus) {
+  var alertArea  = document.getElementById('alert-area');
+  var draftBtn   = document.getElementById('draft-btn');
+  var publishBtn = document.getElementById('publish-btn');
+  alertArea.innerHTML = '';
+
+  var title   = document.getElementById('title').value.trim();
+  var content = document.getElementById('content').value.trim();
+  var status  = forceStatus || document.querySelector('input[name="status"]:checked').value;
+
+  if (!title)   { alertArea.innerHTML = '<div class="alert alert-danger">Title is required.</div>';   return; }
+  if (!content) { alertArea.innerHTML = '<div class="alert alert-danger">Content is required.</div>'; return; }
+
+  draftBtn.disabled = publishBtn.disabled = true;
+  publishBtn.textContent = 'Saving...';
+
+  var fd = new FormData();
+  fd.append('title',   title);
+  fd.append('content', content);
+  fd.append('status',  status);
+
+  var summary  = document.getElementById('summary').value.trim();
+  var catId    = document.getElementById('category').value;
+  var cover    = document.getElementById('cover-input').files[0];
+
+  if (summary) fd.append('summary',     summary);
+  if (catId)   fd.append('category_id', catId);
+  if (cover)   fd.append('cover',       cover);
+  if (tags.length) fd.append('tags', JSON.stringify(tags));
+
+  try {
+    var res = editId
+      ? await Blogs.update(editId, fd)
+      : await Blogs.create(fd);
+
+    if (res && res.ok) {
+      var savedBlog = res.data.blog;
+      var bid  = editId || savedBlog.id;
+      var slug = savedBlog ? savedBlog.slug : null;
+
+      showToast(status === 'published' ? 'Blog published!' : 'Draft saved.', 'success');
+
+      if (status === 'published' && slug) {
+        setTimeout(function(){ window.location.href = '/pages/blog-detail.html?slug=' + slug; }, 700);
+        return;
+      }
+
+      // stay on page, update URL if new
+      if (!editId) {
+        editId = bid;
+        window.history.replaceState({}, '', '/pages/write-blog.html?id=' + bid);
+        document.getElementById('page-title').textContent = 'Edit Blog';
+        document.getElementById('publish-btn').textContent = 'Update';
+      }
+
+      alertArea.innerHTML = '<div class="alert alert-success">Saved as ' + status + '.' +
+        (slug ? ' <a href="/pages/blog-detail.html?slug=' + slug + '">View →</a>' : '') + '</div>';
+    } else {
+      alertArea.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed to save.') + '</div>';
+    }
+  } catch(e) {
+    alertArea.innerHTML = '<div class="alert alert-danger">Something went wrong. Please try again.</div>';
+  }
+
+  draftBtn.disabled = publishBtn.disabled = false;
+  publishBtn.textContent = editId ? 'Update' : 'Publish';
+}
+</script>
+</body>
+</html>

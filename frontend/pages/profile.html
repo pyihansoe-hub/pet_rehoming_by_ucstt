@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile — Pet Rehoming</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .profile-avatar-wrap { text-align:center; margin-bottom:20px; }
+    .profile-avatar { width:90px; height:90px; border-radius:50%; object-fit:cover; border:3px solid #e6f5f3; }
+    .profile-avatar-placeholder { width:90px; height:90px; border-radius:50%; background:#2a9d8f; color:#fff; font-size:2rem; font-weight:bold; display:flex; align-items:center; justify-content:center; border:3px solid #e6f5f3; margin:0 auto; }
+    .profile-name { font-size:1.2rem; font-weight:bold; margin-top:10px; }
+    .profile-email { font-size:0.86rem; color:#6b7a8d; margin-top:2px; }
+    .stat-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:24px; }
+    .stat-box { background:#f9f9f7; border-radius:8px; padding:14px; text-align:center; }
+    .stat-box-value { font-size:1.4rem; font-weight:bold; color:#1c2b3a; }
+    .stat-box-label { font-size:0.76rem; color:#9baab8; margin-top:2px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+    <div style="max-width:680px;margin:0 auto">
+
+      <div class="page-header">
+        <h1>My Profile</h1>
+      </div>
+
+      <!-- STATS -->
+      <div class="stat-row" id="stat-row">
+        <div class="stat-box"><div class="stat-box-value" id="stat-pets">—</div><div class="stat-box-label">Pets Listed</div></div>
+        <div class="stat-box"><div class="stat-box-value" id="stat-requests">—</div><div class="stat-box-label">Requests Sent</div></div>
+        <div class="stat-box"><div class="stat-box-value" id="stat-favorites">—</div><div class="stat-box-label">Saved Pets</div></div>
+      </div>
+
+      <!-- QUICK LINKS -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px">
+        <a href="/pages/my-pets.html" class="btn btn-outline btn-sm">🐾 My Pets</a>
+        <a href="/pages/adoption-requests.html" class="btn btn-outline btn-sm">📋 Requests</a>
+        <a href="/pages/adoption-requests.html?tab=received" class="btn btn-outline btn-sm">📬 Received</a>
+        <a href="/pages/notifications.html" class="btn btn-outline btn-sm">🔔 Notifications</a>
+        <a href="/pages/messages.html" class="btn btn-outline btn-sm">💬 Messages</a>
+      </div>
+
+      <!-- TABS -->
+      <div id="tabs-wrap">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="tab-info">Profile Info</button>
+          <button class="tab-btn" data-tab="tab-password">Change Password</button>
+          <button class="tab-btn" data-tab="tab-favorites">Saved Pets</button>
+        </div>
+
+        <!-- PROFILE INFO TAB -->
+        <div class="tab-panel active" id="tab-info">
+          <div class="card">
+            <div id="profile-alert"></div>
+
+            <!-- avatar -->
+            <div class="profile-avatar-wrap">
+              <div id="avatar-display"></div>
+              <div class="profile-name" id="display-name"></div>
+              <div class="profile-email" id="display-email"></div>
+              <label style="margin-top:10px;display:inline-block">
+                <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="previewAvatar(this)">
+                <span class="btn btn-outline btn-sm" style="cursor:pointer">Change Photo</span>
+              </label>
+              <div id="avatar-preview-area"></div>
+            </div>
+
+            <hr class="divider">
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" class="form-control" placeholder="Your name">
+              </div>
+              <div class="form-group">
+                <label for="phone">Phone</label>
+                <input type="text" id="phone" class="form-control" placeholder="+95 9...">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="address">Address</label>
+              <input type="text" id="address" class="form-control" placeholder="Township, City">
+            </div>
+
+            <div style="display:flex;gap:10px;justify-content:flex-end">
+              <button class="btn btn-primary" id="save-profile-btn" onclick="saveProfile()">Save Changes</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHANGE PASSWORD TAB -->
+        <div class="tab-panel" id="tab-password">
+          <div class="card">
+            <div id="password-alert"></div>
+            <div class="form-group">
+              <label for="current-pass">Current Password</label>
+              <input type="password" id="current-pass" class="form-control" placeholder="Enter current password">
+            </div>
+            <div class="form-group">
+              <label for="new-pass">New Password</label>
+              <input type="password" id="new-pass" class="form-control" placeholder="Min 6 characters">
+            </div>
+            <div class="form-group">
+              <label for="confirm-pass">Confirm New Password</label>
+              <input type="password" id="confirm-pass" class="form-control" placeholder="Repeat new password">
+            </div>
+            <div style="display:flex;justify-content:flex-end">
+              <button class="btn btn-primary" id="save-pass-btn" onclick="changePassword()">Update Password</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SAVED PETS TAB -->
+        <div class="tab-panel" id="tab-favorites">
+          <div id="favorites-list">
+            <div class="loading-wrap"><div class="spinner"></div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/app.js"></script>
+<script>
+var currentAvatarUrl = null;
+var newAvatarFile    = null;
+
+document.addEventListener('DOMContentLoaded', async function() {
+  if (!requireAuth()) return;
+  initTabs('tabs-wrap');
+
+  // load profile
+  try {
+    var res = await User.getProfile();
+    if (res && res.ok) {
+      var u = res.data.user;
+      currentAvatarUrl = u.avatar_url;
+
+      // avatar display
+      renderAvatar(u.avatar_url, u.name);
+      document.getElementById('display-name').textContent  = u.name  || '';
+      document.getElementById('display-email').textContent = u.email || '';
+
+      // form fields
+      document.getElementById('name').value    = u.name    || '';
+      document.getElementById('phone').value   = u.phone   || '';
+      document.getElementById('address').value = u.address || '';
+
+      // update localStorage
+      saveAuth(getToken(), u);
+    }
+  } catch(e) { showToast('Failed to load profile.', 'error'); }
+
+  // load stats
+  loadStats();
+
+  // load favorites when that tab is clicked
+  document.querySelector('[data-tab="tab-favorites"]').addEventListener('click', function() {
+    loadFavorites();
+  });
+});
+
+function renderAvatar(url, name) {
+  var el = document.getElementById('avatar-display');
+  if (url) {
+    el.innerHTML = '<img src="' + imgUrl(url) + '" class="profile-avatar" alt="avatar" onerror="this.style.display=\'none\'">';
+  } else {
+    el.innerHTML = '<div class="profile-avatar-placeholder">' + initials(name || 'U') + '</div>';
+  }
+}
+
+async function loadStats() {
+  try {
+    var myPets = await Pets.my();
+    if (myPets && myPets.ok) document.getElementById('stat-pets').textContent = (myPets.data.pets || []).length;
+  } catch(e) {}
+  try {
+    var mine = await Adoption.mine();
+    if (mine && mine.ok) document.getElementById('stat-requests').textContent = (mine.data.requests || []).length;
+  } catch(e) {}
+  try {
+    var favs = await Favorites.list();
+    if (favs && favs.ok) document.getElementById('stat-favorites').textContent = (favs.data.favorites || []).length;
+  } catch(e) {}
+}
+
+function previewAvatar(input) {
+  var file = input.files[0];
+  if (!file) return;
+  newAvatarFile = file;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('avatar-preview-area').innerHTML =
+      '<div style="margin-top:10px">' +
+        '<img src="' + e.target.result + '" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #2a9d8f">' +
+        '<div style="font-size:0.78rem;color:#2a9d8f;margin-top:4px">New photo selected — save to apply</div>' +
+      '</div>';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveProfile() {
+  var alertEl = document.getElementById('profile-alert');
+  var btn     = document.getElementById('save-profile-btn');
+  alertEl.innerHTML = '';
+
+  var name    = document.getElementById('name').value.trim();
+  var phone   = document.getElementById('phone').value.trim();
+  var address = document.getElementById('address').value.trim();
+
+  if (!name) { alertEl.innerHTML = '<div class="alert alert-danger">Name is required.</div>'; return; }
+
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  var fd = new FormData();
+  fd.append('name', name);
+  if (phone)   fd.append('phone',   phone);
+  if (address) fd.append('address', address);
+  if (newAvatarFile) fd.append('avatar', newAvatarFile);
+
+  try {
+    var res = await User.updateProfile(fd);
+    if (res && res.ok) {
+      var u = res.data.user;
+      saveAuth(getToken(), u);
+      currentAvatarUrl = u.avatar_url;
+      newAvatarFile = null;
+      document.getElementById('avatar-preview-area').innerHTML = '';
+      renderAvatar(u.avatar_url, u.name);
+      document.getElementById('display-name').textContent = u.name;
+      renderNavbar(); // update navbar avatar
+      showToast('Profile updated!', 'success');
+      alertEl.innerHTML = '<div class="alert alert-success">Profile saved successfully.</div>';
+    } else {
+      alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed to save.') + '</div>';
+    }
+  } catch(e) {
+    alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>';
+  }
+  btn.disabled = false; btn.textContent = 'Save Changes';
+}
+
+async function changePassword() {
+  var alertEl  = document.getElementById('password-alert');
+  var btn      = document.getElementById('save-pass-btn');
+  var current  = document.getElementById('current-pass').value;
+  var newPass  = document.getElementById('new-pass').value;
+  var confirm  = document.getElementById('confirm-pass').value;
+  alertEl.innerHTML = '';
+
+  if (!current || !newPass) { alertEl.innerHTML = '<div class="alert alert-danger">All fields are required.</div>'; return; }
+  if (newPass.length < 6)   { alertEl.innerHTML = '<div class="alert alert-danger">New password must be at least 6 characters.</div>'; return; }
+  if (newPass !== confirm)  { alertEl.innerHTML = '<div class="alert alert-danger">Passwords do not match.</div>'; return; }
+
+  btn.disabled = true; btn.textContent = 'Updating...';
+
+  try {
+    var res = await User.changePassword({ currentPassword: current, newPassword: newPass });
+    if (res && res.ok) {
+      document.getElementById('current-pass').value = '';
+      document.getElementById('new-pass').value     = '';
+      document.getElementById('confirm-pass').value = '';
+      showToast('Password updated!', 'success');
+      alertEl.innerHTML = '<div class="alert alert-success">Password changed successfully.</div>';
+    } else {
+      alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed.') + '</div>';
+    }
+  } catch(e) {
+    alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>';
+  }
+  btn.disabled = false; btn.textContent = 'Update Password';
+}
+
+async function loadFavorites() {
+  var el = document.getElementById('favorites-list');
+  if (el.querySelector('.spinner')) {
+    // only load once
+  } else return;
+
+  try {
+    var res = await Favorites.list();
+    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger">Failed to load.</div>'; return; }
+    var favs = res.data.favorites || [];
+    if (!favs.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❤️</div><h3>No saved pets</h3><p>Browse pets and save the ones you like.</p><a href="/pages/pets.html" class="btn btn-primary">Browse Pets</a></div>';
+      return;
+    }
+    el.innerHTML = '<div class="grid-3">' + favs.map(function(pet) {
+      var img = pet.primary_image || null;
+      var imgHtml = img
+        ? '<img class="pet-card-img" src="' + imgUrl(img) + '" alt="' + pet.name + '">'
+        : '<div class="pet-card-placeholder">🐾</div>';
+      return '<div class="pet-card" style="cursor:pointer" onclick="window.location.href=\'/pages/pet-detail.html?id=' + pet.id + '\'">' +
+        imgHtml +
+        '<div class="pet-card-body">' +
+          '<div class="pet-card-title">' + pet.name + '</div>' +
+          '<div class="pet-card-meta">' + (pet.pet_type_name||'') + (pet.city ? ' · ' + pet.city : '') + '</div>' +
+          '<div class="pet-card-footer">' +
+            (pet.fee_type === 'free' ? '<span class="pill pill-free">Free</span>' : '<span class="pill pill-paid">' + fmtMoney(pet.adoption_fee) + '</span>') +
+            '<button onclick="event.stopPropagation();removeFav(' + pet.id + ',this)" style="background:none;border:none;color:#e76f51;cursor:pointer;font-size:0.8rem">✕ Remove</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  } catch(e) {
+    el.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>';
+  }
+}
+
+async function removeFav(petId, btn) {
+  try {
+    var res = await Favorites.remove(petId);
+    if (res && res.ok) {
+      showToast('Removed from saved.', 'success');
+      // reload favorites list
+      document.getElementById('favorites-list').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+      loadFavorites();
+      // update stat
+      var statEl = document.getElementById('stat-favorites');
+      statEl.textContent = Math.max(0, parseInt(statEl.textContent) - 1);
+    }
+  } catch(e) { showToast('Failed.', 'error'); }
+}
+</script>
+</body>
+</html>

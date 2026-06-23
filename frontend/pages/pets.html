@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browse Pets — Pet Rehoming</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+
+    <div class="page-header-row">
+      <div>
+        <h1>Browse Pets</h1>
+        <p style="color:#6b7a8d;margin-top:4px" id="result-count">Loading...</p>
+      </div>
+      <a href="/pages/add-pet.html" class="btn btn-primary" id="list-btn" style="display:none">+ List a Pet</a>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="card" style="margin-bottom:24px;padding:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:end">
+        <div>
+          <label style="font-size:0.8rem;font-weight:bold;margin-bottom:4px;display:block">Search</label>
+          <input type="text" id="filter-search" class="form-control" placeholder="Name or breed..." oninput="debounceSearch()">
+        </div>
+        <div>
+          <label style="font-size:0.8rem;font-weight:bold;margin-bottom:4px;display:block">Pet Type</label>
+          <select id="filter-type" class="form-control" onchange="applyFilters()">
+            <option value="">All Types</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.8rem;font-weight:bold;margin-bottom:4px;display:block">City</label>
+          <select id="filter-city" class="form-control" onchange="applyFilters()">
+            <option value="">All Cities</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.8rem;font-weight:bold;margin-bottom:4px;display:block">Fee</label>
+          <select id="filter-fee" class="form-control" onchange="applyFilters()">
+            <option value="">Any</option>
+            <option value="free">Free</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
+        </div>
+      </div>
+
+      <!-- gender chips -->
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:0.8rem;font-weight:bold;color:#6b7a8d">Gender:</span>
+        <button class="chip active" data-gender="" onclick="setGender(this,'')">All</button>
+        <button class="chip" data-gender="male" onclick="setGender(this,'male')">♂ Male</button>
+        <button class="chip" data-gender="female" onclick="setGender(this,'female')">♀ Female</button>
+        <button class="chip" data-gender="unknown" onclick="setGender(this,'unknown')">Unknown</button>
+      </div>
+    </div>
+
+    <!-- PET TYPE CHIPS -->
+    <div id="type-chips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px"></div>
+
+    <!-- RESULTS -->
+    <div id="pets-grid" class="grid-4">
+      <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
+    </div>
+
+    <div id="pagination"></div>
+
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/app.js"></script>
+<script>
+var currentPage = 1;
+var currentGender = '';
+var searchTimer = null;
+var LIMIT = 20;
+
+document.addEventListener('DOMContentLoaded', async function() {
+  // show list btn if logged in
+  if (getToken()) document.getElementById('list-btn').style.display = 'inline-block';
+
+  // read URL params
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('type')) document.getElementById('filter-type').value = params.get('type') || '';
+
+  // load pet types
+  try {
+    var typesRes = await PetTypes.list();
+    if (typesRes && typesRes.ok) {
+      var sel = document.getElementById('filter-type');
+      var icons = { Dog:'🐕', Cat:'🐈', Rabbit:'🐇', Bird:'🦜', Fish:'🐟', Reptile:'🦎', Hamster:'🐹', 'Guinea Pig':'🐾', Other:'🐾' };
+      typesRes.data.petTypes.forEach(function(t) {
+        var opt = document.createElement('option');
+        opt.value = t.id; opt.textContent = (icons[t.name]||'🐾') + ' ' + t.name;
+        sel.appendChild(opt);
+      });
+      if (params.get('type')) sel.value = params.get('type');
+
+      // type chips
+      var chipsHtml = '<button class="chip ' + (!params.get('type') ? 'active' : '') + '" onclick="setTypeChip(this,\'\')">All</button>';
+      typesRes.data.petTypes.forEach(function(t) {
+        chipsHtml += '<button class="chip ' + (params.get('type') == t.id ? 'active' : '') + '" onclick="setTypeChip(this,\'' + t.id + '\')">' + (icons[t.name]||'🐾') + ' ' + t.name + '</button>';
+      });
+      document.getElementById('type-chips').innerHTML = chipsHtml;
+    }
+  } catch(e) {}
+
+  // load cities
+  try {
+    var citiesRes = await Pets.cities();
+    if (citiesRes && citiesRes.ok) {
+      var citySel = document.getElementById('filter-city');
+      citiesRes.data.cities.forEach(function(c) {
+        var opt = document.createElement('option');
+        opt.value = c; opt.textContent = c;
+        citySel.appendChild(opt);
+      });
+    }
+  } catch(e) {}
+
+  loadPets();
+});
+
+function setTypeChip(el, val) {
+  document.querySelectorAll('#type-chips .chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('filter-type').value = val;
+  currentPage = 1;
+  loadPets();
+}
+
+function setGender(el, val) {
+  document.querySelectorAll('[data-gender]').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  currentGender = val;
+  currentPage = 1;
+  loadPets();
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() { currentPage = 1; loadPets(); }, 400);
+}
+
+function applyFilters() { currentPage = 1; loadPets(); }
+
+function clearFilters() {
+  document.getElementById('filter-search').value = '';
+  document.getElementById('filter-type').value = '';
+  document.getElementById('filter-city').value = '';
+  document.getElementById('filter-fee').value = '';
+  currentGender = '';
+  document.querySelectorAll('[data-gender]').forEach(function(c){ c.classList.remove('active'); });
+  document.querySelector('[data-gender=""]').classList.add('active');
+  document.querySelectorAll('#type-chips .chip').forEach(function(c,i){ c.classList.toggle('active', i===0); });
+  currentPage = 1;
+  loadPets();
+}
+
+async function loadPets() {
+  var grid = document.getElementById('pets-grid');
+  grid.innerHTML = '<div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>';
+
+  var q = { status: 'available', page: currentPage, limit: LIMIT };
+  var search = document.getElementById('filter-search').value.trim();
+  var type   = document.getElementById('filter-type').value;
+  var city   = document.getElementById('filter-city').value;
+  var fee    = document.getElementById('filter-fee').value;
+
+  if (search) q.search   = search;
+  if (type)   q.type     = type;
+  if (city)   q.city     = city;
+  if (fee)    q.fee_type = fee;
+  if (currentGender) q.gender = currentGender;
+
+  try {
+    var res = await Pets.list(q);
+    if (!res || !res.ok) {
+      grid.innerHTML = '<p style="color:#e76f51;grid-column:1/-1">Failed to load pets.</p>';
+      return;
+    }
+    var pets = res.data.pets || [];
+    var total = res.data.total || 0;
+
+    document.getElementById('result-count').textContent = total + ' pet' + (total !== 1 ? 's' : '') + ' found';
+
+    if (!pets.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🐾</div><h3>No pets found</h3><p>Try adjusting your filters.</p></div>';
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+
+    // load favorites to show saved state
+    var favIds = [];
+    if (getToken()) {
+      try {
+        var favRes = await Favorites.list();
+        if (favRes && favRes.ok) favIds = (favRes.data.favorites || []).map(function(f){ return f.id; });
+      } catch(e) {}
+    }
+
+    grid.innerHTML = pets.map(function(pet) {
+      return petCardWithFav(pet, favIds.indexOf(pet.id) !== -1);
+    }).join('');
+
+    renderPagination('pagination', total, LIMIT, currentPage, function(p) {
+      currentPage = p; loadPets(); window.scrollTo(0,0);
+    });
+  } catch(e) {
+    grid.innerHTML = '<p style="color:#e76f51;grid-column:1/-1">Something went wrong.</p>';
+  }
+}
+
+function petCardWithFav(pet, isFaved) {
+  var img = pet.images && pet.images[0] ? pet.images[0].url : (pet.primary_image || null);
+  var imgHtml = img
+    ? '<img class="pet-card-img" src="' + imgUrl(img) + '" alt="' + pet.name + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">' +
+      '<div class="pet-card-placeholder" style="display:none">🐾</div>'
+    : '<div class="pet-card-placeholder">🐾</div>';
+
+  var fee = pet.fee_type === 'free'
+    ? '<span class="pill pill-free">Free</span>'
+    : '<span class="pill pill-paid">' + fmtMoney(pet.adoption_fee) + '</span>';
+
+  var favBtn = getToken()
+    ? '<button onclick="event.stopPropagation();toggleFav(this,' + pet.id + ')" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:2px" title="' + (isFaved?'Remove from favorites':'Save') + '">' + (isFaved ? '❤️' : '🤍') + '</button>'
+    : '';
+
+  return '<div class="pet-card" onclick="window.location.href=\'/pages/pet-detail.html?id=' + pet.id + '\'" style="cursor:pointer">' +
+    imgHtml +
+    '<div class="pet-card-body">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+        '<div class="pet-card-title">' + pet.name + '</div>' + favBtn +
+      '</div>' +
+      '<div class="pet-card-meta">' +
+        (pet.pet_type_name||'') +
+        (pet.breed ? ' · ' + pet.breed : '') +
+        (pet.city || pet.location ? ' · ' + (pet.city || pet.location) : '') +
+      '</div>' +
+      '<div class="pet-card-footer">' + fee + pill(pet.status) + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+async function toggleFav(btn, petId) {
+  if (!getToken()) { window.location.href = '/pages/login.html'; return; }
+  var isFaved = btn.textContent.trim() === '❤️';
+  try {
+    if (isFaved) {
+      await Favorites.remove(petId);
+      btn.textContent = '🤍';
+      btn.title = 'Save';
+    } else {
+      await Favorites.add(petId);
+      btn.textContent = '❤️';
+      btn.title = 'Remove from favorites';
+    }
+  } catch(e) { showToast('Failed to update favorites.', 'error'); }
+}
+</script>
+</body>
+</html>

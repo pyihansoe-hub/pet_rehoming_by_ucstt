@@ -35,6 +35,7 @@ const createCategory = async (req, res) => {
 // ── Blogs ──────────────────────────────────────────────────────────────────
 
 const BLOG_SELECT = `
+SELECT
   b.*,
   u.name  AS author_name,
   u.avatar_url AS author_avatar,
