@@ -217,22 +217,64 @@ var currentUser = getUser();
 
 var LOG_ICONS = { vaccination:'💉', vet_visit:'🏥', deworming:'💊', weight:'⚖️', other:'📋' };
 
+// document.addEventListener('DOMContentLoaded', async function() {
+//   var params = new URLSearchParams(window.location.search);
+//   petId = params.get('id');
+//   if (!petId) { showErr(); return; }
+
+//   initTabs('tabs-wrap');
+
+//   try {
+//     var res = await Pets.get(petId);
+//     if (!res || !res.ok) { showErr(); return; }
+//     petData = res.data.pet;
+//     renderPet(petData);
+//     document.getElementById('loading-area').classList.add('hidden');
+//     document.getElementById('content-area').classList.remove('hidden');
+//   } catch(e) { showErr(); }
+// });
 document.addEventListener('DOMContentLoaded', async function() {
   var params = new URLSearchParams(window.location.search);
   petId = params.get('id');
-  if (!petId) { showErr(); return; }
+
+  console.log('petId =', petId);
+
+  if (!petId) {
+    console.log('No petId found');
+    showErr();
+    return;
+  }
 
   initTabs('tabs-wrap');
 
   try {
     var res = await Pets.get(petId);
-    if (!res || !res.ok) { showErr(); return; }
+
+    console.log('API response =', res);
+
+    if (!res || !res.ok) {
+      console.log('API failed');
+      showErr();
+      return;
+    }
+
     petData = res.data.pet;
+
+    console.log('petData =', petData);
+
     renderPet(petData);
+
+    console.log('renderPet finished');
+
     document.getElementById('loading-area').classList.add('hidden');
     document.getElementById('content-area').classList.remove('hidden');
-  } catch(e) { showErr(); }
+
+  } catch(e) {
+    console.error('ERROR:', e);
+    showErr();
+  }
 });
+//here
 
 function showErr() {
   document.getElementById('loading-area').classList.add('hidden');
