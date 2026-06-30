@@ -274,7 +274,7 @@ async function savePet() {
         document.getElementById('upload-area').style.display = 'block';
       }
       showToast(editId ? 'Listing updated!' : 'Saved! Now add photos.', 'success');
-      alertArea.innerHTML = '<div class="alert alert-success">Saved! <a href="/pages/pet-detail.html?id=' + savedPetId + '">View listing →</a></div>';
+      alertArea.innerHTML = '<div class="alert alert-success">Saved! <a href="' + petDetailHref(savedPetId) + '">View listing →</a></div>';
     } else {
       alertArea.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed to save.') + '</div>';
     }

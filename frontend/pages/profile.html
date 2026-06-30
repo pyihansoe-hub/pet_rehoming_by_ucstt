@@ -298,18 +298,19 @@ async function loadFavorites() {
       return;
     }
     el.innerHTML = '<div class="grid-3">' + favs.map(function(pet) {
+      var petId = petIdOf(pet);
       var img = pet.primary_image || null;
       var imgHtml = img
         ? '<img class="pet-card-img" src="' + imgUrl(img) + '" alt="' + pet.name + '">'
         : '<div class="pet-card-placeholder">🐾</div>';
-      return '<div class="pet-card" style="cursor:pointer" onclick="window.location.href=\'/pages/pet-detail.html?id=' + pet.id + '\'">' +
+      return '<div class="pet-card" style="cursor:pointer" onclick="window.location.href=\'' + petDetailHref(petId) + '\'">' +
         imgHtml +
         '<div class="pet-card-body">' +
           '<div class="pet-card-title">' + pet.name + '</div>' +
           '<div class="pet-card-meta">' + (pet.pet_type_name||'') + (pet.city ? ' · ' + pet.city : '') + '</div>' +
           '<div class="pet-card-footer">' +
             (pet.fee_type === 'free' ? '<span class="pill pill-free">Free</span>' : '<span class="pill pill-paid">' + fmtMoney(pet.adoption_fee) + '</span>') +
-            '<button onclick="event.stopPropagation();removeFav(' + pet.id + ',this)" style="background:none;border:none;color:#e76f51;cursor:pointer;font-size:0.8rem">✕ Remove</button>' +
+            '<button onclick="event.stopPropagation();removeFav(' + petId + ',this)" style="background:none;border:none;color:#e76f51;cursor:pointer;font-size:0.8rem">✕ Remove</button>' +
           '</div>' +
         '</div>' +
       '</div>';

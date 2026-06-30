@@ -44,6 +44,15 @@ function imgUrl(path) {
   return 'http://localhost:3000' + path;
 }
 
+function petIdOf(pet) {
+  return pet && (pet.id || pet._id || pet.pet_id);
+}
+
+function petDetailHref(pet) {
+  var id = typeof pet === 'object' ? petIdOf(pet) : pet;
+  return '/pages/pet-detail?id=' + encodeURIComponent(id);
+}
+
 // ===== INITIALS =====
 function initials(name) {
   if (!name) return '?';
@@ -302,7 +311,7 @@ function petCardHtml(pet) {
     ? '<span class="pill pill-free">Free</span>'
     : '<span class="pill pill-paid">' + fmtMoney(pet.adoption_fee) + '</span>';
 
-  return '<div class="pet-card" onclick="window.location.href=\'' + p('pet-detail.html') + '?id=' + pet.id + '\'" style="cursor:pointer">' +
+  return '<div class="pet-card" onclick="window.location.href=\'' + petDetailHref(pet) + '\'" style="cursor:pointer">' +
     imgHtml +
     '<div class="pet-card-body">' +
       '<div class="pet-card-title">' + pet.name + '</div>' +

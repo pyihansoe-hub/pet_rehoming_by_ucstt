@@ -583,7 +583,7 @@ async function loadAdminPets() {
           '<select onchange="changePetStatus(' + p.id + ',this.value)" class="form-control" style="padding:4px 8px;font-size:0.78rem;width:120px">' +
             ['available','pending','adopted','withdrawn'].map(function(s){ return '<option value="' + s + '"' + (p.status===s?' selected':'') + '>' + s + '</option>'; }).join('') +
           '</select>' +
-          '<a href="/pages/pet-detail.html?id=' + p.id + '" class="btn btn-outline btn-sm" target="_blank">View</a>' +
+          '<a href="' + petDetailHref(p) + '" class="btn btn-outline btn-sm" target="_blank">View</a>' +
           '<button onclick="deleteAdminPet(' + p.id + ',\'' + p.name + '\')" class="btn btn-danger btn-sm">Delete</button>' +
         '</div></td>' +
       '</tr>';
