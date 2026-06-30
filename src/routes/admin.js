@@ -9,6 +9,7 @@ const {
   listAllFollowups, listAllHealthLogs,
   getAuditLog,
   listReports, resolveReport,
+  trustUser, untrustUser,
 } = require('../controllers/adminController');
 
 // All admin routes require login + admin role
@@ -49,5 +50,8 @@ router.get('/audit-log',                getAuditLog);
 // Reports
 router.get('/reports',                  listReports);
 router.patch('/reports/:id/resolve',    resolveReport);
+
+router.patch('/users/:id/trust',   trustUser);
+router.patch('/users/:id/untrust', untrustUser);
 
 module.exports = router;
