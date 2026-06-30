@@ -6,6 +6,9 @@
   <title>PawBot — Pet Rehoming</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
+    .typing-dots span { animation: typing-bounce 1s ease infinite; display:inline-block; }
+    .typing-dots span:nth-child(2) { animation-delay:0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay:0.4s; }
     .pawbot-wrap { display:grid; grid-template-columns:240px 1fr; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; background:#fff; height:calc(100vh - 120px); }
     .pawbot-sidebar { border-right:1px solid #e5e7eb; display:flex; flex-direction:column; background:#f9f9f7; }
     .pawbot-sidebar-header { padding:14px 16px; border-bottom:1px solid #e5e7eb; background:#fff; display:flex; align-items:center; justify-content:space-between; }
@@ -223,6 +226,62 @@ async function deleteCurrentSession() {
 }
 
 // ── MESSAGING ─────────────────────────────────────────────────
+// async function sendMsg() {
+//   var input = document.getElementById('pawbot-input');
+//   var msg   = input.value.trim();
+//   if (!msg || isWaiting) return;
+
+//   input.value = '';
+//   input.style.height = 'auto';
+//   document.getElementById('suggestion-chips').style.display = 'none';
+//   isWaiting = true;
+//   document.getElementById('send-btn').disabled = true;
+
+//   addUserMessage(msg);
+//   showTyping();
+
+//   try {
+//     var res;
+//     if (getToken()) {
+//       // use session if logged in
+//       if (!activeSessionId) {
+//         var sessRes = await Chat.createSession();
+//         if (sessRes && sessRes.ok) {
+//           activeSessionId = sessRes.data.session.id;
+//           document.getElementById('delete-session-btn').style.display = 'inline-block';
+//           loadSessions();
+//         }
+//       }
+//       if (activeSessionId) {
+//         res = await Chat.send(activeSessionId, { message: msg });
+//         if (res && res.ok) {
+//           hideTyping();
+//           addBotMessage(res.data.reply);
+//           loadSessions(); // refresh session title
+//         } else {
+//           hideTyping();
+//           addBotMessage('Sorry, something went wrong. Please try again.');
+//         }
+//       }
+//     } else {
+//       // one-shot for guests
+//       res = await Chat.oneShot({ message: msg });
+//       hideTyping();
+//       if (res && res.ok) {
+//         addBotMessage(res.data.reply);
+//       } else {
+//         addBotMessage('Sorry, something went wrong. Please try again.');
+//       }
+//     }
+//   } catch(e) {
+//     hideTyping();
+//     addBotMessage('I\'m having trouble connecting. Please check your internet and try again.');
+//   }
+
+//   isWaiting = false;
+//   document.getElementById('send-btn').disabled = false;
+//   scrollToBottom();
+// }
 async function sendMsg() {
   var input = document.getElementById('pawbot-input');
   var msg   = input.value.trim();
@@ -235,12 +294,15 @@ async function sendMsg() {
   document.getElementById('send-btn').disabled = true;
 
   addUserMessage(msg);
-  showTyping();
+
+  // create bot bubble for streaming into
+  var botBubble = addBotMessageEmpty();
 
   try {
-    var res;
+    var streamUrl;
+
     if (getToken()) {
-      // use session if logged in
+      // ensure session exists
       if (!activeSessionId) {
         var sessRes = await Chat.createSession();
         if (sessRes && sessRes.ok) {
@@ -249,35 +311,102 @@ async function sendMsg() {
           loadSessions();
         }
       }
-      if (activeSessionId) {
-        res = await Chat.send(activeSessionId, { message: msg });
-        if (res && res.ok) {
-          hideTyping();
-          addBotMessage(res.data.reply);
-          loadSessions(); // refresh session title
-        } else {
-          hideTyping();
-          addBotMessage('Sorry, something went wrong. Please try again.');
-        }
-      }
+      streamUrl = 'http://localhost:3000/api/chat/sessions/' + activeSessionId
+                + '/stream?message=' + encodeURIComponent(msg);
     } else {
-      // one-shot for guests
-      res = await Chat.oneShot({ message: msg });
-      hideTyping();
-      if (res && res.ok) {
-        addBotMessage(res.data.reply);
-      } else {
-        addBotMessage('Sorry, something went wrong. Please try again.');
-      }
+      // guest one-shot streaming
+      streamUrl = 'http://localhost:3000/api/chat/stream?message=' + encodeURIComponent(msg);
     }
-  } catch(e) {
-    hideTyping();
-    addBotMessage('I\'m having trouble connecting. Please check your internet and try again.');
-  }
 
-  isWaiting = false;
-  document.getElementById('send-btn').disabled = false;
+    streamResponse(streamUrl, botBubble, function() {
+      // on done
+      isWaiting = false;
+      document.getElementById('send-btn').disabled = false;
+      if (activeSessionId) loadSessions();
+    });
+
+  } catch(e) {
+    botBubble.innerHTML = 'Sorry, something went wrong. Please try again.';
+    isWaiting = false;
+    document.getElementById('send-btn').disabled = false;
+  }
+}
+
+// ── Stream handler using EventSource ─────────────────────────
+function streamResponse(url, bubbleEl, onDone) {
+  // Add auth token as query param since EventSource doesn't support headers
+  var token = getToken();
+  var fullUrl = token ? url + '&token=' + token : url;
+
+  // Show typing indicator inside bubble while waiting for first token
+  bubbleEl.innerHTML = '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>';
+
+  var es       = new EventSource(fullUrl);
+  var fullText = '';
+  var started  = false;
+
+  es.onmessage = function(e) {
+    try {
+      var data = JSON.parse(e.data);
+
+      if (data.error) {
+        bubbleEl.innerHTML = escapeAndFormat('Sorry, an error occurred: ' + data.error);
+        es.close();
+        if (onDone) onDone();
+        return;
+      }
+
+      if (data.token) {
+        if (!started) {
+          // clear typing dots on first real token
+          bubbleEl.innerHTML = '';
+          started = true;
+        }
+        fullText += data.token;
+        // render incrementally
+        bubbleEl.innerHTML = escapeAndFormat(fullText);
+        scrollToBottom();
+      }
+
+      if (data.done) {
+        es.close();
+        // final render
+        bubbleEl.innerHTML = escapeAndFormat(fullText);
+        scrollToBottom();
+        if (onDone) onDone();
+      }
+    } catch(err) {
+      // ignore parse errors on SSE keep-alive lines
+    }
+  };
+
+  es.onerror = function() {
+    es.close();
+    if (!started) {
+      bubbleEl.innerHTML = 'Connection lost. Please try again.';
+    }
+    if (onDone) onDone();
+  };
+}
+
+// ── Add empty bot bubble, return the content element ─────────
+function addBotMessageEmpty() {
+  var area = document.getElementById('pawbot-messages');
+  var wrap = document.createElement('div');
+  wrap.className = 'chat-msg bot';
+  var bubble = document.createElement('div');
+  bubble.className = 'chat-bubble';
+  bubble.innerHTML = '';
+  var avatarDiv = document.createElement('div');
+  avatarDiv.className = 'chat-msg-avatar';
+  avatarDiv.textContent = '🐾';
+  wrap.appendChild(avatarDiv);
+  var inner = document.createElement('div');
+  inner.appendChild(bubble);
+  wrap.appendChild(inner);
+  area.appendChild(wrap);
   scrollToBottom();
+  return bubble;
 }
 
 function sendSuggestion(btn) {

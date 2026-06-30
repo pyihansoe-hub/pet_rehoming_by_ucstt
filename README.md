@@ -153,4 +153,4 @@
 2.  **Pagination:** List endpoints return `{ data: [], total: 100, page: 1, limit: 10 }`.
 3.  **Errors:** `401` means token expired (redirect to login). `403` means suspended or wrong role.
 4.  **Demo Mode:** If Aya Pay isn't configured, use the "Simulate Payment" button in your UI to call the backend verify logic manually.
-sudo -u postgres psqltV
+sudo -u postgres psql
