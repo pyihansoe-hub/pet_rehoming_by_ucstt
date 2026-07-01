@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet Detail — Pet Rehoming</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .gallery { display:grid; grid-template-columns:1fr 180px; gap:8px; margin-bottom:24px; border-radius:10px; overflow:hidden; max-height:420px; }
+    .gallery-main { background:#f3f3ef; overflow:hidden; }
+    .gallery-main img { width:100%; height:100%; object-fit:cover; cursor:pointer; }
+    .gallery-main-placeholder { width:100%; height:100%; min-height:280px; display:flex; align-items:center; justify-content:center; font-size:4rem; color:#9baab8; }
+    .gallery-thumbs { display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
+    .gallery-thumb { aspect-ratio:1; object-fit:cover; cursor:pointer; opacity:0.6; border-radius:4px; width:100%; }
+    .gallery-thumb.active, .gallery-thumb:hover { opacity:1; }
+    .info-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 0; }
+    .info-item { background:#f3f3ef; border-radius:8px; padding:10px 14px; }
+    .info-label { font-size:0.72rem; color:#9baab8; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px; }
+    .info-value { font-size:0.88rem; font-weight:bold; color:#1c2b3a; }
+    @media(max-width:700px){ .gallery{ grid-template-columns:1fr; max-height:none; } .gallery-thumbs{ flex-direction:row; overflow-x:auto; } .gallery-thumb{ width:70px; height:70px; } .info-grid{ grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+
+    <div id="loading-area" class="loading-wrap"><div class="spinner"></div></div>
+    <div id="error-area" class="hidden">
+      <div class="alert alert-danger">Pet not found or failed to load.</div>
+      <a href="/pages/pets.html" class="btn btn-secondary" style="margin-top:8px">← Back to Browse</a>
+    </div>
+
+    <div id="content-area" class="hidden">
+      <div style="margin-bottom:16px">
+        <a href="/pages/pets.html" style="font-size:0.86rem;color:#6b7a8d">← Browse Pets</a>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:32px;align-items:start">
+
+        <!-- LEFT -->
+        <div>
+          <!-- gallery -->
+          <div class="gallery" id="gallery">
+            <div class="gallery-main" id="gallery-main">
+              <div class="gallery-main-placeholder">🐾</div>
+            </div>
+            <div class="gallery-thumbs" id="gallery-thumbs"></div>
+          </div>
+
+          <!-- tabs -->
+          <div id="tabs-wrap">
+            <div class="tabs">
+              <button class="tab-btn active" data-tab="tab-about">About</button>
+              <button class="tab-btn" data-tab="tab-health">Health</button>
+              <button class="tab-btn" data-tab="tab-history" id="history-tab-btn" style="display:none">Status History</button>
+              <button class="tab-btn" data-tab="tab-logs" id="logs-tab-btn" style="display:none">Health Logs</button>
+            </div>
+
+            <!-- About -->
+            <div class="tab-panel active" id="tab-about">
+              <div class="info-grid" id="info-grid"></div>
+              <div id="description-area"></div>
+            </div>
+
+            <!-- Health -->
+            <div class="tab-panel" id="tab-health">
+              <div id="health-badges" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"></div>
+              <div id="health-notes-area"></div>
+            </div>
+
+            <!-- Status History -->
+            <div class="tab-panel" id="tab-history">
+              <div id="status-history-list"></div>
+            </div>
+
+            <!-- Health Logs (owner only) -->
+            <div class="tab-panel" id="tab-logs">
+              <div id="health-logs-list"></div>
+              <div id="add-log-area" class="hidden" style="margin-top:16px">
+                <h4 style="margin-bottom:12px">Add Health Log</h4>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Type</label>
+                    <select id="log-type" class="form-control">
+                      <option value="vaccination">Vaccination</option>
+                      <option value="vet_visit">Vet Visit</option>
+                      <option value="deworming">Deworming</option>
+                      <option value="weight">Weight Check</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Vet Name</label>
+                    <input type="text" id="log-vet" class="form-control" placeholder="Optional">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Weight (kg)</label>
+                    <input type="number" id="log-weight" class="form-control" placeholder="Optional" step="0.1">
+                  </div>
+                  <div class="form-group">
+                    <label>Next Due Date</label>
+                    <input type="date" id="log-next-due" class="form-control">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Notes</label>
+                  <textarea id="log-desc" class="form-control" rows="2" placeholder="Optional description"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="submitHealthLog()">Save Log</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT SIDEBAR -->
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+              <h2 id="pet-name" style="font-size:1.4rem"></h2>
+              <span id="pet-status-pill"></span>
+            </div>
+            <p id="pet-type-breed" style="color:#6b7a8d;font-size:0.88rem;margin-bottom:12px"></p>
+
+            <div id="fee-area" style="margin-bottom:16px;padding:12px;background:#f3f3ef;border-radius:8px">
+              <div style="font-size:0.78rem;color:#9baab8;margin-bottom:2px">Adoption Fee</div>
+              <div id="fee-value" style="font-size:1.3rem;font-weight:bold"></div>
+            </div>
+
+            <div style="font-size:0.82rem;color:#6b7a8d;margin-bottom:16px" id="location-area"></div>
+
+            <div id="action-area"></div>
+          </div>
+
+          <!-- owner info -->
+          <div class="card" id="owner-card" style="margin-bottom:16px">
+            <h4 style="margin-bottom:10px">Listed by</h4>
+            <div id="owner-info"></div>
+          </div>
+
+          <!-- report -->
+          <div style="text-align:center">
+            <button onclick="openReportModal()" style="background:none;border:none;color:#9baab8;font-size:0.8rem;cursor:pointer;text-decoration:underline">Report this listing</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADOPT MODAL -->
+<div class="modal-overlay" id="adopt-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Request Adoption</h3>
+      <button class="modal-close" onclick="closeModal('adopt-modal')">✕</button>
+    </div>
+    <div id="adopt-alert"></div>
+    <p style="color:#6b7a8d;font-size:0.88rem;margin-bottom:16px">Tell the owner a bit about yourself and why you'd be a great fit.</p>
+    <div class="form-group">
+      <label for="adopt-message">Message (optional)</label>
+      <textarea id="adopt-message" class="form-control" rows="4" placeholder="I have a large garden, work from home..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('adopt-modal')">Cancel</button>
+      <button class="btn btn-primary" id="adopt-submit-btn" onclick="submitAdoption()">Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="modal-overlay" id="report-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Report Listing</h3>
+      <button class="modal-close" onclick="closeModal('report-modal')">✕</button>
+    </div>
+    <div id="report-alert"></div>
+    <div class="form-group">
+      <label>Reason</label>
+      <select id="report-reason" class="form-control">
+        <option value="spam">Spam</option>
+        <option value="abuse">Abuse</option>
+        <option value="misleading">Misleading information</option>
+        <option value="inappropriate">Inappropriate content</option>
+        <option value="animal_welfare">Animal welfare concern</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Details (optional)</label>
+      <textarea id="report-details" class="form-control" rows="3" placeholder="Describe the issue..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('report-modal')">Cancel</button>
+      <button class="btn btn-danger" onclick="submitReport()">Submit Report</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+<script>
+const originalReplaceState = history.replaceState;
+history.replaceState = function (...args) {
+    console.trace("replaceState called");
+    return originalReplaceState.apply(this, args);
+};
+
+const originalPushState = history.pushState;
+history.pushState = function (...args) {
+    console.trace("pushState called");
+    return originalPushState.apply(this, args);
+};
+</script>
+<script src="/js/api.js"></script>
+<script src="/js/app.js"></script>
+<script>
+console.log("Before anything:", window.location.href);
+var petId = null;
+var petData = null;
+var currentUser = getUser();
+
+var LOG_ICONS = { vaccination:'💉', vet_visit:'🏥', deworming:'💊', weight:'⚖️', other:'📋' };
+
+// document.addEventListener('DOMContentLoaded', async function() {
+//   var params = new URLSearchParams(window.location.search);
+//   petId = params.get('id');
+//   if (!petId) { showErr(); return; }
+
+//   initTabs('tabs-wrap');
+
+//   try {
+//     var res = await Pets.get(petId);
+//     if (!res || !res.ok) { showErr(); return; }
+//     petData = res.data.pet;
+//     renderPet(petData);
+//     document.getElementById('loading-area').classList.add('hidden');
+//     document.getElementById('content-area').classList.remove('hidden');
+//   } catch(e) { showErr(); }
+// });
+document.addEventListener('DOMContentLoaded', async function() {
+  var params = new URLSearchParams(window.location.search);
+  petId = params.get('id');
+
+  console.log('petId =', petId);
+
+  if (!petId) {
+    console.log('No petId found');
+    showErr();
+    return;
+  }
+
+  initTabs('tabs-wrap');
+
+  try {
+    var res = await Pets.get(petId);
+
+    console.log('API response =', res);
+
+    if (!res || !res.ok) {
+      console.log('API failed');
+      showErr();
+      return;
+    }
+
+    petData = res.data.pet;
+
+    console.log('petData =', petData);
+
+    renderPet(petData);
+
+    console.log('renderPet finished');
+
+    document.getElementById('loading-area').classList.add('hidden');
+    document.getElementById('content-area').classList.remove('hidden');
+
+  } catch(e) {
+    console.error('ERROR:', e);
+    showErr();
+  }
+});
+//here
+
+function showErr() {
+  document.getElementById('loading-area').classList.add('hidden');
+  document.getElementById('error-area').classList.remove('hidden');
+}
+
+function renderPet(pet) {
+  document.title = pet.name + ' — Pet Rehoming';
+
+  // gallery
+  var images = pet.images || [];
+  var mainEl = document.getElementById('gallery-main');
+  var thumbsEl = document.getElementById('gallery-thumbs');
+
+  if (images.length) {
+    // hide thumbs col if only 1 image
+    if (images.length === 1) document.getElementById('gallery').style.gridTemplateColumns = '1fr';
+
+    var primary = images.find(function(i){ return i.is_primary; }) || images[0];
+    mainEl.innerHTML = '<img id="main-img" src="' + imgUrl(primary.url) + '" alt="' + pet.name + '">';
+
+    if (images.length > 1) {
+      thumbsEl.innerHTML = images.map(function(img, idx) {
+        return '<img class="gallery-thumb' + (img.is_primary ? ' active' : '') + '" src="' + imgUrl(img.url) + '" alt="" onclick="setMainImg(this,\'' + imgUrl(img.url) + '\')">';
+      }).join('');
+    }
+  }
+
+  // name + status
+  document.getElementById('pet-name').textContent = pet.name;
+  document.getElementById('pet-status-pill').innerHTML = pill(pet.status);
+
+  // type + breed
+  var typeBreed = pet.pet_type_name || '';
+  if (pet.breed) typeBreed += ' · ' + pet.breed;
+  if (pet.gender) typeBreed += ' · ' + pet.gender.charAt(0).toUpperCase() + pet.gender.slice(1);
+  document.getElementById('pet-type-breed').textContent = typeBreed;
+
+  // fee
+  document.getElementById('fee-value').textContent = pet.fee_type === 'free' ? 'Free' : fmtMoney(pet.adoption_fee);
+  document.getElementById('fee-area').style.background = pet.fee_type === 'free' ? '#eef8f2' : '#fef9ec';
+
+  // location
+  if (pet.city || pet.location) {
+    document.getElementById('location-area').innerHTML = '📍 ' + (pet.city || pet.location);
+  }
+
+  // action buttons
+  renderActions(pet);
+
+  // owner card
+  document.getElementById('owner-info').innerHTML =
+    '<div style="font-weight:bold;margin-bottom:4px">' + (pet.owner_name || 'Unknown') + '</div>' +
+    (pet.owner_phone ? '<div style="font-size:0.86rem;color:#6b7a8d">📞 ' + pet.owner_phone + '</div>' : '');
+
+  // info grid
+  var age = '';
+  if (pet.birth_date) {
+    var bd = new Date(pet.birth_date);
+    var now = new Date();
+    var months = (now.getFullYear() - bd.getFullYear()) * 12 + (now.getMonth() - bd.getMonth());
+    var yrs = Math.floor(months/12);
+    var mos = months % 12;
+    age = (yrs ? yrs + 'y ' : '') + (mos ? mos + 'm' : '');
+    if (!age) age = '< 1m';
+    if (!pet.is_sure) age += ' (est.)';
+  }
+
+  var infoItems = [
+    { label: 'Age',    value: age || '—' },
+    { label: 'Gender', value: pet.gender ? (pet.gender.charAt(0).toUpperCase()+pet.gender.slice(1)) : '—' },
+    { label: 'Color',  value: pet.color  || '—' },
+    { label: 'Weight', value: pet.weight_kg ? pet.weight_kg + ' kg' : '—' },
+    { label: 'City',   value: pet.city   || pet.location || '—' },
+    { label: 'Listed', value: fmtDate(pet.created_at) },
+  ];
+  document.getElementById('info-grid').innerHTML = infoItems.map(function(item) {
+    return '<div class="info-item"><div class="info-label">' + item.label + '</div><div class="info-value">' + item.value + '</div></div>';
+  }).join('');
+
+  // description
+  if (pet.description) {
+    document.getElementById('description-area').innerHTML =
+      '<h4 style="margin-bottom:8px;margin-top:16px">About ' + pet.name + '</h4>' +
+      '<p style="color:#6b7a8d;font-size:0.9rem;line-height:1.7">' + pet.description + '</p>';
+  }
+
+  // health tab
+  var badges = '';
+  if (pet.is_vaccinated) badges += '<span class="pill pill-available">✓ Vaccinated</span> ';
+  if (pet.is_neutered)   badges += '<span class="pill pill-available">✓ Neutered</span> ';
+  if (!pet.is_vaccinated) badges += '<span class="pill pill-withdrawn">✗ Not Vaccinated</span> ';
+  document.getElementById('health-badges').innerHTML = badges;
+  if (pet.health_notes) {
+    document.getElementById('health-notes-area').innerHTML =
+      '<p style="color:#6b7a8d;font-size:0.9rem;line-height:1.7">' + pet.health_notes + '</p>';
+  }
+
+  // owner-only tabs
+  var isOwner = currentUser && pet.owner_id === currentUser.id;
+  var isAdmin = currentUser && currentUser.role === 'admin';
+
+  if (isOwner || isAdmin) {
+    document.getElementById('history-tab-btn').style.display = 'inline-block';
+    document.getElementById('logs-tab-btn').style.display = 'inline-block';
+    document.getElementById('add-log-area').classList.remove('hidden');
+    loadStatusHistory();
+    loadHealthLogs();
+  }
+}
+
+function renderActions(pet) {
+  var area = document.getElementById('action-area');
+  var isOwner = currentUser && pet.owner_id === currentUser.id;
+
+  if (isOwner) {
+    area.innerHTML =
+      '<a href="/pages/add-pet.html?id=' + pet.id + '" class="btn btn-secondary btn-full" style="margin-bottom:8px">✏️ Edit Listing</a>' +
+      '<a href="/pages/my-pets.html" class="btn btn-outline btn-full">My Pets</a>';
+    return;
+  }
+
+  if (pet.status !== 'available') {
+    area.innerHTML = '<div class="alert alert-info" style="text-align:center">This pet is no longer available.</div>';
+    return;
+  }
+
+  if (!getToken()) {
+    area.innerHTML = '<a href="/pages/login.html" class="btn btn-primary btn-full">Login to Adopt</a>';
+    return;
+  }
+
+  area.innerHTML =
+    '<button class="btn btn-primary btn-full" style="margin-bottom:8px" onclick="openModal(\'adopt-modal\')">🐾 Request Adoption</button>' +
+    '<button onclick="toggleFavDetail()" id="fav-btn" class="btn btn-outline btn-full">🤍 Save</button>';
+
+  // check if already faved
+  Favorites.list().then(function(res) {
+    if (res && res.ok) {
+      var faved = (res.data.favorites || []).find(function(f){ return f.id === pet.id; });
+      var favBtn = document.getElementById('fav-btn');
+      if (favBtn) favBtn.innerHTML = faved ? '❤️ Saved' : '🤍 Save';
+    }
+  }).catch(function(){});
+}
+
+function setMainImg(thumb, url) {
+  document.querySelectorAll('.gallery-thumb').forEach(function(t){ t.classList.remove('active'); });
+  thumb.classList.add('active');
+  var main = document.getElementById('main-img');
+  if (main) main.src = url;
+}
+
+async function toggleFavDetail() {
+  var btn = document.getElementById('fav-btn');
+  var isFaved = btn && btn.innerHTML.includes('❤️');
+  try {
+    if (isFaved) { await Favorites.remove(petId); if (btn) btn.innerHTML = '🤍 Save'; }
+    else         { await Favorites.add(petId);    if (btn) btn.innerHTML = '❤️ Saved'; }
+  } catch(e) { showToast('Failed to update favorites.', 'error'); }
+}
+
+async function submitAdoption() {
+  var msg = document.getElementById('adopt-message').value.trim();
+  var alertEl = document.getElementById('adopt-alert');
+  var btn = document.getElementById('adopt-submit-btn');
+
+  alertEl.innerHTML = '';
+  btn.disabled = true; btn.textContent = 'Submitting...';
+
+  try {
+    var res = await Adoption.request(petId, { message: msg || undefined });
+    if (res && res.ok) {
+      closeModal('adopt-modal');
+      showToast('Adoption request submitted!', 'success');
+      if (res.data.paymentRequired) {
+        showToast('This is a paid adoption — payment required after approval.', 'info');
+      }
+      // refresh page to update status
+      setTimeout(function(){ window.location.reload(); }, 1000);
+    } else {
+      alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed to submit.') + '</div>';
+    }
+  } catch(e) {
+    alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>';
+  }
+  btn.disabled = false; btn.textContent = 'Submit Request';
+}
+
+function openReportModal() {
+  if (!getToken()) { window.location.href = '/pages/login.html'; return; }
+  openModal('report-modal');
+}
+
+async function submitReport() {
+  var reason  = document.getElementById('report-reason').value;
+  var details = document.getElementById('report-details').value.trim();
+  var alertEl = document.getElementById('report-alert');
+  alertEl.innerHTML = '';
+
+  try {
+    var res = await Reports.submit({ pet_id: parseInt(petId), reason: reason, details: details || undefined });
+    if (res && res.ok) {
+      closeModal('report-modal');
+      showToast('Report submitted. Thank you.', 'success');
+    } else {
+      alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed.') + '</div>';
+    }
+  } catch(e) {
+    alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>';
+  }
+}
+
+async function loadStatusHistory() {
+  try {
+    var res = await Pets.statusHistory(petId);
+    var el = document.getElementById('status-history-list');
+    if (!res || !res.ok || !res.data.history.length) {
+      el.innerHTML = '<p style="color:#6b7a8d">No status changes recorded yet.</p>';
+      return;
+    }
+    el.innerHTML = res.data.history.map(function(h) {
+      return '<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #e5e7eb;align-items:flex-start">' +
+        '<div style="font-size:0.78rem;color:#9baab8;white-space:nowrap;margin-top:2px">' + fmtDate(h.created_at) + '</div>' +
+        '<div>' +
+          (h.old_status ? pill(h.old_status) + ' → ' : '') + pill(h.new_status) +
+          (h.reason ? '<div style="font-size:0.8rem;color:#6b7a8d;margin-top:3px">' + h.reason + '</div>' : '') +
+          (h.changed_by_name ? '<div style="font-size:0.78rem;color:#9baab8">by ' + h.changed_by_name + '</div>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e) {}
+}
+
+async function loadHealthLogs() {
+  try {
+    var res = await Monitoring.getHealthLogs(petId);
+    var el = document.getElementById('health-logs-list');
+    if (!res || !res.ok || !res.data.logs.length) {
+      el.innerHTML = '<p style="color:#6b7a8d;margin-bottom:12px">No health logs yet.</p>';
+      return;
+    }
+    el.innerHTML = res.data.logs.map(function(log) {
+      return '<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #e5e7eb">' +
+        '<div style="width:36px;height:36px;border-radius:50%;background:#e6f5f3;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">' + (LOG_ICONS[log.type]||'📋') + '</div>' +
+        '<div style="flex:1">' +
+          '<div style="font-weight:bold;font-size:0.88rem">' + log.type.replace(/_/g,' ') + '</div>' +
+          (log.description ? '<div style="font-size:0.82rem;color:#6b7a8d">' + log.description + '</div>' : '') +
+          '<div style="font-size:0.76rem;color:#9baab8;margin-top:3px">' +
+            fmtDate(log.created_at) +
+            (log.vet_name ? ' · ' + log.vet_name : '') +
+            (log.weight_kg ? ' · ' + log.weight_kg + 'kg' : '') +
+            (log.next_due ? ' · Next: ' + fmtDate(log.next_due) : '') +
+          '</div>' +
+        '</div>' +
+        '<button onclick="deleteLog(' + log.id + ',this)" style="background:none;border:none;color:#e76f51;cursor:pointer;font-size:0.8rem;flex-shrink:0">✕</button>' +
+      '</div>';
+    }).join('');
+  } catch(e) {}
+}
+
+async function submitHealthLog() {
+  var body = {
+    type:        document.getElementById('log-type').value,
+    description: document.getElementById('log-desc').value.trim() || undefined,
+    vet_name:    document.getElementById('log-vet').value.trim()  || undefined,
+    weight_kg:   document.getElementById('log-weight').value      || undefined,
+    next_due:    document.getElementById('log-next-due').value    || undefined,
+  };
+  try {
+    var res = await Monitoring.addHealthLog(petId, body);
+    if (res && res.ok) {
+      showToast('Health log added.', 'success');
+      document.getElementById('log-desc').value = '';
+      document.getElementById('log-vet').value = '';
+      document.getElementById('log-weight').value = '';
+      document.getElementById('log-next-due').value = '';
+      loadHealthLogs();
+    } else {
+      showToast(res.data.message || 'Failed.', 'error');
+    }
+  } catch(e) { showToast('Something went wrong.', 'error'); }
+}
+
+async function deleteLog(logId, btn) {
+  if (!confirm('Delete this log?')) return;
+  try {
+    var res = await Monitoring.deleteHealthLog(petId, logId);
+    if (res && res.ok) { showToast('Log deleted.', 'success'); loadHealthLogs(); }
+    else showToast('Failed to delete.', 'error');
+  } catch(e) { showToast('Something went wrong.', 'error'); }
+}
+</script>
+</body>
+</html>

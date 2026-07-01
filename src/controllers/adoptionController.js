@@ -1,6 +1,10 @@
 const pool = require('../db/pool');
 const notify = require('../services/notify');
 
+const { createAgreement } = require('./agreementController');
+const { scheduleFollowupReminders } = require('../services/reminderScheduler');
+const { logStatusChange } = require('../services/petStatusHistory');
+
 // POST /api/pets/:id/adopt  — submit adoption request
 const requestAdoption = async (req, res) => {
   const petId = req.params.id;
@@ -27,20 +31,21 @@ const requestAdoption = async (req, res) => {
       paymentRequired: pet.fee_type === 'paid',
       adoptionFee: pet.fee_type === 'paid' ? pet.adoption_fee : 0,
     });
-    //@2
+
     notify(pet.owner_id, {
-  type:  'new_adoption_request',
-  title: `New adoption request for ${pet.name}`,
-  body:  `${req.user.name} wants to adopt your pet.`,
-  link:  `/adoption-requests/received`,
-});
+      type: 'new_adoption_request',
+      title: `New adoption request for ${pet.name}`,
+      body: `${req.user.name} wants to adopt your pet.`,
+      link: `/adoption-requests/received`,
+    });
+
     const { send, emails } = require('../services/email');
     pool.query('SELECT name, email FROM users WHERE id=$1', [pet.owner_id])
-    .then(({ rows }) => {
-    const tmpl = emails.adoptionRequestReceived(rows[0].name, pet.name, req.user.name);
-    return send(rows[0].email, tmpl.subject, tmpl.html);
-  })
-  .catch(err => console.error('Email failed:', err.message));
+      .then(({ rows }) => {
+        const tmpl = emails.adoptionRequestReceived(rows[0].name, pet.name, req.user.name);
+        return send(rows[0].email, tmpl.subject, tmpl.html);
+      })
+      .catch(err => console.error('Email failed:', err.message));
 
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ message: 'You already have a pending request for this pet.' });
@@ -48,7 +53,7 @@ const requestAdoption = async (req, res) => {
   }
 };
 
-// GET /api/adoption-requests/mine  — requester's own requests
+// GET /api/adoption-requests/mine
 const myRequests = async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -61,10 +66,12 @@ const myRequests = async (req, res) => {
       [req.user.id]
     );
     res.json({ requests: rows });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
 };
 
-// GET /api/adoption-requests/received  — requests on owner's pets
+// GET /api/adoption-requests/received
 const receivedRequests = async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -77,12 +84,14 @@ const receivedRequests = async (req, res) => {
       [req.user.id]
     );
     res.json({ requests: rows });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
 };
 
-// PATCH /api/adoption-requests/:id  — approve / reject (owner)
+// PATCH approve/reject
 const reviewRequest = async (req, res) => {
-  const { status } = req.body; // approved | rejected
+  const { status } = req.body;
   if (!['approved', 'rejected'].includes(status))
     return res.status(400).json({ message: 'Status must be approved or rejected.' });
 
@@ -95,8 +104,10 @@ const reviewRequest = async (req, res) => {
        JOIN pets p ON p.id=ar.pet_id WHERE ar.id=$1`,
       [req.params.id]
     );
+
     if (!rows.length) return res.status(404).json({ message: 'Request not found.' });
     const req_ = rows[0];
+
     if (req_.owner_id !== req.user.id && req.user.role !== 'admin')
       return res.status(403).json({ message: 'Not authorized.' });
 
@@ -105,10 +116,9 @@ const reviewRequest = async (req, res) => {
       [status, req.params.id]
     );
 
-    // If approved + free → mark pet as adopted immediately
     if (status === 'approved' && req_.fee_type === 'free') {
       await client.query(`UPDATE pets SET status='adopted' WHERE id=$1`, [req_.pet_id]);
-      // Reject all other pending requests for this pet
+
       await client.query(
         `UPDATE adoption_requests SET status='rejected', reviewed_at=NOW()
          WHERE pet_id=$1 AND id<>$2 AND status='pending'`,
@@ -117,60 +127,101 @@ const reviewRequest = async (req, res) => {
     }
 
     await client.query('COMMIT');
+
+    // REQUIRED ADDED LOGIC (after COMMIT, free approval only)
+    if (status === 'approved' && req_.fee_type === 'free') {
+      await createAgreement(req.params.id);
+      await scheduleFollowupReminders(req.params.id);
+      await logStatusChange(
+        req_.pet_id,
+        'available',
+        'adopted',
+        req.user.id,
+        'Free adoption approved'
+      );
+    }
+
     const { send, emails } = require('../services/email');
-    // notify requester @1
-  notify(req_.requester_id, {
-  type:  'adoption_reviewed',
-  title: status === 'approved' ? `Your adoption request was approved!` : `Adoption request update`,
-  body:  status === 'approved'
-    ? `Your request has been approved. ${req_.fee_type === 'paid' ? 'Please complete payment.' : 'Contact the owner to arrange pickup.'}`
-    : `Your adoption request was not approved this time.`,
-  link:  `/adoption-requests/${req.params.id}`,
-});
 
+    notify(req_.requester_id, {
+      type: 'adoption_reviewed',
+      title: status === 'approved'
+        ? `Your adoption request was approved!`
+        : `Adoption request update`,
+      body: status === 'approved'
+        ? `Your request has been approved. ${req_.fee_type === 'paid' ? 'Please complete payment.' : 'Contact the owner to arrange pickup.'}`
+        : `Your adoption request was not approved this time.`,
+      link: `/adoption-requests/${req.params.id}`,
+    });
 
-try {
-  // notify requester
-  const { rows: userRows } = await pool.query(
-    'SELECT name, email FROM users WHERE id=$1', [req_.requester_id]
-  );
-  const { rows: petRows } = await pool.query(
-    'SELECT name FROM pets WHERE id=$1', [req_.pet_id]
-  );
-  const requester = userRows[0];
-  const pet       = petRows[0];
+    try {
+      const { rows: userRows } = await pool.query(
+        'SELECT name, email FROM users WHERE id=$1', [req_.requester_id]
+      );
+      const { rows: petRows } = await pool.query(
+        'SELECT name FROM pets WHERE id=$1', [req_.pet_id]
+      );
 
-  if (status === 'approved') {
-    const tmpl = emails.adoptionApproved(requester.name, pet.name, req_.fee_type === 'free');
-    await send(requester.email, tmpl.subject, tmpl.html);
-  } else {
-    const tmpl = emails.adoptionRejected(requester.name, pet.name);
-    await send(requester.email, tmpl.subject, tmpl.html);
-  }
-} catch (emailErr) {
-  console.error('Email failed (non-fatal):', emailErr.message);
-}
+      const requester = userRows[0];
+      const pet = petRows[0];
 
-    res.json({ message: `Request ${status}.`, requiresPayment: status === 'approved' && req_.fee_type === 'paid' });
+      if (status === 'approved') {
+        const tmpl = emails.adoptionApproved(
+          requester.name,
+          pet.name,
+          req_.fee_type === 'free'
+        );
+        await send(requester.email, tmpl.subject, tmpl.html);
+      } else {
+        const tmpl = emails.adoptionRejected(requester.name, pet.name);
+        await send(requester.email, tmpl.subject, tmpl.html);
+      }
+    } catch (emailErr) {
+      console.error('Email failed (non-fatal):', emailErr.message);
+    }
+
+    res.json({
+      message: `Request ${status}.`,
+      requiresPayment: status === 'approved' && req_.fee_type === 'paid'
+    });
+
   } catch (err) {
     await client.query('ROLLBACK');
     res.status(500).json({ message: 'Server error.', error: err.message });
-  } finally { client.release(); }
+  } finally {
+    client.release();
+  }
 };
 
-// PATCH /api/adoption-requests/:id/cancel  — requester cancels
+// PATCH cancel
 const cancelRequest = async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT requester_id, status FROM adoption_requests WHERE id=$1', [req.params.id]
+      'SELECT requester_id, status FROM adoption_requests WHERE id=$1',
+      [req.params.id]
     );
-    if (!rows.length) return res.status(404).json({ message: 'Request not found.' });
-    if (rows[0].requester_id !== req.user.id) return res.status(403).json({ message: 'Not authorized.' });
-    if (rows[0].status !== 'pending') return res.status(400).json({ message: 'Only pending requests can be cancelled.' });
 
-    await pool.query(`UPDATE adoption_requests SET status='cancelled' WHERE id=$1`, [req.params.id]);
+    if (!rows.length) return res.status(404).json({ message: 'Request not found.' });
+    if (rows[0].requester_id !== req.user.id)
+      return res.status(403).json({ message: 'Not authorized.' });
+    if (rows[0].status !== 'pending')
+      return res.status(400).json({ message: 'Only pending requests can be cancelled.' });
+
+    await pool.query(
+      `UPDATE adoption_requests SET status='cancelled' WHERE id=$1`,
+      [req.params.id]
+    );
+
     res.json({ message: 'Request cancelled.' });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
 };
 
-module.exports = { requestAdoption, myRequests, receivedRequests, reviewRequest, cancelRequest };
+module.exports = {
+  requestAdoption,
+  myRequests,
+  receivedRequests,
+  reviewRequest,
+  cancelRequest
+};

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog — Pet Rehoming</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .blog-content { line-height:1.85; color:#374151; font-size:0.97rem; }
+    .blog-content p  { margin-bottom:16px; }
+    .blog-content h2 { font-size:1.2rem; margin:24px 0 10px; color:#1c2b3a; }
+    .blog-content h3 { font-size:1.05rem; margin:20px 0 8px; color:#1c2b3a; }
+    .blog-content ul, .blog-content ol { margin:0 0 16px 24px; }
+    .blog-content li { margin-bottom:6px; }
+    .blog-content blockquote { border-left:3px solid #2a9d8f; padding:10px 16px; background:#e6f5f3; border-radius:0 8px 8px 0; margin:16px 0; color:#21867a; font-style:italic; }
+    .comment-item { padding:14px 0; border-bottom:1px solid #e5e7eb; }
+    .comment-item:last-child { border-bottom:none; }
+    .comment-avatar { width:32px; height:32px; border-radius:50%; background:#2a9d8f; color:#fff; font-size:0.78rem; font-weight:bold; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+
+    <div id="loading-area" class="loading-wrap"><div class="spinner"></div></div>
+    <div id="error-area" class="hidden">
+      <div class="alert alert-danger" id="error-msg">Blog not found.</div>
+      <a href="blogs.html" class="btn btn-secondary" style="margin-top:8px">← Back to Blogs</a>
+    </div>
+
+    <div id="content-area" class="hidden">
+      <div style="display:grid;grid-template-columns:1fr 260px;gap:32px;align-items:start">
+
+        <!-- MAIN -->
+        <div>
+          <div style="margin-bottom:16px">
+            <a href="blogs.html" style="font-size:0.86rem;color:#6b7a8d">← All Blogs</a>
+          </div>
+
+          <div id="cat-label" style="font-size:0.76rem;font-weight:bold;color:#2a9d8f;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px"></div>
+          <h1 id="blog-title" style="font-size:1.7rem;margin-bottom:12px;line-height:1.3"></h1>
+
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap">
+            <div id="author-info" style="display:flex;align-items:center;gap:8px;font-size:0.86rem;color:#6b7a8d"></div>
+            <span style="color:#e5e7eb">|</span>
+            <span id="blog-date" style="font-size:0.84rem;color:#9baab8"></span>
+            <span style="color:#e5e7eb">|</span>
+            <span id="blog-views" style="font-size:0.84rem;color:#9baab8"></span>
+          </div>
+
+          <div id="cover-img-area" style="margin-bottom:24px"></div>
+
+          <div id="blog-content" class="blog-content"></div>
+
+          <div id="tags-area" style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap"></div>
+
+          <!-- LIKE -->
+          <div style="display:flex;align-items:center;gap:16px;margin:28px 0;padding:16px;background:#f9f9f7;border-radius:10px">
+            <button id="like-btn" onclick="toggleLike()" style="display:flex;align-items:center;gap:6px;background:none;border:1.5px solid #e5e7eb;padding:8px 16px;border-radius:8px;font-size:0.88rem;font-weight:bold;cursor:pointer;color:#6b7a8d">
+              🤍 <span id="like-count">0</span> Likes
+            </button>
+            <span style="font-size:0.84rem;color:#9baab8">Found this helpful? Share with other pet owners.</span>
+          </div>
+
+          <hr class="divider">
+
+          <!-- COMMENTS -->
+          <div>
+            <h3 style="margin-bottom:16px">Comments <span id="comment-count" style="font-size:0.9rem;color:#9baab8;font-weight:normal"></span></h3>
+
+            <div id="comment-login-prompt" class="hidden" style="margin-bottom:16px">
+              <div class="alert alert-info">
+                <a href="login.html">Log in</a> to leave a comment.
+              </div>
+            </div>
+            <div id="comment-form" class="hidden" style="margin-bottom:20px">
+              <div id="comment-alert"></div>
+              <textarea id="comment-input" class="form-control" rows="3" placeholder="Share your thoughts..."></textarea>
+              <div style="display:flex;justify-content:flex-end;margin-top:8px">
+                <button class="btn btn-primary btn-sm" onclick="submitComment()">Post Comment</button>
+              </div>
+            </div>
+
+            <div id="comments-list">
+              <div class="loading-wrap"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div style="position:sticky;top:80px">
+          <div class="card" style="margin-bottom:16px">
+            <h4 style="margin-bottom:12px">About the Author</h4>
+            <div id="author-card"></div>
+          </div>
+
+          <div class="card" style="margin-bottom:16px">
+            <h4 style="margin-bottom:10px">Browse More</h4>
+            <div id="related-links"></div>
+          </div>
+
+          <div id="owner-actions" class="hidden">
+            <div class="card">
+              <h4 style="margin-bottom:10px">Manage Blog</h4>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <a id="edit-link" href="#" class="btn btn-secondary btn-sm">✏️ Edit</a>
+                <button onclick="deleteBlog()" class="btn btn-danger btn-sm">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="modal-overlay" id="report-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Report Blog</h3>
+      <button class="modal-close" onclick="closeModal('report-modal')">✕</button>
+    </div>
+    <div id="report-alert"></div>
+    <div class="form-group">
+      <label>Reason</label>
+      <select id="report-reason" class="form-control">
+        <option value="spam">Spam</option>
+        <option value="misleading">Misleading</option>
+        <option value="inappropriate">Inappropriate</option>
+        <option value="abuse">Abuse</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Details</label>
+      <textarea id="report-details" class="form-control" rows="3" placeholder="Describe the issue..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('report-modal')">Cancel</button>
+      <button class="btn btn-danger" onclick="submitReport()">Report</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script>
+var blogSlug = null;  // ← THIS is the key fix: read "slug" param, not "id"
+var blogId   = null;
+var currentUser = getUser();
+
+document.addEventListener('DOMContentLoaded', async function() {
+  var params = new URLSearchParams(window.location.search);
+
+  // accept either ?slug=xxx (correct) or ?id=xxx (fallback safety net)
+  blogSlug = params.get('slug');
+  var fallbackId = params.get('id');
+
+  if (!blogSlug && !fallbackId) {
+    showErr('No blog specified in the URL.');
+    return;
+  }
+
+  try {
+    var blog;
+
+    if (blogSlug) {
+      // normal path — fetch by slug
+      var res = await Blogs.get(blogSlug);
+      if (!res || !res.ok) { showErr('Blog not found.'); return; }
+      blog = res.data.blog;
+    } else {
+      // fallback: someone linked with ?id= instead of ?slug=
+      // search published blogs to find matching id, then redirect to correct slug url
+      var listRes = await Blogs.list({ status: 'published', limit: 100 });
+      if (listRes && listRes.ok) {
+        blog = (listRes.data.blogs || []).find(function(b) { return String(b.id) === String(fallbackId); });
+      }
+      if (!blog) { showErr('Blog not found.'); return; }
+      // fix the URL so refresh/share works correctly
+      window.history.replaceState({}, '', 'blog-detail.html?slug=' + blog.slug);
+      blogSlug = blog.slug;
+    }
+
+    blogId = blog.id;
+    renderBlog(blog);
+    loadComments(blog.id);
+    document.getElementById('loading-area').classList.add('hidden');
+    document.getElementById('content-area').classList.remove('hidden');
+  } catch(e) {
+    showErr('Something went wrong loading this blog.');
+  }
+});
+
+function showErr(msg) {
+  document.getElementById('loading-area').classList.add('hidden');
+  document.getElementById('error-msg').textContent = msg || 'Blog not found.';
+  document.getElementById('error-area').classList.remove('hidden');
+}
+
+function renderBlog(blog) {
+  document.title = blog.title + ' — Pet Rehoming';
+
+  document.getElementById('cat-label').textContent = blog.category_name || '';
+  document.getElementById('blog-title').textContent = blog.title;
+  document.getElementById('blog-date').textContent = fmtDate(blog.published_at || blog.created_at);
+  document.getElementById('blog-views').textContent = (blog.views || 0) + ' views';
+
+  var authorInitials = initials(blog.author_name || 'A');
+  document.getElementById('author-info').innerHTML =
+    '<div style="width:28px;height:28px;border-radius:50%;background:#2a9d8f;color:#fff;font-size:0.72rem;font-weight:bold;display:flex;align-items:center;justify-content:center">' + authorInitials + '</div>' +
+    '<span>' + (blog.author_name || 'Author') + '</span>';
+
+  document.getElementById('author-card').innerHTML =
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
+      '<div style="width:40px;height:40px;border-radius:50%;background:#2a9d8f;color:#fff;font-size:0.9rem;font-weight:bold;display:flex;align-items:center;justify-content:center">' + authorInitials + '</div>' +
+      '<div><div style="font-weight:bold;font-size:0.9rem">' + (blog.author_name || 'Author') + '</div></div>' +
+    '</div>' +
+    '<p style="font-size:0.82rem;color:#6b7a8d">Pet care enthusiast sharing knowledge on the Pet Rehoming platform.</p>';
+
+  if (blog.cover_image_url) {
+    document.getElementById('cover-img-area').innerHTML =
+      '<img src="' + imgUrl(blog.cover_image_url) + '" alt="' + blog.title + '" style="width:100%;border-radius:10px;max-height:400px;object-fit:cover">';
+  }
+
+  var content = blog.content || '';
+  if (!content.includes('<')) {
+    content = content.split('\n\n').map(function(para) {
+      return para.trim() ? '<p>' + para.replace(/\n/g, '<br>') + '</p>' : '';
+    }).join('');
+  }
+  document.getElementById('blog-content').innerHTML = content;
+
+  var tags = blog.tags || [];
+  if (tags.length) {
+    document.getElementById('tags-area').innerHTML = tags.map(function(t) {
+      var name = t.name || t;
+      return '<a href="blogs.html?tag=' + name + '" style="display:inline-block;padding:3px 12px;background:#f3f3ef;border-radius:999px;font-size:0.78rem;color:#6b7a8d;text-decoration:none">#' + name + '</a>';
+    }).join('');
+  }
+
+  if (blog.category_name && blog.category_slug) {
+    document.getElementById('related-links').innerHTML =
+      '<a href="blogs.html?category=' + blog.category_slug + '" style="display:block;font-size:0.86rem;color:#2a9d8f;margin-bottom:6px">More ' + blog.category_name + ' articles →</a>' +
+      '<a href="blogs.html" style="display:block;font-size:0.86rem;color:#6b7a8d">All articles →</a>';
+  } else {
+    document.getElementById('related-links').innerHTML =
+      '<a href="blogs.html" style="display:block;font-size:0.86rem;color:#6b7a8d">All articles →</a>';
+  }
+
+  document.getElementById('like-count').textContent = blog.like_count || 0;
+
+  if (currentUser) {
+    document.getElementById('comment-form').classList.remove('hidden');
+  } else {
+    document.getElementById('comment-login-prompt').classList.remove('hidden');
+  }
+
+  var isOwner = currentUser && blog.author_id === currentUser.id;
+  var isAdmin = currentUser && currentUser.role === 'admin';
+  if (isOwner || isAdmin) {
+    document.getElementById('owner-actions').classList.remove('hidden');
+    document.getElementById('edit-link').href = 'write-blog.html?id=' + blog.id;
+  }
+
+  if (currentUser && !isOwner) {
+    document.getElementById('related-links').innerHTML +=
+      '<button onclick="openModal(\'report-modal\')" style="background:none;border:none;font-size:0.78rem;color:#9baab8;cursor:pointer;text-decoration:underline;padding:0;margin-top:12px;display:block">Report this blog</button>';
+  }
+}
+
+async function toggleLike() {
+  if (!getToken()) { window.location.href = 'login.html'; return; }
+  var btn = document.getElementById('like-btn');
+  var countEl = document.getElementById('like-count');
+  try {
+    var res = await Blogs.like(blogId);
+    if (res && res.ok) {
+      var liked = res.data.liked;
+      var current = parseInt(countEl.textContent) || 0;
+      var newCount = liked ? current + 1 : Math.max(0, current - 1);
+      btn.innerHTML = (liked ? '❤️' : '🤍') + ' <span id="like-count">' + newCount + '</span> Likes';
+    }
+  } catch(e) { showToast('Failed to update like.', 'error'); }
+}
+
+async function loadComments(id) {
+  var list = document.getElementById('comments-list');
+  try {
+    var res = await Blogs.getComments(id);
+    if (!res || !res.ok) { list.innerHTML = '<p style="color:#e76f51">Failed to load comments.</p>'; return; }
+    var comments = res.data.comments || [];
+    document.getElementById('comment-count').textContent = '(' + comments.length + ')';
+
+    if (!comments.length) {
+      list.innerHTML = '<p style="color:#9baab8;font-size:0.86rem">No comments yet. Be the first!</p>';
+      return;
+    }
+
+    list.innerHTML = comments.map(function(c) {
+      var canDelete = currentUser && (currentUser.id === c.user_id || currentUser.role === 'admin');
+      return '<div class="comment-item">' +
+        '<div style="display:flex;gap:10px;align-items:flex-start">' +
+          '<div class="comment-avatar">' + initials(c.user_name || 'U') + '</div>' +
+          '<div style="flex:1">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">' +
+              '<div style="font-weight:bold;font-size:0.86rem">' + (c.user_name || 'User') + '</div>' +
+              '<div style="display:flex;align-items:center;gap:8px">' +
+                '<span style="font-size:0.76rem;color:#9baab8">' + timeAgo(c.created_at) + '</span>' +
+                (canDelete ? '<button onclick="deleteComment(' + c.id + ')" style="background:none;border:none;color:#e76f51;font-size:0.76rem;cursor:pointer">Delete</button>' : '') +
+              '</div>' +
+            '</div>' +
+            '<p style="font-size:0.88rem;color:#374151;margin-top:4px;white-space:pre-wrap">' + c.content + '</p>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e) { list.innerHTML = '<p style="color:#e76f51">Failed to load comments.</p>'; }
+}
+
+async function submitComment() {
+  var input = document.getElementById('comment-input');
+  var alertEl = document.getElementById('comment-alert');
+  var content = input.value.trim();
+  alertEl.innerHTML = '';
+
+  if (!content) { alertEl.innerHTML = '<div class="alert alert-danger">Comment cannot be empty.</div>'; return; }
+
+  try {
+    var res = await Blogs.addComment(blogId, { content: content });
+    if (res && res.ok) {
+      input.value = '';
+      showToast('Comment posted!', 'success');
+      loadComments(blogId);
+    } else {
+      alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed.') + '</div>';
+    }
+  } catch(e) { alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>'; }
+}
+
+async function deleteComment(commentId) {
+  if (!confirm('Delete this comment?')) return;
+  try {
+    var res = await Blogs.deleteComment(blogId, commentId);
+    if (res && res.ok) { showToast('Comment deleted.', 'success'); loadComments(blogId); }
+    else showToast('Failed.', 'error');
+  } catch(e) { showToast('Something went wrong.', 'error'); }
+}
+
+async function deleteBlog() {
+  if (!confirm('Delete this blog post? This cannot be undone.')) return;
+  try {
+    var res = await Blogs.delete(blogId);
+    if (res && res.ok) {
+      showToast('Blog deleted.', 'success');
+      setTimeout(function(){ window.location.href = 'blogs.html'; }, 800);
+    } else showToast(res.data.message || 'Failed.', 'error');
+  } catch(e) { showToast('Something went wrong.', 'error'); }
+}
+
+async function submitReport() {
+  var reason  = document.getElementById('report-reason').value;
+  var details = document.getElementById('report-details').value.trim();
+  var alertEl = document.getElementById('report-alert');
+  alertEl.innerHTML = '';
+  try {
+    var res = await Reports.submit({ blog_id: blogId, reason: reason, details: details || undefined });
+    if (res && res.ok) { closeModal('report-modal'); showToast('Report submitted.', 'success'); }
+    else alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed.') + '</div>';
+  } catch(e) { alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>'; }
+}
+</script>
+</body>
+</html>
