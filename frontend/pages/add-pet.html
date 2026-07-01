@@ -226,19 +226,32 @@ async function savePet() {
 
   var petType = document.getElementById('pet-type').value;
   var name    = document.getElementById('name').value.trim();
+  
   if (!petType) { alertArea.innerHTML = '<div class="alert alert-danger">Please select a pet type.</div>'; return; }
   if (!name)    { alertArea.innerHTML = '<div class="alert alert-danger">Pet name is required.</div>'; return; }
 
-  var feeType = document.getElementById('fee-paid').checked ? 'paid' : 'free';
-  var feeAmt  = document.getElementById('adoption-fee').value;
-  if (feeType === 'paid' && !feeAmt) {
-    alertArea.innerHTML = '<div class="alert alert-danger">Please enter the adoption fee.</div>'; return;
+  // --- NEW: Frontend validations to prevent 500 server errors ---
+  
+  var weightVal = document.getElementById('weight').value;
+  if (weightVal && (isNaN(weightVal) || Number(weightVal) < 0)) {
+    alertArea.innerHTML = '<div class="alert alert-danger">Weight must be a valid positive number.</div>';
+    return;
   }
 
-  // convert date input (YYYY-MM-DD) to DD-MM-YYYY for API
   var bd = document.getElementById('birth-date').value;
-  var formattedBd = '';
-  if (bd) { var p = bd.split('-'); formattedBd = p[2]+'-'+p[1]+'-'+p[0]; }
+  if (bd && isNaN(Date.parse(bd))) {
+    alertArea.innerHTML = '<div class="alert alert-danger">Please enter a valid birth date.</div>';
+    return;
+  }
+
+  var feeType = document.getElementById('fee-paid').checked ? 'paid' : 'free';
+  var feeAmt  = document.getElementById('adoption-fee').value;
+  if (feeType === 'paid' && (!feeAmt || isNaN(feeAmt) || Number(feeAmt) <= 0)) {
+    alertArea.innerHTML = '<div class="alert alert-danger">Please enter a valid adoption fee amount.</div>';
+    return;
+  }
+
+  // --- END VALIDATIONS ---
 
   var body = {
     pet_type_id:   parseInt(petType),
@@ -246,8 +259,8 @@ async function savePet() {
     breed:         document.getElementById('breed').value.trim()        || undefined,
     color:         document.getElementById('color').value.trim()        || undefined,
     gender:        document.getElementById('gender').value              || undefined,
-    weight_kg:     document.getElementById('weight').value              || undefined,
-    birth_date:    formattedBd                                          || undefined,
+    weight_kg:     weightVal                                            || undefined,
+    birth_date:    bd                                                    || undefined,
     is_sure:       document.getElementById('is-sure').checked,
     location:      document.getElementById('location').value.trim()    || undefined,
     city:          document.getElementById('city').value.trim()         || undefined,
@@ -272,6 +285,7 @@ async function savePet() {
         window.history.replaceState({}, '', '/pages/add-pet.html?id=' + pid);
         document.getElementById('images-note').textContent = 'Add photos to your listing.';
         document.getElementById('upload-area').style.display = 'block';
+        btn.textContent = 'Update Listing'; // Fix: Update button text since it's now an edit
       }
       showToast(editId ? 'Listing updated!' : 'Saved! Now add photos.', 'success');
       alertArea.innerHTML = '<div class="alert alert-success">Saved! <a href="' + petDetailHref(savedPetId) + '">View listing →</a></div>';
@@ -281,8 +295,12 @@ async function savePet() {
   } catch(e) {
     alertArea.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>';
   }
+  
   btn.disabled = false;
-  btn.textContent = 'Update Listing';
+  // Fix: Restore correct button text based on whether it's a new pet or editing
+  if (!editId) {
+    btn.textContent = 'Save Listing';
+  }
 }
 
 async function handleImageUpload(input) {
