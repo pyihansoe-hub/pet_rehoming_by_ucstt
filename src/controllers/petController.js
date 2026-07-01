@@ -122,11 +122,11 @@ const createPet = async (req, res) => {
        RETURNING *`,
       [
         req.user.id, pet_type_id, name, breed || null,
-        birth_date || null, is_sure || null,
+        birth_date || null, is_sure != null ? is_sure : false,
         gender || null, color || null, weight_kg || null,
         description || null, health_notes || null,
         is_vaccinated, is_neutered,
-        fee_type, fee_type === 'free' ? 0 : adoption_fee,
+        fee_type, fee_type === 'free' ? 0 : (Number(adoption_fee) || 0),
         location || null
       ]
     );
