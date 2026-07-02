@@ -3,8 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blogs — Pet Rehoming</title>
+  <title>Pet Care Blog — Pet Rehoming</title>
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* Warm Blog Header */
+    .blog-hero {
+      text-align: center;
+      padding: 40px 0 24px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .blog-hero p { color: #6b7a8d; max-width: 520px; margin: 8px auto 0; font-size: 0.95rem; line-height:1.6; }
+
+    /* Magazine 2-Column Layout */
+    .blog-grid-layout {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px;
+    }
+    @media(max-width: 768px) {
+      .blog-grid-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Make cards look like articles, not products */
+    .blog-grid-layout .blog-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .blog-grid-layout .blog-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+    }
+    
+    .blog-grid-layout .blog-card-img {
+      height: 210px;
+      width: 100%;
+      object-fit: cover;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .blog-grid-layout .blog-card-placeholder {
+      height: 210px;
+      font-size: 3rem;
+      background: #f9f9f7;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .blog-grid-layout .blog-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 20px;
+    }
+    .blog-grid-layout .blog-card-cat {
+      font-size: 0.72rem;
+      font-weight: bold;
+      color: #2a9d8f;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .blog-grid-layout .blog-card-title {
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: #1c2b3a;
+      margin-bottom: 10px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .blog-grid-layout .blog-card-summary {
+      flex: 1;
+      font-size: 0.88rem;
+      color: #4b5563;
+      line-height: 1.65;
+      display: -webkit-box;
+      
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .blog-grid-layout .blog-card-footer {
+      font-size: 0.8rem;
+      color: #9baab8;
+      display: flex;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid #f3f3ef;
+    }
+  </style>
 </head>
 <body>
 
@@ -15,28 +109,27 @@
 <div class="page-wrap">
   <div class="container">
 
-    <div class="page-header-row">
-      <div>
-        <h1>Pet Care Blogs</h1>
-        <p style="color:#6b7a8d;margin-top:4px" id="result-count">Loading...</p>
-      </div>
-      <a href="/pages/write-blog.html" class="btn btn-primary" id="write-btn" style="display:none">+ Write Blog</a>
+    <div class="blog-hero">
+      <h1>🐾 Pet Care Blog</h1>
+      <p>Expert tips, nutritional advice, and heartwarming stories to help you give your furry friends the best life possible.</p>
+      <a href="/pages/write-blog.html" class="btn btn-primary" id="write-btn" style="display:none; margin-top:16px">+ Write an Article</a>
     </div>
 
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-      <input type="text" id="search" class="form-control" style="flex:1;min-width:200px" placeholder="Search blogs..." oninput="debounceSearch()">
+      <input type="text" id="search" class="form-control" style="flex:1;min-width:200px" placeholder="Search articles..." oninput="debounceSearch()">
       <select id="filter-cat" class="form-control" style="width:180px" onchange="applyFilters()">
         <option value="">All Categories</option>
       </select>
     </div>
 
-    <div id="cat-chips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px"></div>
+    <div id="cat-chips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px"></div>
 
-    <div id="blog-grid" class="grid-3">
+    <!-- Changed from grid-3 to blog-grid-layout -->
+    <div id="blog-grid" class="blog-grid-layout">
       <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
     </div>
 
-    <div id="pagination"></div>
+    <div id="pagination" style="margin-top: 32px;"></div>
 
   </div>
 </div>
@@ -48,7 +141,7 @@
 <script>
 var currentPage = 1;
 var searchTimer = null;
-var LIMIT = 12;
+var LIMIT = 10; // 10 is a good number for 2 columns (makes 5 neat rows)
 
 document.addEventListener('DOMContentLoaded', async function() {
   if (getToken()) document.getElementById('write-btn').style.display = 'inline-block';
@@ -108,10 +201,12 @@ async function loadBlogs() {
     }
     var blogs = res.data.blogs || [];
     var total = res.data.total || 0;
-    document.getElementById('result-count').textContent = total + ' article' + (total !== 1 ? 's' : '');
+    document.getElementById('result-count') // remove result count if you want, or keep it
+    var countEl = document.querySelector('.blog-hero p');
+    if(countEl) countEl.textContent = 'Expert tips and advice to help your pets thrive. ' + total + ' article' + (total !== 1 ? 's' : '') + ' available.';
 
     if (!blogs.length) {
-      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">📝</div><h3>No blogs found</h3><p>Try a different search or category.</p></div>';
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">📝</div><h3>No articles found</h3><p>Try a different search or category.</p></div>';
       document.getElementById('pagination').innerHTML = '';
       return;
     }
