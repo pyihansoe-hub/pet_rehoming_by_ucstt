@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blog — Pet Rehoming</title>
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
   <style>
     .blog-content { line-height:1.85; color:#374151; font-size:0.97rem; }
     .blog-content p  { margin-bottom:16px; }
@@ -30,7 +30,7 @@
     <div id="loading-area" class="loading-wrap"><div class="spinner"></div></div>
     <div id="error-area" class="hidden">
       <div class="alert alert-danger" id="error-msg">Blog not found.</div>
-      <a href="blogs.html" class="btn btn-secondary" style="margin-top:8px">← Back to Blogs</a>
+      <a href="/pages/blogs.html" class="btn btn-secondary" style="margin-top:8px">← Back to Blogs</a>
     </div>
 
     <div id="content-area" class="hidden">
@@ -39,7 +39,7 @@
         <!-- MAIN -->
         <div>
           <div style="margin-bottom:16px">
-            <a href="blogs.html" style="font-size:0.86rem;color:#6b7a8d">← All Blogs</a>
+            <a href="/pages/blogs.html" style="font-size:0.86rem;color:#6b7a8d">← All Blogs</a>
           </div>
 
           <div id="cat-label" style="font-size:0.76rem;font-weight:bold;color:#2a9d8f;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px"></div>
@@ -73,22 +73,27 @@
           <div>
             <h3 style="margin-bottom:16px">Comments <span id="comment-count" style="font-size:0.9rem;color:#9baab8;font-weight:normal"></span></h3>
 
-            <div id="comment-login-prompt" class="hidden" style="margin-bottom:16px">
-              <div class="alert alert-info">
-                <a href="login.html">Log in</a> to leave a comment.
-              </div>
-            </div>
-            <div id="comment-form" class="hidden" style="margin-bottom:20px">
-              <div id="comment-alert"></div>
-              <textarea id="comment-input" class="form-control" rows="3" placeholder="Share your thoughts..."></textarea>
-              <div style="display:flex;justify-content:flex-end;margin-top:8px">
-                <button class="btn btn-primary btn-sm" onclick="submitComment()">Post Comment</button>
-              </div>
-            </div>
-
+            <!-- MOVED: Comment list is now FIRST so new comments appear above the box -->
             <div id="comments-list">
               <div class="loading-wrap"><div class="spinner"></div></div>
             </div>
+
+            <!-- MOVED: Login prompt and form are now BELOW the list -->
+            <div style="margin-top:20px; border-top:1px solid #e5e7eb; padding-top:20px;">
+              <div id="comment-login-prompt" class="hidden" style="margin-bottom:16px">
+                <div class="alert alert-info">
+                  <a href="/pages/login.html">Log in</a> to leave a comment.
+                </div>
+              </div>
+              <div id="comment-form" class="hidden">
+                <div id="comment-alert"></div>
+                <textarea id="comment-input" class="form-control" rows="3" placeholder="Share your thoughts..."></textarea>
+                <div style="display:flex;justify-content:flex-end;margin-top:8px">
+                  <button class="btn btn-primary btn-sm" onclick="submitComment()">Post Comment</button>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -152,47 +157,28 @@
 
 <footer class="footer" id="footer"></footer>
 
-<script src="../js/api.js"></script>
-<script src="../js/app.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/app.js"></script>
 <script>
-var blogSlug = null;  // ← THIS is the key fix: read "slug" param, not "id"
 var blogId   = null;
 var currentUser = getUser();
 
 document.addEventListener('DOMContentLoaded', async function() {
   var params = new URLSearchParams(window.location.search);
+  blogId = params.get('id');
 
-  // accept either ?slug=xxx (correct) or ?id=xxx (fallback safety net)
-  blogSlug = params.get('slug');
-  var fallbackId = params.get('id');
-
-  if (!blogSlug && !fallbackId) {
+  if (!blogId) {
     showErr('No blog specified in the URL.');
     return;
   }
 
   try {
-    var blog;
-
-    if (blogSlug) {
-      // normal path — fetch by slug
-      var res = await Blogs.get(blogSlug);
-      if (!res || !res.ok) { showErr('Blog not found.'); return; }
-      blog = res.data.blog;
-    } else {
-      // fallback: someone linked with ?id= instead of ?slug=
-      // search published blogs to find matching id, then redirect to correct slug url
-      var listRes = await Blogs.list({ status: 'published', limit: 100 });
-      if (listRes && listRes.ok) {
-        blog = (listRes.data.blogs || []).find(function(b) { return String(b.id) === String(fallbackId); });
-      }
-      if (!blog) { showErr('Blog not found.'); return; }
-      // fix the URL so refresh/share works correctly
-      window.history.replaceState({}, '', 'blog-detail.html?slug=' + blog.slug);
-      blogSlug = blog.slug;
-    }
-
-    blogId = blog.id;
+    var res = await Blogs.get(blogId);
+    if (!res || !res.ok) { showErr('Blog not found.'); return; }
+    
+    var blog = res.data.blog;
+    blogId = blog.id; 
+    
     renderBlog(blog);
     loadComments(blog.id);
     document.getElementById('loading-area').classList.add('hidden');
@@ -245,19 +231,20 @@ function renderBlog(blog) {
   if (tags.length) {
     document.getElementById('tags-area').innerHTML = tags.map(function(t) {
       var name = t.name || t;
-      return '<a href="blogs.html?tag=' + name + '" style="display:inline-block;padding:3px 12px;background:#f3f3ef;border-radius:999px;font-size:0.78rem;color:#6b7a8d;text-decoration:none">#' + name + '</a>';
+      return '<a href="/pages/blogs.html?tag=' + encodeURIComponent(name) + '" style="display:inline-block;padding:3px 12px;background:#f3f3ef;border-radius:999px;font-size:0.78rem;color:#6b7a8d;text-decoration:none">#' + name + '</a>';
     }).join('');
   }
 
   if (blog.category_name && blog.category_slug) {
     document.getElementById('related-links').innerHTML =
-      '<a href="blogs.html?category=' + blog.category_slug + '" style="display:block;font-size:0.86rem;color:#2a9d8f;margin-bottom:6px">More ' + blog.category_name + ' articles →</a>' +
-      '<a href="blogs.html" style="display:block;font-size:0.86rem;color:#6b7a8d">All articles →</a>';
+      '<a href="/pages/blogs.html?category=' + blog.category_slug + '" style="display:block;font-size:0.86rem;color:#2a9d8f;margin-bottom:6px">More ' + blog.category_name + ' articles →</a>' +
+      '<a href="/pages/blogs.html" style="display:block;font-size:0.86rem;color:#6b7a8d">All articles →</a>';
   } else {
     document.getElementById('related-links').innerHTML =
-      '<a href="blogs.html" style="display:block;font-size:0.86rem;color:#6b7a8d">All articles →</a>';
+      '<a href="/pages/blogs.html" style="display:block;font-size:0.86rem;color:#6b7a8d">All articles →</a>';
   }
 
+  // This will now pull the correct number from the backend!
   document.getElementById('like-count').textContent = blog.like_count || 0;
 
   if (currentUser) {
@@ -270,7 +257,7 @@ function renderBlog(blog) {
   var isAdmin = currentUser && currentUser.role === 'admin';
   if (isOwner || isAdmin) {
     document.getElementById('owner-actions').classList.remove('hidden');
-    document.getElementById('edit-link').href = 'write-blog.html?id=' + blog.id;
+    document.getElementById('edit-link').href = '/pages/write-blog.html?id=' + blog.id;
   }
 
   if (currentUser && !isOwner) {
@@ -280,7 +267,7 @@ function renderBlog(blog) {
 }
 
 async function toggleLike() {
-  if (!getToken()) { window.location.href = 'login.html'; return; }
+  if (!getToken()) { window.location.href = '/pages/login.html'; return; }
   var btn = document.getElementById('like-btn');
   var countEl = document.getElementById('like-count');
   try {
@@ -363,7 +350,7 @@ async function deleteBlog() {
     var res = await Blogs.delete(blogId);
     if (res && res.ok) {
       showToast('Blog deleted.', 'success');
-      setTimeout(function(){ window.location.href = 'blogs.html'; }, 800);
+      setTimeout(function(){ window.location.href = '/pages/blogs.html'; }, 800);
     } else showToast(res.data.message || 'Failed.', 'error');
   } catch(e) { showToast('Something went wrong.', 'error'); }
 }

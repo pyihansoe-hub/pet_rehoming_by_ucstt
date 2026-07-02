@@ -111,11 +111,25 @@ var Monitoring = {
   getHealthLogs:   function(petId)         { return get('/api/monitoring/pets/' + petId + '/health-logs'); },
   deleteHealthLog: function(petId, logId)  { return del('/api/monitoring/pets/' + petId + '/health-logs/' + logId); },
 };
-
 var Blogs = {
   categories:   function()        { return get('/api/blogs/categories'); },
   list:         function(q)       { return get('/api/blogs?' + new URLSearchParams(q)); },
-  get:          function(slug)    { return get('/api/blogs/' + slug); },
+  
+  // FIXED: Handles both ?id= (number) and ?slug= (string)
+  get: async function(idOrSlug) {
+    
+    if (!isNaN(idOrSlug)) {
+      var res = await get('/api/blogs?limit=200');
+      if (res && res.ok && res.data && res.data.blogs) {
+        var blog = res.data.blogs.find(function(b) { return String(b.id) === String(idOrSlug); });
+        if (blog) return { ok: true, data: { blog: blog } };
+      }
+      return { ok: false, data: { message: 'Blog not found' } };
+    }
+    // If it's text (a slug), use normal backend route
+    return get('/api/blogs/' + idOrSlug); 
+  },
+
   create:       function(fd)      { return postForm('/api/blogs', fd); },
   update:       function(id, fd)  { return patchForm('/api/blogs/' + id, fd); },
   delete:       function(id)      { return del('/api/blogs/' + id); },

@@ -33,7 +33,6 @@ const createCategory = async (req, res) => {
 };
 
 // ── Blogs ──────────────────────────────────────────────────────────────────
-
 const BLOG_SELECT = `
 SELECT
   b.*,
@@ -41,6 +40,7 @@ SELECT
   u.avatar_url AS author_avatar,
   bc.name AS category_name,
   bc.slug AS category_slug,
+  (SELECT COUNT(*) FROM blog_likes bl WHERE bl.blog_id = b.id) AS like_count,
   COALESCE(
     json_agg(DISTINCT jsonb_build_object('id', t.id, 'name', t.name))
     FILTER (WHERE t.id IS NOT NULL), '[]'
@@ -51,7 +51,6 @@ LEFT JOIN blog_categories bc ON bc.id=b.category_id
 LEFT JOIN blog_tags bt ON bt.blog_id=b.id
 LEFT JOIN tags t ON t.id=bt.tag_id
 `;
-
 // GET /api/blogs
 const listBlogs = async (req, res) => {
   const { category, pet_type, status = 'published', search, page = 1, limit = 20, tag } = req.query;
@@ -100,7 +99,7 @@ const getBlog = async (req, res) => {
 // POST /api/blogs
 const createBlog = async (req, res) => {
   const { title, content, summary, category_id, status = 'draft', tags = [] } = req.body;
-  const cover_image_url = req.file ? '/uploads/blogs/${req.file.filename}' : null;
+  const cover_image_url = req.file ? `/uploads/blogs/${req.file.filename}` : null;
   if (!title || !content) return res.status(400).json({ message: 'Title and content are required.' });
 
   const client = await pool.connect();
@@ -138,7 +137,7 @@ const createBlog = async (req, res) => {
 // PATCH /api/blogs/:id
 const updateBlog = async (req, res) => {
   const { title, content, summary, category_id, status, tags } = req.body;
-  const cover_image_url = req.file ? '/uploads/blogs/${req.file.filename}' : undefined;
+  const cover_image_url = req.file ? `/uploads/blogs/${req.file.filename}` : undefined;
 
   try {
     const check = await pool.query('SELECT author_id, status FROM blogs WHERE id=$1', [req.params.id]);
@@ -177,7 +176,12 @@ const updateBlog = async (req, res) => {
       }
     }
 
-    res.json({ message: 'Blog updated.' });
+        // Fetch the updated blog to return it to the frontend
+    const { rows: updatedRows } = await pool.query(
+      `${BLOG_SELECT} WHERE b.id=$1 GROUP BY b.id, u.name, u.avatar_url, bc.name, bc.slug`,
+      [req.params.id]
+    );
+    res.json({ message: 'Blog updated.', blog: updatedRows[0] });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 

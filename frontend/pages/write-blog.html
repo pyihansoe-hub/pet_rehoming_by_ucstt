@@ -327,7 +327,6 @@ function removeCoverPreview() {
   document.getElementById('cover-preview-area').innerHTML = '';
 }
 
-// ── SAVE ──────────────────────────────────────────────────────
 async function saveBlog(forceStatus) {
   var alertArea  = document.getElementById('alert-area');
   var draftBtn   = document.getElementById('draft-btn');
@@ -355,36 +354,35 @@ async function saveBlog(forceStatus) {
 
   if (summary) fd.append('summary',     summary);
   if (catId)   fd.append('category_id', catId);
-  if (cover)   fd.append('cover',       cover);
+  if (cover)   fd.append('cover', cover);
   if (tags.length) fd.append('tags', JSON.stringify(tags));
 
-  try {
+    try {
     var res = editId
       ? await Blogs.update(editId, fd)
       : await Blogs.create(fd);
 
     if (res && res.ok) {
       var savedBlog = res.data.blog;
-      var bid  = editId || savedBlog.id;
-      var slug = savedBlog ? savedBlog.slug : null;
+      
+      // If editing, grab the ID to update the URL bar
+      if (!editId && savedBlog) {
+        editId = savedBlog.id || savedBlog._id;
+        if (editId) {
+          window.history.replaceState({}, '', '/pages/write-blog.html?id=' + editId);
+          document.getElementById('page-title').textContent = 'Edit Blog';
+          document.getElementById('publish-btn').textContent = 'Update';
+        }
+      }
 
       showToast(status === 'published' ? 'Blog published!' : 'Draft saved.', 'success');
 
-      if (status === 'published' && slug) {
-        setTimeout(function(){ window.location.href = '/pages/blog-detail.html?slug=' + slug; }, 700);
-        return;
+      // Always redirect to the blogs list page after publishing or saving draft
+      if (status === 'published') {
+        setTimeout(function(){ window.location.href = '/pages/blogs.html'; }, 500);
+      } else {
+        alertArea.innerHTML = '<div class="alert alert-success">Draft saved.</div>';
       }
-
-      // stay on page, update URL if new
-      if (!editId) {
-        editId = bid;
-        window.history.replaceState({}, '', '/pages/write-blog.html?id=' + bid);
-        document.getElementById('page-title').textContent = 'Edit Blog';
-        document.getElementById('publish-btn').textContent = 'Update';
-      }
-
-      alertArea.innerHTML = '<div class="alert alert-success">Saved as ' + status + '.' +
-        (slug ? ' <a href="/pages/blog-detail.html?slug=' + slug + '">View →</a>' : '') + '</div>';
     } else {
       alertArea.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed to save.') + '</div>';
     }

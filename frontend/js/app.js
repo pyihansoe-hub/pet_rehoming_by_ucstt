@@ -38,12 +38,18 @@ function showToast(msg, type) {
 }
 
 // ===== IMAGE URL =====
+// function imgUrl(path) {
+//   if (!path) return '';
+//   if (path.startsWith('http')) return path;
+//   return window.location.protocol + '//' + window.location.hostname + ':3000' + path;
+// }
+
 function imgUrl(path) {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  return 'http://localhost:3000' + path;
+  // Automatically uses 192.168.100.49:3000 when on phone, localhost:3000 when on PC
+  return window.location.protocol + '//' + window.location.hostname + ':3000' + path;
 }
-
 function petIdOf(pet) {
   return pet && (pet.id || pet._id || pet.pet_id);
 }
@@ -52,7 +58,15 @@ function petDetailHref(pet) {
   var id = typeof pet === 'object' ? petIdOf(pet) : pet;
   return '/pages/pet-detail?id=' + encodeURIComponent(id);
 }
+// ===== BLOG ID HELPERS (Same pattern as pets) =====
+function blogIdOf(blog) {
+  return blog && (blog.id || blog._id || blog.blog_id);
+}
 
+function blogDetailHref(blog) {
+  var id = typeof blog === 'object' ? blogIdOf(blog) : blog;
+  return '/pages/blog-detail?id=' + encodeURIComponent(id);
+}
 // ===== INITIALS =====
 function initials(name) {
   if (!name) return '?';
@@ -323,11 +337,13 @@ function petCardHtml(pet) {
 
 // ===== BLOG CARD =====
 function blogCardHtml(blog) {
-  var imgHtml = blog.cover_image_url
-    ? '<img class="blog-card-img" src="' + imgUrl(blog.cover_image_url) + '" alt="' + blog.title + '">'
+  var img = blog.cover_image_url;
+  var imgHtml = img
+    ? '<img class="blog-card-img" src="' + imgUrl(img) + '" alt="' + blog.title + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">' +
+      '<div class="blog-card-placeholder" style="display:none">📝</div>'
     : '<div class="blog-card-placeholder">📝</div>';
 
-  return '<div class="blog-card" onclick="window.location.href=\'' + p('blog-detail.html') + '?slug=' + blog.slug + '\'" style="cursor:pointer">' +
+  return '<div class="blog-card" onclick="window.location.href=\'' + blogDetailHref(blog) + '\'" style="cursor:pointer">' +
     imgHtml +
     '<div class="blog-card-body">' +
       '<div class="blog-card-cat">' + (blog.category_name || 'General') + '</div>' +
