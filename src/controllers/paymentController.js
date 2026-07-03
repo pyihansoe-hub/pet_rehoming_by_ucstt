@@ -170,10 +170,90 @@ const getPayment = async (req, res) => {
     res.status(500).json({ message: 'Server error.', error: err.message });
   }
 };
+// POST /api/payments/simulate — Demo payment flow (PAYS AT REQUEST TIME)
+const simulatePayment = async (req, res) => {
+  const { adoption_request_id } = req.body;
+  if (!adoption_request_id) return res.status(400).json({ message: 'Adoption request ID is required.' });
 
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // 1. Verify request is PENDING (not approved yet) and is a paid type
+    const { rows: reqRows } = await client.query(
+      `SELECT ar.id, ar.requester_id, ar.pet_id, ar.payment_id, p.adoption_fee, p.name as pet_name, p.owner_id
+       FROM adoption_requests ar 
+       JOIN pets p ON p.id = ar.pet_id
+       WHERE ar.id = $1 AND ar.status = 'pending' AND p.fee_type = 'paid'`,
+      [adoption_request_id]
+    );
+    
+    if (!reqRows.length) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ message: 'Invalid request. Must be pending and a paid adoption.' });
+    }
+
+    const reqData = reqRows[0];
+
+    // Check if already paid
+    if (reqData.payment_id) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ message: 'Payment already made for this request.' });
+    }
+
+    // 2. Create the payment record as 'completed'
+    const { rows: payRows } = await client.query(
+      `INSERT INTO payments (user_id, adoption_request_id, amount, currency, description, status, metadata)
+       VALUES ($1, $2, $3, 'MMK', $4, 'completed', $5) RETURNING *`,
+      [
+        reqData.requester_id, 
+        adoption_request_id, 
+        reqData.adoption_fee, 
+        'Adoption fee for ' + reqData.pet_name,
+        JSON.stringify({ simulated: true })
+      ]
+    );
+
+    const payment = payRows[0];
+
+    // 3. Link payment to the adoption request
+    await client.query(
+      `UPDATE adoption_requests SET payment_id = $1, updated_at = NOW() WHERE id = $2`,
+      [payment.id, adoption_request_id]
+    );
+
+    // 4. Notify the OWNER that payment is done (fix: use owner_id, not requester_id)
+    // Make sure you have a notify function imported/defined
+    if (typeof notify === 'function') {
+      await notify(reqData.owner_id, {
+        type: 'payment_received',
+        title: 'Payment Received!',
+        body: 'An adopter has paid ' + reqData.adoption_fee + ' MMK for ' + reqData.pet_name + '. Please review and approve.',
+        link: '/pages/adoption-requests.html?tab=received',
+      });
+    }
+
+    // NOTE: We do NOT mark pet as adopted here!
+    // That happens when the OWNER clicks "Approve"
+
+    await client.query('COMMIT');
+    
+    res.json({ 
+      message: 'Payment successful!', 
+      payment: payment 
+    });
+
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ message: 'Simulation failed.', error: err.message });
+  } finally {
+    client.release();
+  }
+};
 module.exports = {
   initiatePayment,
   verifyPayment,
   listPayments,
-  getPayment
+  getPayment,
+  simulatePayment
 };

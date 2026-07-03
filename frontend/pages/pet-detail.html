@@ -17,6 +17,9 @@
     .info-item { background:#f3f3ef; border-radius:8px; padding:10px 14px; }
     .info-label { font-size:0.72rem; color:#9baab8; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px; }
     .info-value { font-size:0.88rem; font-weight:bold; color:#1c2b3a; }
+    .comment-item { padding:14px 0; border-bottom:1px solid #e5e7eb; }
+    .comment-item:last-child { border-bottom:none; }
+    .comment-avatar { width:32px; height:32px; border-radius:50%; background:#2a9d8f; color:#fff; font-size:0.78rem; font-weight:bold; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     @media(max-width:700px){ .gallery{ grid-template-columns:1fr; max-height:none; } .gallery-thumbs{ flex-direction:row; overflow-x:auto; } .gallery-thumb{ width:70px; height:70px; } .info-grid{ grid-template-columns:1fr 1fr; } }
   </style>
 </head>
@@ -28,7 +31,6 @@
 
 <div class="page-wrap">
   <div class="container">
-
     <div id="loading-area" class="loading-wrap"><div class="spinner"></div></div>
     <div id="error-area" class="hidden">
       <div class="alert alert-danger">Pet not found or failed to load.</div>
@@ -41,10 +43,7 @@
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 320px;gap:32px;align-items:start">
-
-        <!-- LEFT -->
         <div>
-          <!-- gallery -->
           <div class="gallery" id="gallery">
             <div class="gallery-main" id="gallery-main">
               <div class="gallery-main-placeholder">🐾</div>
@@ -52,7 +51,6 @@
             <div class="gallery-thumbs" id="gallery-thumbs"></div>
           </div>
 
-          <!-- tabs -->
           <div id="tabs-wrap">
             <div class="tabs">
               <button class="tab-btn active" data-tab="tab-about">About</button>
@@ -60,25 +58,15 @@
               <button class="tab-btn" data-tab="tab-history" id="history-tab-btn" style="display:none">Status History</button>
               <button class="tab-btn" data-tab="tab-logs" id="logs-tab-btn" style="display:none">Health Logs</button>
             </div>
-
-            <!-- About -->
             <div class="tab-panel active" id="tab-about">
               <div class="info-grid" id="info-grid"></div>
               <div id="description-area"></div>
             </div>
-
-            <!-- Health -->
             <div class="tab-panel" id="tab-health">
               <div id="health-badges" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"></div>
               <div id="health-notes-area"></div>
             </div>
-
-            <!-- Status History -->
-            <div class="tab-panel" id="tab-history">
-              <div id="status-history-list"></div>
-            </div>
-
-            <!-- Health Logs (owner only) -->
+            <div class="tab-panel" id="tab-history"><div id="status-history-list"></div></div>
             <div class="tab-panel" id="tab-logs">
               <div id="health-logs-list"></div>
               <div id="add-log-area" class="hidden" style="margin-top:16px">
@@ -117,9 +105,34 @@
               </div>
             </div>
           </div>
+
+          <div style="display:flex; align-items:center; margin:24px 0; padding:16px; background:#f9f9f7; border-radius:10px;">
+            <button id="like-btn" onclick="togglePetLike()" style="display:flex; align-items:center; background:none; border:1.5px solid #e5e7eb; padding:8px 16px; border-radius:8px; font-size:0.88rem; font-weight:bold; cursor:pointer; color:#6b7a8d; margin-right:16px;">
+              🤍 <span id="like-count" style="margin-left:6px;">0</span> Likes
+            </button>
+            <span style="font-size:0.84rem; color:#9baab8;">Love this pet? Give them a heart!</span>
+          </div>
+
+          <hr class="divider">
+
+          <div>
+            <h3 style="margin-bottom:16px;">Questions & Comments <span id="comment-count" style="font-size:0.9rem; color:#9baab8; font-weight:normal;"></span></h3>
+            <div id="comments-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+            <div style="margin-top:20px; padding-top:20px; border-top:1px solid #e5e7eb;">
+              <div id="comment-login-prompt" class="hidden" style="margin-bottom:16px;">
+                <div class="alert alert-info"><a href="/pages/login.html">Log in</a> to leave a comment.</div>
+              </div>
+              <div id="comment-form" class="hidden">
+                <div id="comment-alert"></div>
+                <textarea id="comment-input" class="form-control" rows="3" placeholder="Ask a question about this pet..."></textarea>
+                <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+                  <button class="btn btn-primary btn-sm" onclick="submitPetComment()">Post Comment</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- RIGHT SIDEBAR -->
         <div>
           <div class="card" style="margin-bottom:16px">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
@@ -127,36 +140,27 @@
               <span id="pet-status-pill"></span>
             </div>
             <p id="pet-type-breed" style="color:#6b7a8d;font-size:0.88rem;margin-bottom:12px"></p>
-
             <div id="fee-area" style="margin-bottom:16px;padding:12px;background:#f3f3ef;border-radius:8px">
               <div style="font-size:0.78rem;color:#9baab8;margin-bottom:2px">Adoption Fee</div>
               <div id="fee-value" style="font-size:1.3rem;font-weight:bold"></div>
             </div>
-
             <div style="font-size:0.82rem;color:#6b7a8d;margin-bottom:16px" id="location-area"></div>
-
             <div id="action-area"></div>
           </div>
-
-          <!-- owner info -->
           <div class="card" id="owner-card" style="margin-bottom:16px">
             <h4 style="margin-bottom:10px">Listed by</h4>
             <div id="owner-info"></div>
           </div>
-
-          <!-- report -->
           <div style="text-align:center">
             <button onclick="openReportModal()" style="background:none;border:none;color:#9baab8;font-size:0.8rem;cursor:pointer;text-decoration:underline">Report this listing</button>
           </div>
         </div>
-
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- ADOPT MODAL -->
+<!-- ADOPT & PAY MODAL -->
 <div class="modal-overlay" id="adopt-modal">
   <div class="modal">
     <div class="modal-header">
@@ -164,19 +168,60 @@
       <button class="modal-close" onclick="closeModal('adopt-modal')">✕</button>
     </div>
     <div id="adopt-alert"></div>
+    
+    <div id="adopt-fee-area" style="display:none; margin-bottom:16px; padding:16px;background:#fef3c7; border:1px solid #fcd34d; border-radius:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:0.84rem;color:#92400e;font-weight:bold;">Adoption Fee</div>
+          <div id="adopt-fee-amount" style="font-size:1.4rem;font-weight:bold;color:#92400e;"></div>
+        </div>
+        <div style="text-align:right;">
+          <span style="font-size:0.76rem;color:#78716c;">Secure Payment</span>
+        </div>
+      </div>
+    </div>
+
     <p style="color:#6b7a8d;font-size:0.88rem;margin-bottom:16px">Tell the owner a bit about yourself and why you'd be a great fit.</p>
     <div class="form-group">
       <label for="adopt-message">Message (optional)</label>
       <textarea id="adopt-message" class="form-control" rows="4" placeholder="I have a large garden, work from home..."></textarea>
     </div>
-    <div style="display:flex;gap:10px;justify-content:flex-end">
+
+    <div id="adopt-pay-area" style="display:none; margin-bottom:16px;">
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;justify-content:center;padding:10px;background:#f0fdf4;border-radius:6px;">
+          <span style="font-size:1.5rem;">🔒</span>
+          <span style="font-size:0.88rem;color:#166534;font-weight:600;">Secure Payment Gateway</span>
+        </div>
+        
+        <div class="form-group">
+          <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">Name on Card</label>
+          <input type="text" id="adopt-pay-name" class="form-control" placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">Card Number</label>
+          <input type="text" id="adopt-pay-card" class="form-control" placeholder="4242 4242 4242 4242" maxlength="19" autocomplete="cc-number">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">Expiry Date</label>
+            <input type="text" id="adopt-pay-expiry" class="form-control" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp">
+          </div>
+          <div class="form-group">
+            <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">CVV</label>
+            <input type="password" id="adopt-pay-cvv" class="form-control" placeholder="•••" maxlength="4" inputmode="numeric">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button class="btn btn-secondary" onclick="closeModal('adopt-modal')">Cancel</button>
-      <button class="btn btn-primary" id="adopt-submit-btn" onclick="submitAdoption()">Submit Request</button>
+      <button class="btn btn-primary" id="adopt-submit-btn" onclick="submitAdoption()" style="background:#166534;min-width:160px;">Submit Request</button>
     </div>
   </div>
 </div>
 
-<!-- REPORT MODAL -->
 <div class="modal-overlay" id="report-modal">
   <div class="modal">
     <div class="modal-header">
@@ -207,87 +252,48 @@
 </div>
 
 <footer class="footer" id="footer"></footer>
-<script>
-const originalReplaceState = history.replaceState;
-history.replaceState = function (...args) {
-    console.trace("replaceState called");
-    return originalReplaceState.apply(this, args);
-};
 
-const originalPushState = history.pushState;
-history.pushState = function (...args) {
-    console.trace("pushState called");
-    return originalPushState.apply(this, args);
-};
-</script>
 <script src="/js/api.js"></script>
 <script src="/js/app.js"></script>
 <script>
-console.log("Before anything:", window.location.href);
 var petId = null;
 var petData = null;
 var currentUser = getUser();
-
 var LOG_ICONS = { vaccination:'💉', vet_visit:'🏥', deworming:'💊', weight:'⚖️', other:'📋' };
 
-// document.addEventListener('DOMContentLoaded', async function() {
-//   var params = new URLSearchParams(window.location.search);
-//   petId = params.get('id');
-//   if (!petId) { showErr(); return; }
-
-//   initTabs('tabs-wrap');
-
-//   try {
-//     var res = await Pets.get(petId);
-//     if (!res || !res.ok) { showErr(); return; }
-//     petData = res.data.pet;
-//     renderPet(petData);
-//     document.getElementById('loading-area').classList.add('hidden');
-//     document.getElementById('content-area').classList.remove('hidden');
-//   } catch(e) { showErr(); }
-// });
 document.addEventListener('DOMContentLoaded', async function() {
   var params = new URLSearchParams(window.location.search);
   petId = params.get('id');
-
-  console.log('petId =', petId);
-
-  if (!petId) {
-    console.log('No petId found');
-    showErr();
-    return;
-  }
-
+  if (!petId) { showErr(); return; }
   initTabs('tabs-wrap');
 
   try {
     var res = await Pets.get(petId);
-
-    console.log('API response =', res);
-
-    if (!res || !res.ok) {
-      console.log('API failed');
-      showErr();
-      return;
-    }
-
+    if (!res || !res.ok) { showErr(); return; }
     petData = res.data.pet;
-
-    console.log('petData =', petData);
-
     renderPet(petData);
-
-    console.log('renderPet finished');
-
+    loadPetComments(petData.id);
     document.getElementById('loading-area').classList.add('hidden');
     document.getElementById('content-area').classList.remove('hidden');
-
-  } catch(e) {
-    console.error('ERROR:', e);
-    showErr();
+  } catch(e) { showErr(); }
+  
+  // Card formatting listeners
+  var cardInput = document.getElementById('adopt-pay-card');
+  var expiryInput = document.getElementById('adopt-pay-expiry');
+  if (cardInput) {
+    cardInput.addEventListener('input', function(e) {
+      var val = e.target.value.replace(/\D/g, '').substring(0, 16);
+      e.target.value = val.replace(/(.{4})/g, '$1 ').trim();
+    });
+  }
+  if (expiryInput) {
+    expiryInput.addEventListener('input', function(e) {
+      var val = e.target.value.replace(/\D/g, '').substring(0, 4);
+      if (val.length >= 3) val = val.substring(0,2) + '/' + val.substring(2);
+      e.target.value = val;
+    });
   }
 });
-//here
 
 function showErr() {
   document.getElementById('loading-area').classList.add('hidden');
@@ -296,54 +302,38 @@ function showErr() {
 
 function renderPet(pet) {
   document.title = pet.name + ' — Pet Rehoming';
-
-  // gallery
   var images = pet.images || [];
   var mainEl = document.getElementById('gallery-main');
   var thumbsEl = document.getElementById('gallery-thumbs');
 
   if (images.length) {
-    // hide thumbs col if only 1 image
     if (images.length === 1) document.getElementById('gallery').style.gridTemplateColumns = '1fr';
-
     var primary = images.find(function(i){ return i.is_primary; }) || images[0];
     mainEl.innerHTML = '<img id="main-img" src="' + imgUrl(primary.url) + '" alt="' + pet.name + '">';
-
     if (images.length > 1) {
-      thumbsEl.innerHTML = images.map(function(img, idx) {
+      thumbsEl.innerHTML = images.map(function(img) {
         return '<img class="gallery-thumb' + (img.is_primary ? ' active' : '') + '" src="' + imgUrl(img.url) + '" alt="" onclick="setMainImg(this,\'' + imgUrl(img.url) + '\')">';
       }).join('');
     }
   }
 
-  // name + status
   document.getElementById('pet-name').textContent = pet.name;
   document.getElementById('pet-status-pill').innerHTML = pill(pet.status);
-
-  // type + breed
   var typeBreed = pet.pet_type_name || '';
   if (pet.breed) typeBreed += ' · ' + pet.breed;
   if (pet.gender) typeBreed += ' · ' + pet.gender.charAt(0).toUpperCase() + pet.gender.slice(1);
   document.getElementById('pet-type-breed').textContent = typeBreed;
 
-  // fee
   document.getElementById('fee-value').textContent = pet.fee_type === 'free' ? 'Free' : fmtMoney(pet.adoption_fee);
   document.getElementById('fee-area').style.background = pet.fee_type === 'free' ? '#eef8f2' : '#fef9ec';
 
-  // location
-  if (pet.city || pet.location) {
-    document.getElementById('location-area').innerHTML = '📍 ' + (pet.city || pet.location);
-  }
-
-  // action buttons
+  if (pet.city || pet.location) document.getElementById('location-area').innerHTML = '📍 ' + (pet.city || pet.location);
   renderActions(pet);
 
-  // owner card
   document.getElementById('owner-info').innerHTML =
     '<div style="font-weight:bold;margin-bottom:4px">' + (pet.owner_name || 'Unknown') + '</div>' +
     (pet.owner_phone ? '<div style="font-size:0.86rem;color:#6b7a8d">📞 ' + pet.owner_phone + '</div>' : '');
 
-  // info grid
   var age = '';
   if (pet.birth_date) {
     var bd = new Date(pet.birth_date);
@@ -353,40 +343,29 @@ function renderPet(pet) {
     var mos = months % 12;
     age = (yrs ? yrs + 'y ' : '') + (mos ? mos + 'm' : '');
     if (!age) age = '< 1m';
-    if (!pet.is_sure) age += ' (est.)';
+    if (pet.is_sure) age += ' (est.)';
   }
 
   var infoItems = [
-    { label: 'Age',    value: age || '—' },
-    { label: 'Gender', value: pet.gender ? (pet.gender.charAt(0).toUpperCase()+pet.gender.slice(1)) : '—' },
-    { label: 'Color',  value: pet.color  || '—' },
-    { label: 'Weight', value: pet.weight_kg ? pet.weight_kg + ' kg' : '—' },
-    { label: 'City',   value: pet.city   || pet.location || '—' },
-    { label: 'Listed', value: fmtDate(pet.created_at) },
+    { label: 'Age', value: age || '—' }, { label: 'Gender', value: pet.gender ? (pet.gender.charAt(0).toUpperCase()+pet.gender.slice(1)) : '—' },
+    { label: 'Color', value: pet.color || '—' }, { label: 'Weight', value: pet.weight_kg ? pet.weight_kg + ' kg' : '—' },
+    { label: 'City', value: pet.city || pet.location || '—' }, { label: 'Listed', value: fmtDate(pet.created_at) },
   ];
   document.getElementById('info-grid').innerHTML = infoItems.map(function(item) {
     return '<div class="info-item"><div class="info-label">' + item.label + '</div><div class="info-value">' + item.value + '</div></div>';
   }).join('');
 
-  // description
   if (pet.description) {
-    document.getElementById('description-area').innerHTML =
-      '<h4 style="margin-bottom:8px;margin-top:16px">About ' + pet.name + '</h4>' +
-      '<p style="color:#6b7a8d;font-size:0.9rem;line-height:1.7">' + pet.description + '</p>';
+    document.getElementById('description-area').innerHTML = '<h4 style="margin-bottom:8px;margin-top:16px">About ' + pet.name + '</h4><p style="color:#6b7a8d;font-size:0.9rem;line-height:1.7">' + pet.description + '</p>';
   }
 
-  // health tab
   var badges = '';
   if (pet.is_vaccinated) badges += '<span class="pill pill-available">✓ Vaccinated</span> ';
-  if (pet.is_neutered)   badges += '<span class="pill pill-available">✓ Neutered</span> ';
+  if (pet.is_neutered) badges += '<span class="pill pill-available">✓ Neutered</span> ';
   if (!pet.is_vaccinated) badges += '<span class="pill pill-withdrawn">✗ Not Vaccinated</span> ';
   document.getElementById('health-badges').innerHTML = badges;
-  if (pet.health_notes) {
-    document.getElementById('health-notes-area').innerHTML =
-      '<p style="color:#6b7a8d;font-size:0.9rem;line-height:1.7">' + pet.health_notes + '</p>';
-  }
+  if (pet.health_notes) document.getElementById('health-notes-area').innerHTML = '<p style="color:#6b7a8d;font-size:0.9rem;line-height:1.7">' + pet.health_notes + '</p>';
 
-  // owner-only tabs
   var isOwner = currentUser && pet.owner_id === currentUser.id;
   var isAdmin = currentUser && currentUser.role === 'admin';
 
@@ -397,6 +376,10 @@ function renderPet(pet) {
     loadStatusHistory();
     loadHealthLogs();
   }
+
+  document.getElementById('like-count').textContent = pet.like_count || 0;
+  if (currentUser) document.getElementById('comment-form').classList.remove('hidden');
+  else document.getElementById('comment-login-prompt').classList.remove('hidden');
 }
 
 function renderActions(pet) {
@@ -404,27 +387,19 @@ function renderActions(pet) {
   var isOwner = currentUser && pet.owner_id === currentUser.id;
 
   if (isOwner) {
-    area.innerHTML =
-      '<a href="/pages/add-pet.html?id=' + pet.id + '" class="btn btn-secondary btn-full" style="margin-bottom:8px">✏️ Edit Listing</a>' +
-      '<a href="/pages/my-pets.html" class="btn btn-outline btn-full">My Pets</a>';
+    area.innerHTML = '<a href="/pages/add-pet.html?id=' + pet.id + '" class="btn btn-secondary btn-full" style="margin-bottom:8px">✏️ Edit Listing</a><a href="/pages/my-pets.html" class="btn btn-outline btn-full">My Pets</a>';
     return;
   }
-
   if (pet.status !== 'available') {
     area.innerHTML = '<div class="alert alert-info" style="text-align:center">This pet is no longer available.</div>';
     return;
   }
-
   if (!getToken()) {
     area.innerHTML = '<a href="/pages/login.html" class="btn btn-primary btn-full">Login to Adopt</a>';
     return;
   }
-
-  area.innerHTML =
-    '<button class="btn btn-primary btn-full" style="margin-bottom:8px" onclick="openModal(\'adopt-modal\')">🐾 Request Adoption</button>' +
-    '<button onclick="toggleFavDetail()" id="fav-btn" class="btn btn-outline btn-full">🤍 Save</button>';
-
-  // check if already faved
+  area.innerHTML = '<button class="btn btn-primary btn-full" style="margin-bottom:8px" onclick="openAdoptModal()">🐾 Request Adoption</button><button onclick="toggleFavDetail()" id="fav-btn" class="btn btn-outline btn-full">🤍 Save</button>';
+  
   Favorites.list().then(function(res) {
     if (res && res.ok) {
       var faved = (res.data.favorites || []).find(function(f){ return f.id === pet.id; });
@@ -446,35 +421,91 @@ async function toggleFavDetail() {
   var isFaved = btn && btn.innerHTML.includes('❤️');
   try {
     if (isFaved) { await Favorites.remove(petId); if (btn) btn.innerHTML = '🤍 Save'; }
-    else         { await Favorites.add(petId);    if (btn) btn.innerHTML = '❤️ Saved'; }
+    else { await Favorites.add(petId); if (btn) btn.innerHTML = '❤️ Saved'; }
   } catch(e) { showToast('Failed to update favorites.', 'error'); }
+}
+
+function openAdoptModal() {
+  if (!petData) return;
+  document.getElementById('adopt-message').value = '';
+  document.getElementById('adopt-alert').innerHTML = '';
+  document.getElementById('adopt-submit-btn').disabled = false;
+  
+  var feeArea = document.getElementById('adopt-fee-area');
+  var payArea = document.getElementById('adopt-pay-area');
+  var feeAmountEl = document.getElementById('adopt-fee-amount');
+  var submitBtn = document.getElementById('adopt-submit-btn');
+  
+  if (petData.fee_type === 'paid' && petData.adoption_fee > 0) {
+    if (feeArea) feeArea.style.display = 'block';
+    if (payArea) payArea.style.display = 'block';
+    if (feeAmountEl) feeAmountEl.textContent = fmtMoney(petData.adoption_fee);
+    if (submitBtn) submitBtn.innerHTML = 'Pay ' + fmtMoney(petData.adoption_fee) + ' & Request';
+  } else {
+    if (feeArea) feeArea.style.display = 'none';
+    if (payArea) payArea.style.display = 'none';
+    if (submitBtn) submitBtn.innerHTML = 'Submit Request';
+  }
+  openModal('adopt-modal');
 }
 
 async function submitAdoption() {
   var msg = document.getElementById('adopt-message').value.trim();
   var alertEl = document.getElementById('adopt-alert');
   var btn = document.getElementById('adopt-submit-btn');
-
   alertEl.innerHTML = '';
-  btn.disabled = true; btn.textContent = 'Submitting...';
+  if (!petData) return;
+
+  var feeType = petData.fee_type;
+  var feeAmount = petData.adoption_fee;
+
+  if (feeType === 'paid' && feeAmount > 0) {
+    var cardEl = document.getElementById('adopt-pay-card');
+    var expiryEl = document.getElementById('adopt-pay-expiry');
+    var cvvEl = document.getElementById('adopt-pay-cvv');
+    if (cardEl && expiryEl && cvvEl) {
+      var card = cardEl.value.replace(/\s/g, '').replace(/[^0-9]/g, '');
+      var expiry = expiryEl.value.trim();
+      var cvv = cvvEl.value.trim();
+      if (card.length < 13 || card.length > 19) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">Please enter a valid card number.</div>'; return; }
+      if (!/^\d{2}\/\d{2}$/.test(expiry)) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">Please enter a valid expiry date (MM/YY).</div>'; return; }
+      if (cvv.length < 3) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">Please enter a valid CVV.</div>'; return; }
+    }
+  }
+
+  btn.disabled = true; 
+  btn.innerHTML = 'Processing...';
+  alertEl.innerHTML = '<div style="text-align:center;padding:10px;color:#6b7a8d;font-size:0.88rem;">Submitting request...</div>';
 
   try {
-    var res = await Adoption.request(petId, { message: msg || undefined });
-    if (res && res.ok) {
-      closeModal('adopt-modal');
-      showToast('Adoption request submitted!', 'success');
-      if (res.data.paymentRequired) {
-        showToast('This is a paid adoption — payment required after approval.', 'info');
-      }
-      // refresh page to update status
-      setTimeout(function(){ window.location.reload(); }, 1000);
-    } else {
-      alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed to submit.') + '</div>';
+    var res = await Adoption.request(petData.id, { message: msg || undefined });
+    if (!res || !res.ok) {
+      alertEl.innerHTML = '<div class="alert alert-danger">' + ((res && res.data && res.data.message) || 'Failed to submit request.') + '</div>';
+      btn.disabled = false; btn.innerHTML = feeType === 'paid' ? 'Pay ' + fmtMoney(feeAmount) + ' & Request' : 'Submit Request';
+      return;
     }
-  } catch(e) {
-    alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>';
+    
+    var requestId = res.data.request ? res.data.request.id : null;
+
+    if (feeType === 'paid' && feeAmount > 0 && requestId) {
+      alertEl.innerHTML = '<div style="text-align:center;padding:10px;color:#6b7a8d;font-size:0.88rem;">Processing payment securely...</div>';
+      var payRes = await Payments.simulate({ adoption_request_id: requestId, amount: feeAmount, description: 'Adoption fee for ' + petData.name });
+      await new Promise(function(resolve) { setTimeout(resolve, 2500); });
+      
+      if (!payRes || !payRes.ok) {
+        alertEl.innerHTML = '<div class="alert alert-danger">Payment failed. Request submitted but payment pending.</div>';
+        btn.disabled = false; btn.innerHTML = 'Pay ' + fmtMoney(feeAmount);
+        return;
+      }
+    }
+
+    closeModal('adopt-modal');
+    showToast(feeType === 'paid' ? 'Payment successful! Request submitted. Waiting for owner approval.' : 'Adoption request submitted! Waiting for owner approval.', 'success');
+    setTimeout(function(){ window.location.href = '/pages/adoption-requests.html?tab=mine'; }, 1500);
+  } catch(e) { 
+    alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>'; 
+    btn.disabled = false; btn.innerHTML = feeType === 'paid' ? 'Pay ' + fmtMoney(feeAmount) : 'Submit Request';
   }
-  btn.disabled = false; btn.textContent = 'Submit Request';
 }
 
 function openReportModal() {
@@ -483,41 +514,24 @@ function openReportModal() {
 }
 
 async function submitReport() {
-  var reason  = document.getElementById('report-reason').value;
+  var reason = document.getElementById('report-reason').value;
   var details = document.getElementById('report-details').value.trim();
   var alertEl = document.getElementById('report-alert');
   alertEl.innerHTML = '';
-
   try {
     var res = await Reports.submit({ pet_id: parseInt(petId), reason: reason, details: details || undefined });
-    if (res && res.ok) {
-      closeModal('report-modal');
-      showToast('Report submitted. Thank you.', 'success');
-    } else {
-      alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed.') + '</div>';
-    }
-  } catch(e) {
-    alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>';
-  }
+    if (res && res.ok) { closeModal('report-modal'); showToast('Report submitted. Thank you.', 'success'); }
+    else { alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed.') + '</div>'; }
+  } catch(e) { alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>'; }
 }
 
 async function loadStatusHistory() {
   try {
     var res = await Pets.statusHistory(petId);
     var el = document.getElementById('status-history-list');
-    if (!res || !res.ok || !res.data.history.length) {
-      el.innerHTML = '<p style="color:#6b7a8d">No status changes recorded yet.</p>';
-      return;
-    }
+    if (!res || !res.ok || !res.data.history.length) { el.innerHTML = '<p style="color:#6b7a8d">No status changes recorded yet.</p>'; return; }
     el.innerHTML = res.data.history.map(function(h) {
-      return '<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #e5e7eb;align-items:flex-start">' +
-        '<div style="font-size:0.78rem;color:#9baab8;white-space:nowrap;margin-top:2px">' + fmtDate(h.created_at) + '</div>' +
-        '<div>' +
-          (h.old_status ? pill(h.old_status) + ' → ' : '') + pill(h.new_status) +
-          (h.reason ? '<div style="font-size:0.8rem;color:#6b7a8d;margin-top:3px">' + h.reason + '</div>' : '') +
-          (h.changed_by_name ? '<div style="font-size:0.78rem;color:#9baab8">by ' + h.changed_by_name + '</div>' : '') +
-        '</div>' +
-      '</div>';
+      return '<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #e5e7eb;align-items:flex-start"><div style="font-size:0.78rem;color:#9baab8;white-space:nowrap;margin-top:2px">' + fmtDate(h.created_at) + '</div><div>' + (h.old_status ? pill(h.old_status) + ' → ' : '') + pill(h.new_status) + (h.reason ? '<div style="font-size:0.8rem;color:#6b7a8d;margin-top:3px">' + h.reason + '</div>' : '') + (h.changed_by_name ? '<div style="font-size:0.78rem;color:#9baab8">by ' + h.changed_by_name + '</div>' : '') + '</div></div>';
     }).join('');
   } catch(e) {}
 }
@@ -526,49 +540,19 @@ async function loadHealthLogs() {
   try {
     var res = await Monitoring.getHealthLogs(petId);
     var el = document.getElementById('health-logs-list');
-    if (!res || !res.ok || !res.data.logs.length) {
-      el.innerHTML = '<p style="color:#6b7a8d;margin-bottom:12px">No health logs yet.</p>';
-      return;
-    }
+    if (!res || !res.ok || !res.data.logs.length) { el.innerHTML = '<p style="color:#6b7a8d;margin-bottom:12px">No health logs yet.</p>'; return; }
     el.innerHTML = res.data.logs.map(function(log) {
-      return '<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #e5e7eb">' +
-        '<div style="width:36px;height:36px;border-radius:50%;background:#e6f5f3;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">' + (LOG_ICONS[log.type]||'📋') + '</div>' +
-        '<div style="flex:1">' +
-          '<div style="font-weight:bold;font-size:0.88rem">' + log.type.replace(/_/g,' ') + '</div>' +
-          (log.description ? '<div style="font-size:0.82rem;color:#6b7a8d">' + log.description + '</div>' : '') +
-          '<div style="font-size:0.76rem;color:#9baab8;margin-top:3px">' +
-            fmtDate(log.created_at) +
-            (log.vet_name ? ' · ' + log.vet_name : '') +
-            (log.weight_kg ? ' · ' + log.weight_kg + 'kg' : '') +
-            (log.next_due ? ' · Next: ' + fmtDate(log.next_due) : '') +
-          '</div>' +
-        '</div>' +
-        '<button onclick="deleteLog(' + log.id + ',this)" style="background:none;border:none;color:#e76f51;cursor:pointer;font-size:0.8rem;flex-shrink:0">✕</button>' +
-      '</div>';
+      return '<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #e5e7eb"><div style="width:36px;height:36px;border-radius:50%;background:#e6f5f3;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">' + (LOG_ICONS[log.type]||'📋') + '</div><div style="flex:1"><div style="font-weight:bold;font-size:0.88rem">' + log.type.replace(/_/g,' ') + '</div>' + (log.description ? '<div style="font-size:0.82rem;color:#6b7a8d">' + log.description + '</div>' : '') + '<div style="font-size:0.76rem;color:#9baab8;margin-top:3px">' + fmtDate(log.created_at) + (log.vet_name ? ' · ' + log.vet_name : '') + (log.weight_kg ? ' · ' + log.weight_kg + 'kg' : '') + (log.next_due ? ' · Next: ' + fmtDate(log.next_due) : '') + '</div></div><button onclick="deleteLog(' + log.id + ',this)" style="background:none;border:none;color:#e76f51;cursor:pointer;font-size:0.8rem;flex-shrink:0">✕</button></div>';
     }).join('');
   } catch(e) {}
 }
 
 async function submitHealthLog() {
-  var body = {
-    type:        document.getElementById('log-type').value,
-    description: document.getElementById('log-desc').value.trim() || undefined,
-    vet_name:    document.getElementById('log-vet').value.trim()  || undefined,
-    weight_kg:   document.getElementById('log-weight').value      || undefined,
-    next_due:    document.getElementById('log-next-due').value    || undefined,
-  };
+  var body = { type: document.getElementById('log-type').value, description: document.getElementById('log-desc').value.trim() || undefined, vet_name: document.getElementById('log-vet').value.trim() || undefined, weight_kg: document.getElementById('log-weight').value || undefined, next_due: document.getElementById('log-next-due').value || undefined };
   try {
     var res = await Monitoring.addHealthLog(petId, body);
-    if (res && res.ok) {
-      showToast('Health log added.', 'success');
-      document.getElementById('log-desc').value = '';
-      document.getElementById('log-vet').value = '';
-      document.getElementById('log-weight').value = '';
-      document.getElementById('log-next-due').value = '';
-      loadHealthLogs();
-    } else {
-      showToast(res.data.message || 'Failed.', 'error');
-    }
+    if (res && res.ok) { showToast('Health log added.', 'success'); loadHealthLogs(); }
+    else { showToast(res.data.message || 'Failed.', 'error'); }
   } catch(e) { showToast('Something went wrong.', 'error'); }
 }
 
@@ -578,6 +562,58 @@ async function deleteLog(logId, btn) {
     var res = await Monitoring.deleteHealthLog(petId, logId);
     if (res && res.ok) { showToast('Log deleted.', 'success'); loadHealthLogs(); }
     else showToast('Failed to delete.', 'error');
+  } catch(e) { showToast('Something went wrong.', 'error'); }
+}
+
+async function togglePetLike() {
+  if (!getToken()) { window.location.href = '/pages/login.html'; return; }
+  var btn = document.getElementById('like-btn');
+  try {
+    var res = await Pets.like(petId);
+    if (res && res.ok) {
+      var liked = res.data.liked;
+      var countEl = document.getElementById('like-count');
+      var current = parseInt(countEl.textContent) || 0;
+      var newCount = liked ? current + 1 : Math.max(0, current - 1);
+      btn.innerHTML = (liked ? '❤️' : '🤍') + ' <span id="like-count" style="margin-left:6px;">' + newCount + '</span> Likes';
+    }
+  } catch(e) { showToast('Failed to update like.', 'error'); }
+}
+
+async function loadPetComments(id) {
+  var list = document.getElementById('comments-list');
+  try {
+    var res = await Pets.getComments(id);
+    if (!res || !res.ok) { list.innerHTML = '<p style="color:#e76f51">Failed to load comments.</p>'; return; }
+    var comments = res.data.comments || [];
+    document.getElementById('comment-count').textContent = '(' + comments.length + ')';
+    if (!comments.length) { list.innerHTML = '<p style="color:#9baab8; font-size:0.86rem;">No comments yet. Be the first!</p>'; return; }
+    list.innerHTML = comments.map(function(c) {
+      var canDelete = currentUser && (currentUser.id === c.user_id || currentUser.role === 'admin');
+      return '<div class="comment-item"><div style="display:flex; gap:10px; align-items:flex-start;"><div class="comment-avatar">' + initials(c.user_name || 'U') + '</div><div style="flex:1;"><div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;"><div style="font-weight:bold; font-size:0.86rem;">' + (c.user_name || 'User') + '</div><div style="display:flex; align-items:center; gap:8px;"><span style="font-size:0.76rem; color:#9baab8;">' + timeAgo(c.created_at) + '</span>' + (canDelete ? '<button onclick="deletePetComment(' + c.id + ')" style="background:none; border:none; color:#e76f51; font-size:0.76rem; cursor:pointer;">Delete</button>' : '') + '</div></div><p style="font-size:0.88rem; color:#374151; margin-top:4px; white-space:pre-wrap;">' + c.content + '</p></div></div></div>';
+    }).join('');
+  } catch(e) { list.innerHTML = '<p style="color:#e76f51">Failed to load comments.</p>'; }
+}
+
+async function submitPetComment() {
+  var input = document.getElementById('comment-input');
+  var alertEl = document.getElementById('comment-alert');
+  var content = input.value.trim();
+  alertEl.innerHTML = '';
+  if (!content) { alertEl.innerHTML = '<div class="alert alert-danger">Comment cannot be empty.</div>'; return; }
+  try {
+    var res = await Pets.addComment(petId, { content: content });
+    if (res && res.ok) { input.value=''; showToast('Comment posted!', 'success'); loadPetComments(petId); }
+    else { alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed.') + '</div>'; }
+  } catch(e) { alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>'; }
+}
+
+async function deletePetComment(commentId) {
+  if (!confirm('Delete this comment?')) return;
+  try {
+    var res = await Pets.deleteComment(petId, commentId);
+    if (res && res.ok) { showToast('Comment deleted.', 'success'); loadPetComments(petId); }
+    else showToast('Failed.', 'error');
   } catch(e) { showToast('Something went wrong.', 'error'); }
 }
 </script>
