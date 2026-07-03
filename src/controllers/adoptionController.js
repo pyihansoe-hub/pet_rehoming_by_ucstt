@@ -36,7 +36,7 @@ const requestAdoption = async (req, res) => {
       type: 'new_adoption_request',
       title: `New adoption request for ${pet.name}`,
       body: `${req.user.name} wants to adopt your pet.`,
-      link: `/adoption-requests/received`,
+      link: `/pages/adoption-requests.html?tab=received`,
     });
 
     const { send, emails } = require('../services/email');
@@ -148,10 +148,10 @@ const reviewRequest = async (req, res) => {
       title: status === 'approved'
         ? `Your adoption request was approved!`
         : `Adoption request update`,
-      body: status === 'approved'
-        ? `Your request has been approved. ${req_.fee_type === 'paid' ? 'Please complete payment.' : 'Contact the owner to arrange pickup.'}`
+            body: status === 'approved'
+        ? `Your request has been approved. ${req_.fee_type === 'paid' ? 'Please complete the payment to finalize adoption.' : 'Please connect in Messages to chat with the owner and arrange pickup!'}`
         : `Your adoption request was not approved this time.`,
-      link: `/adoption-requests/${req.params.id}`,
+      link: `/pages/messages.html?conv=recent`,
     });
 
     try {
@@ -178,6 +178,16 @@ const reviewRequest = async (req, res) => {
       }
     } catch (emailErr) {
       console.error('Email failed (non-fatal):', emailErr.message);
+    }
+
+        // Auto-create chat room when approved so they can message each other
+    if (status === 'approved') {
+      try {
+        await pool.query(
+          `INSERT INTO conversations (adoption_request_id) VALUES ($1) ON CONFLICT DO NOTHING`,
+          [req.params.id]
+        );
+      } catch(e) { console.error('Chat creation skipped:', e.message); }
     }
 
     res.json({
@@ -217,11 +227,50 @@ const cancelRequest = async (req, res) => {
     res.status(500).json({ message: 'Server error.', error: err.message });
   }
 };
+// Add this function to controllers/adoptionController.js
+
+const linkPayment = async (req, res) => {
+  try {
+    const { payment_id } = req.body;
+    const requestId = req.params.id;
+    const userId = req.user.id;
+
+    if (!payment_id) {
+      return res.status(400).json({ ok: false, message: 'Payment ID is required' });
+    }
+
+    // Verify the request belongs to this user
+    const check = await pool.query(
+      'SELECT id FROM adoption_requests WHERE id = $1 AND requester_id = $2',
+      [requestId, userId]
+    );
+
+    if (check.rows.length === 0) {
+      return res.status(404).json({ ok: false, message: 'Request not found' });
+    }
+
+    // Update the request with payment_id
+    const result = await pool.query(
+      'UPDATE adoption_requests SET payment_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [payment_id, requestId]
+    );
+
+    res.json({ 
+      ok: true, 
+      request: result.rows[0] 
+    });
+
+  } catch (err) {
+    console.error('linkPayment error:', err);
+    res.status(500).json({ ok: false, message: 'Failed to link payment' });
+  }
+};
 
 module.exports = {
   requestAdoption,
   myRequests,
   receivedRequests,
   reviewRequest,
-  cancelRequest
+  cancelRequest,
+  linkPayment
 };

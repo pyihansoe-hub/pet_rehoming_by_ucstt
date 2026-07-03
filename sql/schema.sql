@@ -432,6 +432,29 @@ CREATE TABLE messages (
 CREATE INDEX idx_messages_conversation ON messages(conversation_id);
 CREATE INDEX idx_messages_sender       ON messages(sender_id);
 
+--blog's comment and likes
+-- Pet Likes
+CREATE TABLE pet_likes (
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  pet_id  INT NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, pet_id)
+);
+
+-- Pet Comments
+CREATE TABLE pet_comments (
+  id       SERIAL PRIMARY KEY,
+  pet_id   INT NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+  user_id  INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content  TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TRIGGER pet_comments_updated_at BEFORE UPDATE ON pet_comments
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE INDEX idx_pet_comments_pet ON pet_comments(pet_id);
+
+ALTER TABLE adoption_requests ADD COLUMN payment_id INT REFERENCES payments(id) ON DELETE SET NULL;
 -- ============================================================
 -- END OF SCHEMA
 -- ============================================================

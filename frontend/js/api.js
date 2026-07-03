@@ -79,6 +79,10 @@ var Pets = {
   addImage:      function(id, fd)   { return postForm('/api/pets/' + id + '/images', fd); },
   deleteImage:   function(id, iid)  { return del('/api/pets/' + id + '/images/' + iid); },
   statusHistory: function(id)       { return get('/api/pets/' + id + '/status-history'); },
+  like:           function(id)      { return post('/api/pets/' + id + '/like'); },
+  getComments:    function(id)      { return get('/api/pets/' + id + '/comments'); },
+  addComment:     function(id, b)   { return post('/api/pets/' + id + '/comments', b); },
+  deleteComment:  function(id, cid) { return del('/api/pets/' + id + '/comments/' + cid); }
 };
 
 var Adoption = {
@@ -96,6 +100,7 @@ var Payments = {
   get:      function(id)  { return get('/api/payments/' + id); },
   initiate: function(b)   { return post('/api/payments/initiate', b); },
   verify:   function(id)  { return post('/api/payments/' + id + '/verify'); },
+  simulate:  function(b) { return post('/api/payments/simulate', b); }
 };
 
 var Favorites = {

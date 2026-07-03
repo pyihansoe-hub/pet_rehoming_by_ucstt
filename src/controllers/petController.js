@@ -5,12 +5,30 @@ const fs   = require('fs');
 const { logStatusChange } = require('../services/petStatusHistory');
 
 // ── helpers ──────────────────────────────────────────────────────────────────
+
+// const PET_SELECT = `
+// SELECT
+//   p.*,
+//   pt.name  AS pet_type_name,
+//   u.name   AS owner_name,
+//   u.phone  AS owner_phone,
+//   COALESCE(
+//     json_agg(pi ORDER BY pi.is_primary DESC, pi.id) FILTER (WHERE pi.id IS NOT NULL),
+//     '[]'
+//   ) AS images
+// FROM pets p
+// JOIN pet_types pt ON pt.id = p.pet_type_id
+// JOIN users     u  ON u.id  = p.owner_id
+// LEFT JOIN pet_images pi ON pi.pet_id = p.id
+// `;
+
 const PET_SELECT = `
 SELECT
   p.*,
   pt.name  AS pet_type_name,
   u.name   AS owner_name,
   u.phone  AS owner_phone,
+  (SELECT COUNT(*) FROM pet_likes pl WHERE pl.pet_id = p.id) AS like_count,
   COALESCE(
     json_agg(pi ORDER BY pi.is_primary DESC, pi.id) FILTER (WHERE pi.id IS NOT NULL),
     '[]'
@@ -20,7 +38,6 @@ JOIN pet_types pt ON pt.id = p.pet_type_id
 JOIN users     u  ON u.id  = p.owner_id
 LEFT JOIN pet_images pi ON pi.pet_id = p.id
 `;
-
 // GET /api/pets
 const listPets = async (req, res) => {
   const {
@@ -322,6 +339,62 @@ const myPets = async (req, res) => {
   }
 };
 
+//pet's comment and likes
+// POST /api/pets/:id/like
+const toggleLike = async (req, res) => {
+  try {
+    const existing = await pool.query(
+      'SELECT 1 FROM pet_likes WHERE user_id=$1 AND pet_id=$2',
+      [req.user.id, req.params.id]
+    );
+    if (existing.rows.length) {
+      await pool.query('DELETE FROM pet_likes WHERE user_id=$1 AND pet_id=$2', [req.user.id, req.params.id]);
+      res.json({ liked: false });
+    } else {
+      await pool.query('INSERT INTO pet_likes (user_id, pet_id) VALUES ($1,$2)', [req.user.id, req.params.id]);
+      res.json({ liked: true });
+    }
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
+// GET /api/pets/:id/comments
+const getComments = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT pc.*, u.name AS user_name FROM pet_comments pc
+       JOIN users u ON u.id=pc.user_id
+       WHERE pc.pet_id=$1 ORDER BY pc.created_at ASC`,
+      [req.params.id]
+    );
+    res.json({ comments: rows });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
+// POST /api/pets/:id/comments
+const addComment = async (req, res) => {
+  const { content } = req.body;
+  if (!content?.trim()) return res.status(400).json({ message: 'Comment content is required.' });
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO pet_comments (pet_id, user_id, content) VALUES ($1,$2,$3) RETURNING *',
+      [req.params.id, req.user.id, content.trim()]
+    );
+    res.status(201).json({ comment: rows[0] });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
+// DELETE /api/pets/:id/comments/:commentId
+const deleteComment = async (req, res) => {
+  try {
+    const check = await pool.query('SELECT user_id FROM pet_comments WHERE id=$1', [req.params.commentId]);
+    if (!check.rows.length) return res.status(404).json({ message: 'Comment not found.' });
+    if (check.rows[0].user_id !== req.user.id && req.user.role !== 'admin')
+      return res.status(403).json({ message: 'Not authorized.' });
+    await pool.query('DELETE FROM pet_comments WHERE id=$1', [req.params.commentId]);
+    res.json({ message: 'Comment deleted.' });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
 module.exports = {
   listPets,
   getPet,
@@ -330,5 +403,9 @@ module.exports = {
   deletePet,
   addPetImage,
   deletePetImage,
-  myPets
+  myPets,
+  toggleLike,      
+  getComments,    
+  addComment,     
+  deleteComment   
 };

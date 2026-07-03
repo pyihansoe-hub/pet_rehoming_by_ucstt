@@ -52,15 +52,12 @@
 
 <div class="page-wrap" style="padding-bottom:0">
   <div class="container">
-
     <div class="page-header-row" style="margin-bottom:16px">
       <h1>Messages</h1>
       <span id="unread-msg-count" style="font-size:0.86rem;color:#6b7a8d"></span>
     </div>
 
     <div class="msg-wrap">
-
-      <!-- SIDEBAR -->
       <div class="msg-sidebar">
         <div class="msg-sidebar-header">
           <span style="font-size:0.92rem;font-weight:bold">Conversations</span>
@@ -70,7 +67,6 @@
         </div>
       </div>
 
-      <!-- MAIN -->
       <div class="msg-main">
         <div id="msg-header-area" class="msg-header" style="display:none">
           <div style="width:36px;height:36px;border-radius:50%;background:#e6f5f3;display:flex;align-items:center;justify-content:center;font-size:1.1rem">🐾</div>
@@ -94,7 +90,6 @@
           <button class="msg-send" onclick="sendMessage()" title="Send">➤</button>
         </div>
       </div>
-
     </div>
   </div>
 </div>
@@ -126,7 +121,6 @@ async function loadConversations() {
     }
     var convs = res.data.conversations || [];
 
-    // update unread count label
     var totalUnread = convs.reduce(function(sum, c){ return sum + (+c.unread_count || 0); }, 0);
     var unreadEl = document.getElementById('unread-msg-count');
     if (unreadEl) unreadEl.textContent = totalUnread ? totalUnread + ' unread' : '';
@@ -141,7 +135,6 @@ async function loadConversations() {
 
     var u = getUser();
     el.innerHTML = convs.map(function(c) {
-      // figure out the other person's name
       var isOwner  = u && c.owner_name !== u.name;
       var otherName = isOwner ? c.owner_name : c.adopter_name;
       var hasUnread = +c.unread_count > 0;
@@ -166,19 +159,14 @@ async function openConversation(convId, el) {
   activeConvId = convId;
   if (pollTimer) clearInterval(pollTimer);
 
-  // mark active in sidebar
   document.querySelectorAll('.conv-item').forEach(function(c){ c.classList.remove('active'); });
   if (el) el.classList.add('active');
 
   document.getElementById('msg-header-area').style.display  = 'flex';
   document.getElementById('msg-input-area').style.display   = 'flex';
 
-  // find conv data from sidebar
-  var convs = document.querySelectorAll('.conv-item');
-
   loadMessages(convId);
 
-  // poll every 5 seconds for new messages
   pollTimer = setInterval(function(){
     if (activeConvId === convId) silentRefresh(convId);
   }, 5000);
@@ -196,7 +184,6 @@ async function loadMessages(convId) {
     }
     var msgs = res.data.messages || [];
 
-    // update header — get conv info from conversations list
     var convRes = await Messages.conversations();
     if (convRes && convRes.ok) {
       var conv = (convRes.data.conversations || []).find(function(c){ return c.id === convId; });
@@ -206,9 +193,8 @@ async function loadMessages(convId) {
         document.getElementById('msg-header-name').textContent = otherName || 'User';
         document.getElementById('msg-header-pet').textContent  = '🐾 ' + (conv.pet_name || '');
       }
-      loadConversations(); // refresh sidebar unread counts
+      loadConversations(); 
     }
-
     renderMessages(msgs);
   } catch(e) {
     area.innerHTML = '<div style="padding:16px;color:#e76f51">Something went wrong.</div>';
@@ -244,7 +230,6 @@ function renderMessages(msgs) {
       html += '<div class="msg-date-divider">' + msgDate + '</div>';
       lastDate = msgDate;
     }
-
     var isMe = m.sender_id === currentUserId;
     html += '<div class="msg-bubble-wrap ' + (isMe ? 'me' : 'other') + '">' +
       (!isMe ? '<div class="msg-avatar">' + initials(m.sender_name || 'U') + '</div>' : '') +
@@ -256,16 +241,11 @@ function renderMessages(msgs) {
   });
 
   area.innerHTML = html;
-  // scroll to bottom
   area.scrollTop = area.scrollHeight;
 }
 
 function escapeHtml(str) {
-  return str
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/\n/g,'<br>');
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
 }
 
 async function sendMessage() {
@@ -283,7 +263,7 @@ async function sendMessage() {
       loadMessages(activeConvId);
     } else {
       showToast(res.data.message || 'Failed to send.', 'error');
-      input.value = content; // restore
+      input.value = content; 
     }
   } catch(e) {
     showToast('Something went wrong.', 'error');
