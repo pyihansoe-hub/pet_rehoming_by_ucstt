@@ -11,11 +11,15 @@ const requestAdoption = async (req, res) => {
   const { message } = req.body;
 
   try {
+    // FIX: Added 'name' to the SELECT query so it isn't undefined in the notification
     const { rows: pets } = await pool.query(
-      'SELECT id, owner_id, status, fee_type, adoption_fee FROM pets WHERE id=$1', [petId]
+      'SELECT id, name, owner_id, status, fee_type, adoption_fee FROM pets WHERE id=$1', 
+      [petId]
     );
+    
     if (!pets.length) return res.status(404).json({ message: 'Pet not found.' });
     const pet = pets[0];
+    
     if (pet.status !== 'available') return res.status(400).json({ message: 'Pet is not available for adoption.' });
     if (pet.owner_id === req.user.id) return res.status(400).json({ message: 'You cannot adopt your own pet.' });
 
@@ -116,9 +120,11 @@ const reviewRequest = async (req, res) => {
       [status, req.params.id]
     );
 
-    if (status === 'approved' && req_.fee_type === 'free') {
+    // Mark pet as adopted for BOTH free and paid when approved
+    if (status === 'approved') {
       await client.query(`UPDATE pets SET status='adopted' WHERE id=$1`, [req_.pet_id]);
 
+      // Auto-reject any other pending requests for this pet
       await client.query(
         `UPDATE adoption_requests SET status='rejected', reviewed_at=NOW()
          WHERE pet_id=$1 AND id<>$2 AND status='pending'`,
@@ -128,8 +134,8 @@ const reviewRequest = async (req, res) => {
 
     await client.query('COMMIT');
 
-    // REQUIRED ADDED LOGIC (after COMMIT, free approval only)
-    if (status === 'approved' && req_.fee_type === 'free') {
+    // Run post-approval tasks for both free and paid
+    if (status === 'approved') {
       await createAgreement(req.params.id);
       await scheduleFollowupReminders(req.params.id);
       await logStatusChange(
@@ -137,7 +143,7 @@ const reviewRequest = async (req, res) => {
         'available',
         'adopted',
         req.user.id,
-        'Free adoption approved'
+        'Adoption approved by owner'
       );
     }
 
@@ -148,7 +154,7 @@ const reviewRequest = async (req, res) => {
       title: status === 'approved'
         ? `Your adoption request was approved!`
         : `Adoption request update`,
-            body: status === 'approved'
+      body: status === 'approved'
         ? `Your request has been approved. ${req_.fee_type === 'paid' ? 'Please complete the payment to finalize adoption.' : 'Please connect in Messages to chat with the owner and arrange pickup!'}`
         : `Your adoption request was not approved this time.`,
       link: `/pages/messages.html?conv=recent`,
@@ -180,7 +186,7 @@ const reviewRequest = async (req, res) => {
       console.error('Email failed (non-fatal):', emailErr.message);
     }
 
-        // Auto-create chat room when approved so they can message each other
+    // Auto-create chat room when approved so they can message each other
     if (status === 'approved') {
       try {
         await pool.query(
@@ -227,8 +233,8 @@ const cancelRequest = async (req, res) => {
     res.status(500).json({ message: 'Server error.', error: err.message });
   }
 };
-// Add this function to controllers/adoptionController.js
 
+// Link payment to an adoption request
 const linkPayment = async (req, res) => {
   try {
     const { payment_id } = req.body;
@@ -239,7 +245,6 @@ const linkPayment = async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Payment ID is required' });
     }
 
-    // Verify the request belongs to this user
     const check = await pool.query(
       'SELECT id FROM adoption_requests WHERE id = $1 AND requester_id = $2',
       [requestId, userId]
@@ -249,7 +254,6 @@ const linkPayment = async (req, res) => {
       return res.status(404).json({ ok: false, message: 'Request not found' });
     }
 
-    // Update the request with payment_id
     const result = await pool.query(
       'UPDATE adoption_requests SET payment_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
       [payment_id, requestId]
