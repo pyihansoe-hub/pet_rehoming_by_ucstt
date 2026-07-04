@@ -38,18 +38,26 @@ function showToast(msg, type) {
 }
 
 // ===== IMAGE URL =====
-// function imgUrl(path) {
-//   if (!path) return '';
-//   if (path.startsWith('http')) return path;
-//   return window.location.protocol + '//' + window.location.hostname + ':3000' + path;
-// }
-
 function imgUrl(path) {
   if (!path) return '';
   if (path.startsWith('http')) return path;
   // Automatically uses 192.168.100.49:3000 when on phone, localhost:3000 when on PC
   return window.location.protocol + '//' + window.location.hostname + ':3000' + path;
 }
+
+// Safe fallback for broken images
+function handleImgError(img) {
+  img.onerror = null; // Prevent infinite loop
+  img.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect width='100%25' height='100%25' fill='%23eef1f4'/><text x='50%25' y='50%25' font-size='16' text-anchor='middle' dominant-baseline='middle' fill='%239baab8' font-family='sans-serif'>Image Unavailable</text></svg>";
+}
+
+// Escape HTML to prevent broken layout from quotes/special chars in names
+function escapeHtml(text) {
+  if (!text) return '';
+  var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+  return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
 function petIdOf(pet) {
   return pet && (pet.id || pet._id || pet.pet_id);
 }
@@ -58,6 +66,7 @@ function petDetailHref(pet) {
   var id = typeof pet === 'object' ? petIdOf(pet) : pet;
   return '/pages/pet-detail?id=' + encodeURIComponent(id);
 }
+
 // ===== BLOG ID HELPERS (Same pattern as pets) =====
 function blogIdOf(blog) {
   return blog && (blog.id || blog._id || blog.blog_id);
@@ -67,6 +76,7 @@ function blogDetailHref(blog) {
   var id = typeof blog === 'object' ? blogIdOf(blog) : blog;
   return '/pages/blog-detail?id=' + encodeURIComponent(id);
 }
+
 // ===== INITIALS =====
 function initials(name) {
   if (!name) return '?';
@@ -207,7 +217,7 @@ function renderNavbar() {
       '<div class="nav-actions">' +
         (isLoggedIn
           ? '<button class="nav-notif-btn" onclick="window.location.href=\'' + p('notifications.html') + '\'" id="nav-notif-btn">🔔<span class="notif-badge hidden" id="notif-badge">0</span></button>' +
-            '<button class="nav-avatar" onclick="window.location.href=\'' + p('profile.html') + '\'" title="' + (user.name || '') + '">' + initials(user.name) + '</button>' +
+            '<button class="nav-avatar" onclick="window.location.href=\'' + p('profile.html') + '\'" title="' + escapeHtml(user.name) + '">' + initials(user.name) + '</button>' +
             '<button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>'
           : '<a href="' + p('login.html') + '" class="btn btn-outline btn-sm">Login</a>' +
             '<a href="' + p('register.html') + '" class="btn btn-primary btn-sm">Register</a>'
@@ -314,9 +324,9 @@ function renderFooter() {
 // Uses p() so link works from both root and /pages/
 function petCardHtml(pet) {
   var img = (pet.images && pet.images[0]) ? pet.images[0].url : (pet.primary_image || null);
+  // Added loading="lazy", decoding="async", and global error handler
   var imgHtml = img
-    ? '<img class="pet-card-img" src="' + imgUrl(img) + '" alt="' + pet.name + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">' +
-      '<div class="pet-card-placeholder" style="display:none">🐾</div>'
+    ? '<img class="pet-card-img" src="' + imgUrl(img) + '" alt="' + escapeHtml(pet.name) + '" loading="lazy" decoding="async" onerror="handleImgError(this)">' 
     : '<div class="pet-card-placeholder">🐾</div>';
 
   var age = calcAge(pet.birth_date, pet.is_sure);
@@ -328,8 +338,8 @@ function petCardHtml(pet) {
   return '<div class="pet-card" onclick="window.location.href=\'' + petDetailHref(pet) + '\'" style="cursor:pointer">' +
     imgHtml +
     '<div class="pet-card-body">' +
-      '<div class="pet-card-title">' + pet.name + '</div>' +
-      '<div class="pet-card-meta">' + meta + '</div>' +
+      '<div class="pet-card-title">' + escapeHtml(pet.name) + '</div>' +
+      '<div class="pet-card-meta">' + escapeHtml(meta) + '</div>' +
       '<div class="pet-card-footer">' + fee + pill(pet.status) + '</div>' +
     '</div>' +
   '</div>';
@@ -338,19 +348,19 @@ function petCardHtml(pet) {
 // ===== BLOG CARD =====
 function blogCardHtml(blog) {
   var img = blog.cover_image_url;
+  // Added loading="lazy", decoding="async", and global error handler
   var imgHtml = img
-    ? '<img class="blog-card-img" src="' + imgUrl(img) + '" alt="' + blog.title + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">' +
-      '<div class="blog-card-placeholder" style="display:none">📝</div>'
+    ? '<img class="blog-card-img" src="' + imgUrl(img) + '" alt="' + escapeHtml(blog.title) + '" loading="lazy" decoding="async" onerror="handleImgError(this)">' 
     : '<div class="blog-card-placeholder">📝</div>';
 
   return '<div class="blog-card" onclick="window.location.href=\'' + blogDetailHref(blog) + '\'" style="cursor:pointer">' +
     imgHtml +
     '<div class="blog-card-body">' +
-      '<div class="blog-card-cat">' + (blog.category_name || 'General') + '</div>' +
-      '<div class="blog-card-title">' + blog.title + '</div>' +
-      '<div class="blog-card-summary">' + (blog.summary || '') + '</div>' +
+      '<div class="blog-card-cat">' + escapeHtml(blog.category_name || 'General') + '</div>' +
+      '<div class="blog-card-title">' + escapeHtml(blog.title) + '</div>' +
+      '<div class="blog-card-summary">' + escapeHtml(blog.summary || '') + '</div>' +
       '<div class="blog-card-footer">' +
-        '<span>' + (blog.author_name || '') + '</span>' +
+        '<span>' + escapeHtml(blog.author_name || '') + '</span>' +
         '<span>' + timeAgo(blog.published_at || blog.created_at) + '</span>' +
       '</div>' +
     '</div>' +

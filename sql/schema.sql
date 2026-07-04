@@ -86,12 +86,6 @@ CREATE TABLE pet_types (
 INSERT INTO pet_types (name, description) VALUES
   ('Dog', 'Domestic dogs of all breeds'),
   ('Cat', 'Domestic cats of all breeds'),
-  ('Rabbit', 'Pet rabbits'),
-  ('Bird', 'Pet birds including parrots, finches, etc.'),
-  ('Fish', 'Freshwater and saltwater fish'),
-  ('Reptile', 'Lizards, snakes, turtles, etc.'),
-  ('Hamster', 'Hamsters and other small rodents'),
-  ('Guinea Pig', 'Guinea pigs'),
   ('Other', 'Other types of pets');
 
 -- ── PETS ───────────────────────────────────────────────────────

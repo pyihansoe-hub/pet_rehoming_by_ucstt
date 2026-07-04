@@ -49,12 +49,12 @@
 <div id="mobile-menu" class="mobile-menu"></div>
 <div id="toast-container" class="toast-container"></div>
 
-<!-- SUSPEND MODAL -->
+<!-- Suspend Modal -->
 <div class="modal-overlay" id="suspend-modal">
   <div class="modal">
     <div class="modal-header">
       <h3>Suspend User</h3>
-      <button class="modal-close" onclick="closeModal('suspend-modal')">✕</button>
+      <button class="modal-close" onclick="closeModal('suspend-modal')">&#10005;</button>
     </div>
     <div id="suspend-alert"></div>
     <p style="color:#6b7a8d;font-size:0.88rem;margin-bottom:14px">The user will be immediately blocked from logging in.</p>
@@ -69,12 +69,12 @@
   </div>
 </div>
 
-<!-- CLOSE ADOPTION MODAL -->
+<!-- Close Adoption Modal -->
 <div class="modal-overlay" id="close-adoption-modal">
   <div class="modal">
     <div class="modal-header">
       <h3>Force Close Adoption</h3>
-      <button class="modal-close" onclick="closeModal('close-adoption-modal')">✕</button>
+      <button class="modal-close" onclick="closeModal('close-adoption-modal')">&#10005;</button>
     </div>
     <div class="form-group">
       <label>Reason</label>
@@ -87,18 +87,18 @@
   </div>
 </div>
 
-<!-- RESOLVE REPORT MODAL -->
+<!-- Resolve Report Modal -->
 <div class="modal-overlay" id="resolve-report-modal">
   <div class="modal">
     <div class="modal-header">
       <h3>Resolve Report</h3>
-      <button class="modal-close" onclick="closeModal('resolve-report-modal')">✕</button>
+      <button class="modal-close" onclick="closeModal('resolve-report-modal')">&#10005;</button>
     </div>
     <div id="resolve-report-info" style="background:#f9f9f7;padding:12px;border-radius:8px;margin-bottom:16px;font-size:0.86rem"></div>
     <div class="form-group">
       <label>Action</label>
       <select id="resolve-action" class="form-control">
-        <option value="">No action — just mark reviewed</option>
+        <option value="">No action -- just mark reviewed</option>
         <option value="remove_pet">Remove pet listing</option>
         <option value="remove_blog">Archive blog post</option>
         <option value="suspend_reporter">Suspend the reporter</option>
@@ -115,42 +115,58 @@
 <div style="margin-top:60px">
   <div class="admin-wrap">
 
-    <!-- SIDEBAR -->
+    <!-- Sidebar -->
     <div class="admin-sidebar">
       <div class="admin-sidebar-logo">
-        <div style="color:#fff;font-weight:bold;font-size:1rem">🐾 Pet Rehoming</div>
+        <div style="color:#fff;font-weight:bold;font-size:1rem">Pet Rehoming</div>
         <div>Admin Panel</div>
       </div>
 
       <div class="admin-nav-section">Overview</div>
-      <button class="admin-nav-item active" onclick="showPanel('dashboard',this)"><span class="icon">📊</span> Dashboard</button>
+      <button class="admin-nav-item active" onclick="showPanel('dashboard',this)">
+        <span class="icon"><!-- chart icon --></span> Dashboard
+      </button>
 
       <div class="admin-nav-section">Manage</div>
-      <button class="admin-nav-item" onclick="showPanel('users',this)"><span class="icon">👥</span> Users</button>
-      <button class="admin-nav-item" onclick="showPanel('pets',this)"><span class="icon">🐾</span> Pets</button>
-      <button class="admin-nav-item" onclick="showPanel('blogs',this)"><span class="icon">📝</span> Blogs</button>
-      <button class="admin-nav-item" onclick="showPanel('adoptions',this)"><span class="icon">🤝</span> Adoptions</button>
+      <button class="admin-nav-item" onclick="showPanel('users',this)">
+        <span class="icon"><!-- users icon --></span> Users
+      </button>
+      <button class="admin-nav-item" onclick="showPanel('pets',this)">
+        <span class="icon"><!-- pet icon --></span> Pets
+      </button>
+      <button class="admin-nav-item" onclick="showPanel('blogs',this)">
+        <span class="icon"><!-- blog icon --></span> Blogs
+      </button>
+      <button class="admin-nav-item" onclick="showPanel('adoptions',this)">
+        <span class="icon"><!-- handshake icon --></span> Adoptions
+      </button>
 
       <div class="admin-nav-section">Monitor</div>
-      <button class="admin-nav-item" onclick="showPanel('followups',this)"><span class="icon">📋</span> Follow-ups</button>
-      <button class="admin-nav-item" onclick="showPanel('healthlogs',this)"><span class="icon">💉</span> Health Logs</button>
+      <button class="admin-nav-item" onclick="showPanel('followups',this)">
+        <span class="icon"><!-- followup icon --></span> Follow-ups
+      </button>
+      <button class="admin-nav-item" onclick="showPanel('healthlogs',this)">
+        <span class="icon"><!-- health icon --></span> Health Logs
+      </button>
       <button class="admin-nav-item" onclick="showPanel('reports',this)" id="reports-nav">
-        <span class="icon">🚨</span> Reports
+        <span class="icon"><!-- report icon --></span> Reports
         <span id="reports-badge" style="margin-left:auto;background:#e76f51;color:#fff;border-radius:999px;padding:1px 7px;font-size:0.7rem;display:none"></span>
       </button>
 
       <div class="admin-nav-section">Logs</div>
-      <button class="admin-nav-item" onclick="showPanel('auditlog',this)"><span class="icon">🗒️</span> Audit Log</button>
+      <button class="admin-nav-item" onclick="showPanel('auditlog',this)">
+        <span class="icon"><!-- log icon --></span> Audit Log
+      </button>
 
       <div style="padding:20px;margin-top:auto;border-top:1px solid rgba(255,255,255,0.08)">
-        <a href="/index.html" style="font-size:0.82rem;color:rgba(255,255,255,0.4)">← Back to Site</a>
+        <a href="/index.html" style="font-size:0.82rem;color:rgba(255,255,255,0.4)">&larr; Back to Site</a>
       </div>
     </div>
 
-    <!-- CONTENT -->
+    <!-- Content -->
     <div class="admin-content" id="admin-content">
 
-      <!-- DASHBOARD -->
+      <!-- Dashboard -->
       <div class="admin-panel active" id="panel-dashboard">
         <h2 style="margin-bottom:20px">Dashboard</h2>
         <div id="stats-grid" class="stat-grid">
@@ -168,7 +184,7 @@
         </div>
       </div>
 
-      <!-- USERS -->
+      <!-- Users -->
       <div class="admin-panel" id="panel-users">
         <div class="page-header-row">
           <h2>Users</h2>
@@ -193,7 +209,7 @@
         <div id="users-pagination"></div>
       </div>
 
-      <!-- PETS -->
+      <!-- Pets -->
       <div class="admin-panel" id="panel-pets">
         <div class="page-header-row">
           <h2>Pet Listings</h2>
@@ -215,7 +231,7 @@
         <div id="pets-pagination"></div>
       </div>
 
-      <!-- BLOGS -->
+      <!-- Blogs -->
       <div class="admin-panel" id="panel-blogs">
         <div class="page-header-row">
           <h2>Blog Posts</h2>
@@ -236,7 +252,7 @@
         <div id="blogs-pagination"></div>
       </div>
 
-      <!-- ADOPTIONS -->
+      <!-- Adoptions -->
       <div class="admin-panel" id="panel-adoptions">
         <div class="page-header-row">
           <h2>Adoption Requests</h2>
@@ -257,7 +273,7 @@
         <div id="adoptions-pagination"></div>
       </div>
 
-      <!-- FOLLOW-UPS -->
+      <!-- Follow-ups -->
       <div class="admin-panel" id="panel-followups">
         <div class="page-header-row">
           <h2>Post-Adoption Follow-ups</h2>
@@ -277,7 +293,7 @@
         <div id="followups-pagination"></div>
       </div>
 
-      <!-- HEALTH LOGS -->
+      <!-- Health Logs -->
       <div class="admin-panel" id="panel-healthlogs">
         <div class="page-header-row">
           <h2>Pet Health Logs</h2>
@@ -299,7 +315,7 @@
         <div id="healthlogs-pagination"></div>
       </div>
 
-      <!-- REPORTS -->
+      <!-- Reports -->
       <div class="admin-panel" id="panel-reports">
         <div class="page-header-row">
           <h2>Reports</h2>
@@ -318,7 +334,7 @@
         <div id="reports-pagination"></div>
       </div>
 
-      <!-- AUDIT LOG -->
+      <!-- Audit Log -->
       <div class="admin-panel" id="panel-auditlog">
         <div class="page-header-row">
           <h2>Audit Log</h2>
@@ -354,37 +370,36 @@ var closeAdoptionId   = null;
 var resolveReportId   = null;
 var resolveReportData = null;
 
-var userPage     = 1; var petsPage = 1; var blogsPage = 1;
-var adoptPage    = 1; var followPage= 1; var logsPage  = 1;
-var reportsPage  = 1; var auditPage = 1;
+var userPage = 1, petsPage = 1, blogsPage = 1;
+var adoptPage = 1, followPage = 1, logsPage = 1;
+var reportsPage = 1, auditPage = 1;
 var LIMIT = 20;
 
-var userTimer = null; var petTimer = null; var blogTimer = null;
+var userTimer = null, petTimer = null, blogTimer = null;
 
 document.addEventListener('DOMContentLoaded', async function() {
   if (!requireAdmin()) return;
   loadDashboard();
 });
 
-// ── NAVIGATION ────────────────────────────────────────────────
+// Navigation
 function showPanel(name, navEl) {
-  document.querySelectorAll('.admin-panel').forEach(function(p){ p.classList.remove('active'); });
-  document.querySelectorAll('.admin-nav-item').forEach(function(n){ n.classList.remove('active'); });
+  document.querySelectorAll('.admin-panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.admin-nav-item').forEach(function(n) { n.classList.remove('active'); });
   document.getElementById('panel-' + name).classList.add('active');
   if (navEl) navEl.classList.add('active');
 
-  // lazy load on first visit
-  if (name === 'users'     && document.getElementById('users-table-wrap').querySelector('.spinner'))     loadUsers();
-  if (name === 'pets'      && document.getElementById('pets-table-wrap').querySelector('.spinner'))      loadAdminPets();
-  if (name === 'blogs'     && document.getElementById('blogs-table-wrap').querySelector('.spinner'))     loadAdminBlogs();
-  if (name === 'adoptions' && document.getElementById('adoptions-table-wrap').querySelector('.spinner')) loadAdminAdoptions();
-  if (name === 'followups' && document.getElementById('followups-table-wrap').querySelector('.spinner')) loadFollowups();
-  if (name === 'healthlogs'&& document.getElementById('healthlogs-table-wrap').querySelector('.spinner'))loadHealthLogs();
-  if (name === 'reports'   && document.getElementById('reports-table-wrap').querySelector('.spinner'))   loadReports();
-  if (name === 'auditlog'  && document.getElementById('auditlog-list').querySelector('.spinner'))        loadAuditLog();
+  if (name === 'users'      && document.getElementById('users-table-wrap').querySelector('.spinner'))      loadUsers();
+  if (name === 'pets'       && document.getElementById('pets-table-wrap').querySelector('.spinner'))       loadAdminPets();
+  if (name === 'blogs'      && document.getElementById('blogs-table-wrap').querySelector('.spinner'))      loadAdminBlogs();
+  if (name === 'adoptions'  && document.getElementById('adoptions-table-wrap').querySelector('.spinner'))  loadAdminAdoptions();
+  if (name === 'followups'  && document.getElementById('followups-table-wrap').querySelector('.spinner'))  loadFollowups();
+  if (name === 'healthlogs' && document.getElementById('healthlogs-table-wrap').querySelector('.spinner')) loadHealthLogs();
+  if (name === 'reports'    && document.getElementById('reports-table-wrap').querySelector('.spinner'))    loadReports();
+  if (name === 'auditlog'   && document.getElementById('auditlog-list').querySelector('.spinner'))         loadAuditLog();
 }
 
-// ── DASHBOARD ─────────────────────────────────────────────────
+// Dashboard
 async function loadDashboard() {
   try {
     var res = await Admin.stats();
@@ -392,23 +407,21 @@ async function loadDashboard() {
     var s = res.data;
 
     document.getElementById('stats-grid').innerHTML =
-      statCard('👥', s.users.total, 'Total Users',  s.users.newThisWeek + ' new this week · ' + s.users.suspended + ' suspended') +
-      statCard('🐾', Object.values(s.pets).reduce(function(a,b){ return a+b; },0), 'Total Pets', (s.pets.available||0) + ' available') +
-      statCard('🤝', Object.values(s.adoptions).reduce(function(a,b){ return a+b; },0), 'Total Adoptions', (s.adoptions.approved||0) + ' approved') +
-      statCard('💳', (s.payments.completed ? fmtMoney(s.payments.completed.total) : '0 MMK'), 'Revenue', (s.payments.completed ? s.payments.completed.count : 0) + ' completed payments') +
-      statCard('📝', (s.blogs.published||0), 'Published Blogs', (s.blogs.draft||0) + ' drafts') +
-      statCard('📋', s.followups||0, 'Follow-ups Submitted', 'Post-adoption monitoring') +
-      statCard('🚨', s.reports.pending||0, 'Pending Reports', 'Require review', s.reports.pending > 0 ? '#fdf0ec' : null) +
-      statCard('👑', s.users.admins||0, 'Admins', 'Platform administrators');
+      statCard('', s.users.total, 'Total Users',  s.users.newThisWeek + ' new this week \u00b7 ' + s.users.suspended + ' suspended') +
+      statCard('', Object.values(s.pets).reduce(function(a,b){ return a+b; }, 0), 'Total Pets', (s.pets.available||0) + ' available') +
+      statCard('', Object.values(s.adoptions).reduce(function(a,b){ return a+b; }, 0), 'Total Adoptions', (s.adoptions.approved||0) + ' approved') +
+      statCard('', (s.payments.completed ? fmtMoney(s.payments.completed.total) : '0 MMK'), 'Revenue', (s.payments.completed ? s.payments.completed.count : 0) + ' completed payments') +
+      statCard('', (s.blogs.published||0), 'Published Blogs', (s.blogs.draft||0) + ' drafts') +
+      statCard('', s.followups||0, 'Follow-ups Submitted', 'Post-adoption monitoring') +
+      statCard('', s.reports.pending||0, 'Pending Reports', 'Require review', s.reports.pending > 0 ? '#fdf0ec' : null) +
+      statCard('', s.users.admins||0, 'Admins', 'Platform administrators');
 
-    // update reports badge
     if (s.reports.pending > 0) {
       var badge = document.getElementById('reports-badge');
       badge.textContent = s.reports.pending;
       badge.style.display = 'inline-block';
     }
 
-    // breakdowns
     renderBreakdown('pet-stats-breakdown', s.pets, { available:'#52b788', pending:'#e9c46a', adopted:'#2a9d8f', withdrawn:'#9baab8' });
     renderBreakdown('adoption-stats-breakdown', s.adoptions, { pending:'#e9c46a', approved:'#52b788', rejected:'#e76f51', cancelled:'#9baab8' });
   } catch(e) {}
@@ -428,7 +441,7 @@ function renderBreakdown(elId, data, colors) {
   var total = Object.values(data).reduce(function(a,b){ return a+b; }, 0);
   if (!total) { el.innerHTML = '<p style="color:#9baab8;font-size:0.86rem">No data yet.</p>'; return; }
   el.innerHTML = Object.entries(data).map(function(entry) {
-    var key = entry[0]; var val = entry[1];
+    var key = entry[0], val = entry[1];
     var pct = Math.round((val / total) * 100);
     var color = colors[key] || '#9baab8';
     return '<div style="margin-bottom:10px">' +
@@ -443,7 +456,7 @@ function renderBreakdown(elId, data, colors) {
   }).join('');
 }
 
-// ── USERS ─────────────────────────────────────────────────────
+// Users
 function debounceUsers() { clearTimeout(userTimer); userTimer = setTimeout(function(){ userPage=1; loadUsers(); }, 400); }
 
 async function loadUsers() {
@@ -453,7 +466,9 @@ async function loadUsers() {
   var s = document.getElementById('user-search').value.trim();
   var r = document.getElementById('user-role-filter').value;
   var sus = document.getElementById('user-suspended-filter').value;
-  if (s) q.search = s; if (r) q.role = r; if (sus !== '') q.suspended = sus;
+  if (s) q.search = s;
+  if (r) q.role = r;
+  if (sus !== '') q.suspended = sus;
 
   try {
     var res = await Admin.users(q);
@@ -462,14 +477,14 @@ async function loadUsers() {
     var total = res.data.total || 0;
     document.getElementById('users-total').textContent = total + ' users';
 
-    if (!users.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><h3>No users found</h3></div>'; return; }
+    if (!users.length) { el.innerHTML = '<div class="empty-state"><h3>No users found</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
       '<th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th>' +
     '</tr></thead><tbody>' +
     users.map(function(u) {
       return '<tr>' +
-        '<td style="font-weight:bold">' + (u.name||'—') + '</td>' +
+        '<td style="font-weight:bold">' + (u.name||'\u2014') + '</td>' +
         '<td style="color:#6b7a8d">' + u.email + '</td>' +
         '<td>' + (u.role === 'admin' ? '<span class="badge-yellow">Admin</span>' : '<span class="badge-gray">User</span>') + '</td>' +
         '<td>' + (u.is_suspended ? '<span class="badge-red">Suspended</span>' : '<span class="badge-green">Active</span>') + '</td>' +
@@ -491,19 +506,26 @@ async function loadUsers() {
   } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Something went wrong.</div>'; }
 }
 
-function openSuspendModal(id) { suspendUserId = id; document.getElementById('suspend-reason').value=''; document.getElementById('suspend-alert').innerHTML=''; openModal('suspend-modal'); }
+function openSuspendModal(id) {
+  suspendUserId = id;
+  document.getElementById('suspend-reason').value = '';
+  document.getElementById('suspend-alert').innerHTML = '';
+  openModal('suspend-modal');
+}
 
 async function confirmSuspend() {
   if (!suspendUserId) return;
   var reason = document.getElementById('suspend-reason').value.trim();
-  var btn    = document.getElementById('suspend-confirm-btn');
-  btn.disabled = true; btn.textContent = 'Suspending...';
+  var btn = document.getElementById('suspend-confirm-btn');
+  btn.disabled = true;
+  btn.textContent = 'Suspending...';
   try {
     var res = await Admin.suspend(suspendUserId, { reason: reason || undefined });
     if (res && res.ok) { closeModal('suspend-modal'); showToast('User suspended.', 'success'); loadUsers(); }
     else document.getElementById('suspend-alert').innerHTML = '<div class="alert alert-danger">' + (res.data.message||'Failed.') + '</div>';
   } catch(e) { document.getElementById('suspend-alert').innerHTML = '<div class="alert alert-danger">Error.</div>'; }
-  btn.disabled = false; btn.textContent = 'Suspend';
+  btn.disabled = false;
+  btn.textContent = 'Suspend';
 }
 
 async function unsuspendUser(id) {
@@ -542,25 +564,26 @@ async function deleteUser(id, name) {
   } catch(e) { showToast('Error.', 'error'); }
 }
 
-// ── PETS ──────────────────────────────────────────────────────
+// Pets
 function debouncePets() { clearTimeout(petTimer); petTimer = setTimeout(function(){ petsPage=1; loadAdminPets(); }, 400); }
 
 async function loadAdminPets() {
   var el = document.getElementById('pets-table-wrap');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
   var q = { page: petsPage, limit: LIMIT };
-  var s  = document.getElementById('pet-search').value.trim();
+  var s = document.getElementById('pet-search').value.trim();
   var st = document.getElementById('pet-status-filter').value;
-  if (s) q.search = s; if (st) q.status = st;
+  if (s) q.search = s;
+  if (st) q.status = st;
 
   try {
     var res = await Admin.pets(q);
     if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
-    var pets  = res.data.pets  || [];
+    var pets = res.data.pets || [];
     var total = res.data.total || 0;
     document.getElementById('pets-total').textContent = total + ' pets';
 
-    if (!pets.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🐾</div><h3>No pets found</h3></div>'; return; }
+    if (!pets.length) { el.innerHTML = '<div class="empty-state"><h3>No pets found</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
       '<th>Pet</th><th>Type</th><th>Owner</th><th>Fee</th><th>Status</th><th>Listed</th><th>Actions</th>' +
@@ -571,9 +594,9 @@ async function loadAdminPets() {
           (p.primary_image ? '<img src="' + imgUrl(p.primary_image) + '" style="width:36px;height:36px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:8px">' : '') +
           '<strong>' + p.name + '</strong>' +
         '</td>' +
-        '<td style="color:#6b7a8d">' + (p.type||'—') + '</td>' +
+        '<td style="color:#6b7a8d">' + (p.type||'\u2014') + '</td>' +
         '<td>' +
-          '<div style="font-size:0.84rem">' + (p.owner_name||'—') + '</div>' +
+          '<div style="font-size:0.84rem">' + (p.owner_name||'\u2014') + '</div>' +
           '<div style="font-size:0.76rem;color:#9baab8">' + (p.owner_email||'') + '</div>' +
         '</td>' +
         '<td>' + (p.fee_type === 'free' ? '<span class="badge-green">Free</span>' : fmtMoney(p.adoption_fee)) + '</td>' +
@@ -611,16 +634,17 @@ async function deleteAdminPet(id, name) {
   } catch(e) { showToast('Error.', 'error'); }
 }
 
-// ── BLOGS ─────────────────────────────────────────────────────
+// Blogs
 function debounceBlogs() { clearTimeout(blogTimer); blogTimer = setTimeout(function(){ blogsPage=1; loadAdminBlogs(); }, 400); }
 
 async function loadAdminBlogs() {
   var el = document.getElementById('blogs-table-wrap');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
   var q = { page: blogsPage, limit: LIMIT };
-  var s  = document.getElementById('blog-search').value.trim();
+  var s = document.getElementById('blog-search').value.trim();
   var st = document.getElementById('blog-status-filter').value;
-  if (s) q.search = s; if (st) q.status = st;
+  if (s) q.search = s;
+  if (st) q.status = st;
 
   try {
     var res = await Admin.blogs(q);
@@ -629,7 +653,7 @@ async function loadAdminBlogs() {
     var total = res.data.total || 0;
     document.getElementById('blogs-total').textContent = total + ' blogs';
 
-    if (!blogs.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📝</div><h3>No blogs found</h3></div>'; return; }
+    if (!blogs.length) { el.innerHTML = '<div class="empty-state"><h3>No blogs found</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
       '<th>Title</th><th>Author</th><th>Category</th><th>Status</th><th>Views</th><th>Date</th><th>Actions</th>' +
@@ -637,8 +661,8 @@ async function loadAdminBlogs() {
     blogs.map(function(b) {
       return '<tr>' +
         '<td style="max-width:220px"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:bold">' + b.title + '</div></td>' +
-        '<td style="color:#6b7a8d;font-size:0.84rem">' + (b.author_name||'—') + '</td>' +
-        '<td style="color:#6b7a8d;font-size:0.82rem">' + (b.category_name||'—') + '</td>' +
+        '<td style="color:#6b7a8d;font-size:0.84rem">' + (b.author_name||'\u2014') + '</td>' +
+        '<td style="color:#6b7a8d;font-size:0.82rem">' + (b.category_name||'\u2014') + '</td>' +
         '<td>' + pill(b.status) + '</td>' +
         '<td style="color:#6b7a8d">' + (b.views||0) + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + fmtDate(b.created_at) + '</td>' +
@@ -674,7 +698,7 @@ async function deleteAdminBlog(id, title) {
   } catch(e) { showToast('Error.', 'error'); }
 }
 
-// ── ADOPTIONS ─────────────────────────────────────────────────
+// Adoptions
 async function loadAdminAdoptions() {
   var el = document.getElementById('adoptions-table-wrap');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -685,26 +709,26 @@ async function loadAdminAdoptions() {
   try {
     var res = await Admin.adoptions(q);
     if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
-    var list  = res.data.adoptions || [];
+    var list = res.data.adoptions || [];
     var total = res.data.total || 0;
     document.getElementById('adoptions-total').textContent = total + ' requests';
 
-    if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🤝</div><h3>No requests found</h3></div>'; return; }
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>No requests found</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
       '<th>Pet</th><th>Owner</th><th>Requester</th><th>Fee</th><th>Status</th><th>Date</th><th>Actions</th>' +
     '</tr></thead><tbody>' +
     list.map(function(a) {
       return '<tr>' +
-        '<td style="font-weight:bold">' + (a.pet_name||'—') + '</td>' +
-        '<td style="font-size:0.82rem;color:#6b7a8d">' + (a.owner_name||'—') + '</td>' +
-        '<td style="font-size:0.82rem">' + (a.requester_name||'—') + '<div style="color:#9baab8;font-size:0.76rem">' + (a.requester_email||'') + '</div></td>' +
+        '<td style="font-weight:bold">' + (a.pet_name||'\u2014') + '</td>' +
+        '<td style="font-size:0.82rem;color:#6b7a8d">' + (a.owner_name||'\u2014') + '</td>' +
+        '<td style="font-size:0.82rem">' + (a.requester_name||'\u2014') + '<div style="color:#9baab8;font-size:0.76rem">' + (a.requester_email||'') + '</div></td>' +
         '<td>' + (a.fee_type === 'free' ? '<span class="badge-green">Free</span>' : '<span class="badge-yellow">Paid</span>') + '</td>' +
         '<td>' + pill(a.status) + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + timeAgo(a.created_at) + '</td>' +
         '<td>' + (a.status === 'approved' || a.status === 'pending'
           ? '<button onclick="openCloseAdoption(' + a.id + ')" class="btn btn-danger btn-sm">Force Close</button>'
-          : '<span style="color:#9baab8;font-size:0.8rem">—</span>') +
+          : '<span style="color:#9baab8;font-size:0.8rem">\u2014</span>') +
         '</td>' +
       '</tr>';
     }).join('') +
@@ -730,7 +754,7 @@ async function confirmCloseAdoption() {
   } catch(e) { showToast('Error.', 'error'); }
 }
 
-// ── FOLLOW-UPS ────────────────────────────────────────────────
+// Follow-ups
 async function loadFollowups() {
   var el = document.getElementById('followups-table-wrap');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -741,23 +765,23 @@ async function loadFollowups() {
   try {
     var res = await Admin.followups(q);
     if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
-    var list  = res.data.followups || [];
-    var total = res.data.total    || 0;
+    var list = res.data.followups || [];
+    var total = res.data.total || 0;
     document.getElementById('followups-total').textContent = total + ' follow-ups';
 
-    if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h3>No follow-ups yet</h3></div>'; return; }
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>No follow-ups yet</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
       '<th>Pet</th><th>Owner</th><th>Adopter</th><th>Health</th><th>Weight</th><th>Notes</th><th>Date</th>' +
     '</tr></thead><tbody>' +
     list.map(function(f) {
       return '<tr>' +
-        '<td style="font-weight:bold">' + (f.pet_name||'—') + '</td>' +
-        '<td style="font-size:0.82rem;color:#6b7a8d">' + (f.owner_name||'—') + '</td>' +
-        '<td style="font-size:0.82rem">' + (f.adopter_name||'—') + '</td>' +
+        '<td style="font-weight:bold">' + (f.pet_name||'\u2014') + '</td>' +
+        '<td style="font-size:0.82rem;color:#6b7a8d">' + (f.owner_name||'\u2014') + '</td>' +
+        '<td style="font-size:0.82rem">' + (f.adopter_name||'\u2014') + '</td>' +
         '<td>' + pill(f.health_status) + '</td>' +
-        '<td style="color:#6b7a8d">' + (f.weight_kg ? f.weight_kg + ' kg' : '—') + '</td>' +
-        '<td style="max-width:200px;font-size:0.82rem;color:#6b7a8d">' + (f.notes ? f.notes.substring(0,80) + (f.notes.length>80?'…':'') : '—') + '</td>' +
+        '<td style="color:#6b7a8d">' + (f.weight_kg ? f.weight_kg + ' kg' : '\u2014') + '</td>' +
+        '<td style="max-width:200px;font-size:0.82rem;color:#6b7a8d">' + (f.notes ? f.notes.substring(0,80) + (f.notes.length>80?'\u2026':'') : '\u2014') + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + timeAgo(f.created_at) + '</td>' +
       '</tr>';
     }).join('') +
@@ -767,7 +791,7 @@ async function loadFollowups() {
   } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Something went wrong.</div>'; }
 }
 
-// ── HEALTH LOGS ───────────────────────────────────────────────
+// Health Logs
 async function loadHealthLogs() {
   var el = document.getElementById('healthlogs-table-wrap');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -778,23 +802,23 @@ async function loadHealthLogs() {
   try {
     var res = await Admin.healthLogs(q);
     if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
-    var list  = res.data.logs  || [];
+    var list = res.data.logs || [];
     var total = res.data.total || 0;
     document.getElementById('healthlogs-total').textContent = total + ' logs';
 
-    if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💉</div><h3>No health logs yet</h3></div>'; return; }
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>No health logs yet</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
       '<th>Pet</th><th>Type</th><th>Logged By</th><th>Vet</th><th>Weight</th><th>Next Due</th><th>Date</th>' +
     '</tr></thead><tbody>' +
     list.map(function(l) {
       return '<tr>' +
-        '<td style="font-weight:bold">' + (l.pet_name||'—') + '</td>' +
+        '<td style="font-weight:bold">' + (l.pet_name||'\u2014') + '</td>' +
         '<td><span class="badge-gray" style="text-transform:capitalize">' + (l.type||'').replace(/_/g,' ') + '</span></td>' +
-        '<td style="font-size:0.82rem;color:#6b7a8d">' + (l.logged_by_name||'—') + '</td>' +
-        '<td style="font-size:0.82rem;color:#6b7a8d">' + (l.vet_name||'—') + '</td>' +
-        '<td style="color:#6b7a8d">' + (l.weight_kg ? l.weight_kg + ' kg' : '—') + '</td>' +
-        '<td style="color:#6b7a8d;font-size:0.82rem">' + (l.next_due ? fmtDate(l.next_due) : '—') + '</td>' +
+        '<td style="font-size:0.82rem;color:#6b7a8d">' + (l.logged_by_name||'\u2014') + '</td>' +
+        '<td style="font-size:0.82rem;color:#6b7a8d">' + (l.vet_name||'\u2014') + '</td>' +
+        '<td style="color:#6b7a8d">' + (l.weight_kg ? l.weight_kg + ' kg' : '\u2014') + '</td>' +
+        '<td style="color:#6b7a8d;font-size:0.82rem">' + (l.next_due ? fmtDate(l.next_due) : '\u2014') + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + timeAgo(l.created_at) + '</td>' +
       '</tr>';
     }).join('') +
@@ -804,7 +828,7 @@ async function loadHealthLogs() {
   } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Something went wrong.</div>'; }
 }
 
-// ── REPORTS ───────────────────────────────────────────────────
+// Reports
 async function loadReports() {
   var el = document.getElementById('reports-table-wrap');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -815,27 +839,27 @@ async function loadReports() {
   try {
     var res = await Admin.reports(q);
     if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
-    var list  = res.data.reports || [];
-    var total = res.data.total   || 0;
+    var list = res.data.reports || [];
+    var total = res.data.total || 0;
     document.getElementById('reports-total').textContent = total + ' reports';
 
-    if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🚨</div><h3>No reports</h3><p>All clear!</p></div>'; return; }
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>No reports</h3><p>All clear!</p></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
       '<th>Target</th><th>Reporter</th><th>Reason</th><th>Details</th><th>Status</th><th>Date</th><th>Actions</th>' +
     '</tr></thead><tbody>' +
     list.map(function(r) {
-      var target = r.pet_name ? '🐾 ' + r.pet_name : (r.blog_title ? '📝 ' + r.blog_title.substring(0,30) : '—');
+      var target = r.pet_name ? 'Pet: ' + r.pet_name : (r.blog_title ? 'Blog: ' + r.blog_title.substring(0,30) : '\u2014');
       return '<tr>' +
         '<td style="font-weight:bold">' + target + '</td>' +
-        '<td style="font-size:0.82rem;color:#6b7a8d">' + (r.reporter_name||'—') + '</td>' +
+        '<td style="font-size:0.82rem;color:#6b7a8d">' + (r.reporter_name||'\u2014') + '</td>' +
         '<td><span class="badge-yellow" style="text-transform:capitalize">' + (r.reason||'').replace(/_/g,' ') + '</span></td>' +
-        '<td style="max-width:180px;font-size:0.8rem;color:#6b7a8d">' + (r.details ? r.details.substring(0,60) + (r.details.length>60?'…':'') : '—') + '</td>' +
+        '<td style="max-width:180px;font-size:0.8rem;color:#6b7a8d">' + (r.details ? r.details.substring(0,60) + (r.details.length>60?'\u2026':'') : '\u2014') + '</td>' +
         '<td>' + pill(r.status) + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + timeAgo(r.created_at) + '</td>' +
         '<td>' + (r.status === 'pending'
           ? '<button onclick="openResolveReport(' + r.id + ',\'' + target.replace(/'/g,"\\'") + '\',' + (r.pet_id||'null') + ',' + (r.blog_id||'null') + ')" class="btn btn-primary btn-sm">Resolve</button>'
-          : '<span style="color:#9baab8;font-size:0.8rem">' + (r.reviewed_by_name||'—') + '</span>') +
+          : '<span style="color:#9baab8;font-size:0.8rem">' + (r.reviewed_by_name||'\u2014') + '</span>') +
         '</td>' +
       '</tr>';
     }).join('') +
@@ -846,18 +870,17 @@ async function loadReports() {
 }
 
 function openResolveReport(id, target, petId, blogId) {
-  resolveReportId   = id;
+  resolveReportId = id;
   resolveReportData = { petId: petId, blogId: blogId };
   document.getElementById('resolve-report-info').innerHTML =
     '<strong>Reported:</strong> ' + target + '<br>' +
-    (petId  ? '<div style="margin-top:4px;color:#9baab8">Pet ID: ' + petId  + '</div>' : '') +
+    (petId ? '<div style="margin-top:4px;color:#9baab8">Pet ID: ' + petId + '</div>' : '') +
     (blogId ? '<div style="margin-top:4px;color:#9baab8">Blog ID: ' + blogId + '</div>' : '');
 
-  // only show relevant actions
   var sel = document.getElementById('resolve-action');
   Array.from(sel.options).forEach(function(opt) {
     opt.style.display = '';
-    if (opt.value === 'remove_pet'  && !petId)  opt.style.display = 'none';
+    if (opt.value === 'remove_pet' && !petId) opt.style.display = 'none';
     if (opt.value === 'remove_blog' && !blogId) opt.style.display = 'none';
   });
   sel.value = '';
@@ -873,12 +896,12 @@ async function confirmResolveReport(status) {
       closeModal('resolve-report-modal');
       showToast('Report ' + status + '.', 'success');
       loadReports();
-      loadDashboard(); // update badge
+      loadDashboard();
     } else showToast(res.data.message||'Failed.', 'error');
   } catch(e) { showToast('Error.', 'error'); }
 }
 
-// ── AUDIT LOG ─────────────────────────────────────────────────
+// Audit Log
 async function loadAuditLog() {
   var el = document.getElementById('auditlog-list');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -889,23 +912,23 @@ async function loadAuditLog() {
   try {
     var res = await Admin.auditLog(q);
     if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
-    var list  = res.data.logs  || [];
+    var list = res.data.logs || [];
     var total = res.data.total || 0;
     document.getElementById('auditlog-total').textContent = total + ' entries';
 
-    if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🗒️</div><h3>No audit logs yet</h3></div>'; return; }
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>No audit logs yet</h3></div>'; return; }
 
     el.innerHTML = list.map(function(l) {
       return '<div class="audit-row" style="padding:12px 16px">' +
-        '<div style="width:34px;height:34px;border-radius:50%;background:#f3f3ef;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0">👤</div>' +
+        '<div style="width:34px;height:34px;border-radius:50%;background:#f3f3ef;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0;color:#6b7a8d">A</div>' +
         '<div style="flex:1">' +
           '<div class="audit-action">' + l.action.replace(/_/g,' ') +
             (l.target_type ? ' <span style="font-size:0.76rem;font-weight:normal;color:#9baab8">on ' + l.target_type + (l.target_id ? ' #' + l.target_id : '') + '</span>' : '') +
           '</div>' +
           (l.detail ? '<div class="audit-detail">' + l.detail + '</div>' : '') +
           '<div class="audit-meta">by <strong>' + (l.admin_name||'Admin') + '</strong>' +
-            (l.ip_address ? ' · ' + l.ip_address : '') +
-            ' · ' + timeAgo(l.created_at) +
+            (l.ip_address ? ' \u00b7 ' + l.ip_address : '') +
+            ' \u00b7 ' + timeAgo(l.created_at) +
           '</div>' +
         '</div>' +
       '</div>';
