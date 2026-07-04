@@ -6,15 +6,18 @@
   <title>Browse Pets — Pet Rehoming</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    /* Simple, clean pill style for filters */
     .filter-chip {
       display: inline-flex; align-items: center;
       padding: 8px 18px; background: #fff; border: 1.5px solid #e5e7eb;
       border-radius: 999px; font-size: 0.88rem; font-weight: 500;
-      color: #1c2b3a; cursor: pointer; transition: all 0.2s;
+      color: #1c2b3a; cursor: pointer; transition: all 0.15s;
     }
     .filter-chip:hover { border-color: #2a9d8f; color: #2a9d8f; background: #f9f9f7; }
     .filter-chip.active { background: #2a9d8f; color: #fff; border-color: #2a9d8f; }
+    .fav-btn { background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px; transition: background 0.15s; }
+    .fav-btn:hover { background: #f3f3ef; }
+    .fav-icon { width: 20px; height: 20px; fill: none; stroke: #9baab8; stroke-width: 2; transition: all 0.15s; }
+    .fav-btn.faved .fav-icon { fill: #e76f51; stroke: #e76f51; }
   </style>
 </head>
 <body>
@@ -31,30 +34,30 @@
         <h1>Browse Pets</h1>
         <p style="color:#6b7a8d;margin-top:4px" id="result-count">Loading...</p>
       </div>
-      <a href="/pages/add-pet.html" class="btn btn-primary" id="list-btn" style="display:none">+ List a Pet</a>
+      <a href="/pages/add-pet.html" class="btn btn-primary" id="list-btn" style="display:none">List a Pet</a>
     </div>
 
     <!-- FILTERS -->
-    <div class="card" style="margin-bottom:24px;padding:16px">
+    <div class="card" style="margin-bottom:24px;padding:18px">
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:end">
         <div>
-          <label style="font-size:0.8rem;font-weight:bold;margin-bottom:4px;display:block">Search</label>
+          <label style="font-size:0.8rem;font-weight:600;margin-bottom:5px;display:block;color:#374151">Search</label>
           <input type="text" id="filter-search" class="form-control" placeholder="Name or breed..." oninput="debounceSearch()">
         </div>
         <div>
-          <label style="font-size:0.8rem;font-weight:bold;margin-bottom:4px;display:block">Pet Type</label>
+          <label style="font-size:0.8rem;font-weight:600;margin-bottom:5px;display:block;color:#374151">Pet Type</label>
           <select id="filter-type" class="form-control" onchange="applyFilters()">
             <option value="">All Types</option>
           </select>
         </div>
         <div>
-          <label style="font-size:0.8rem;font-weight:bold;margin-bottom:4px;display:block">City</label>
+          <label style="font-size:0.8rem;font-weight:600;margin-bottom:5px;display:block;color:#374151">City</label>
           <select id="filter-city" class="form-control" onchange="applyFilters()">
             <option value="">All Cities</option>
           </select>
         </div>
         <div>
-          <label style="font-size:0.8rem;font-weight:bold;margin-bottom:4px;display:block">Fee</label>
+          <label style="font-size:0.8rem;font-weight:600;margin-bottom:5px;display:block;color:#374151">Fee</label>
           <select id="filter-fee" class="form-control" onchange="applyFilters()">
             <option value="">Any</option>
             <option value="free">Free</option>
@@ -67,8 +70,8 @@
       </div>
 
       <!-- gender chips -->
-      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <span style="font-size:0.8rem;font-weight:bold;color:#6b7a8d">Gender:</span>
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:0.8rem;font-weight:600;color:#6b7a8d">Gender:</span>
         <button class="filter-chip active" data-gender="" onclick="setGender(this,'')">All</button>
         <button class="filter-chip" data-gender="male" onclick="setGender(this,'male')">Male</button>
         <button class="filter-chip" data-gender="female" onclick="setGender(this,'female')">Female</button>
@@ -100,18 +103,17 @@ var searchTimer = null;
 var LIMIT = 20;
 
 document.addEventListener('DOMContentLoaded', async function() {
-  if (getToken()) document.getElementById('list-btn').style.display = 'inline-block';
+  if (getToken()) document.getElementById('list-btn').style.display = 'inline-flex';
 
   var params = new URLSearchParams(window.location.search);
   if (params.get('type')) document.getElementById('filter-type').value = params.get('type') || '';
 
-  // load pet types
+  // load pet types - ONLY Dog, Cat, Other
   try {
     var typesRes = await PetTypes.list();
     if (typesRes && typesRes.ok) {
       var sel = document.getElementById('filter-type');
       
-      // ONLY KEEP DOG, CAT, OTHER
       var allowedTypes = ['Dog', 'Cat', 'Other'];
       var filteredTypes = typesRes.data.petTypes.filter(function(t) {
         return allowedTypes.indexOf(t.name) !== -1;
@@ -120,7 +122,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       filteredTypes.forEach(function(t) {
         var opt = document.createElement('option');
         opt.value = t.id; 
-        opt.textContent = t.name; // NO EMOJIS
+        opt.textContent = t.name;
         sel.appendChild(opt);
       });
       if (params.get('type')) sel.value = params.get('type');
@@ -214,12 +216,11 @@ async function loadPets() {
     document.getElementById('result-count').textContent = total + ' pet' + (total !== 1 ? 's' : '') + ' found';
 
     if (!pets.length) {
-      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🐾</div><h3>No pets found</h3><p>Try adjusting your filters.</p></div>';
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">No results</div><h3>No pets found</h3><p>Try adjusting your filters.</p></div>';
       document.getElementById('pagination').innerHTML = '';
       return;
     }
 
-    // load favorites to show saved state
     var favIds = [];
     if (getToken()) {
       try {
@@ -241,11 +242,9 @@ async function loadPets() {
   }
 }
 
-// FIXED: Converted to safe standard JavaScript (removed ES6 ?. syntax that breaks browsers)
 function petCardWithFav(pet, isFaved) {
   var petId = petIdOf(pet);
 
-  // Safe image extraction
   var img = null;
   if (pet.images && pet.images[0] && pet.images[0].url) {
     img = pet.images[0].url;
@@ -253,16 +252,19 @@ function petCardWithFav(pet, isFaved) {
     img = pet.primary_image;
   }
 
+  // FIXED: Added loading="lazy", decoding="async", and global onerror fallback
   var imgHtml = img
-    ? '<img class="pet-card-img" src="' + imgUrl(img) + '" alt="' + pet.name + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"><div class="pet-card-placeholder" style="display:none">🐾</div>'
-    : '<div class="pet-card-placeholder">🐾</div>';
+    ? '<img class="pet-card-img" src="' + imgUrl(img) + '" alt="' + escapeHtml(pet.name) + '" loading="lazy" decoding="async" onerror="handleImgError(this)">' 
+    : '<div class="pet-card-placeholder" style="font-size:1rem">' + (pet.name ? pet.name.charAt(0).toUpperCase() : '?') + '</div>';
 
   var fee = pet.fee_type === 'free'
     ? '<span class="pill pill-free">Free</span>'
     : '<span class="pill pill-paid">' + fmtMoney(pet.adoption_fee) + '</span>';
 
   var favBtn = getToken()
-    ? '<button onclick="event.stopPropagation();toggleFav(this, ' + petId + ')" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:2px" title="' + (isFaved ? 'Remove from favorites' : 'Save') + '">' + (isFaved ? '❤️' : '🤍') + '</button>'
+    ? '<button class="fav-btn ' + (isFaved ? 'faved' : '') + '" onclick="event.stopPropagation();toggleFav(this, ' + petId + ')" title="' + (isFaved ? 'Remove from favorites' : 'Save') + '">' +
+        '<svg class="fav-icon" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' +
+      '</button>'
     : '';
 
   var meta = (pet.pet_type_name || '') + 
@@ -273,10 +275,10 @@ function petCardWithFav(pet, isFaved) {
     imgHtml +
     '<div class="pet-card-body">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
-        '<div class="pet-card-title">' + pet.name + '</div>' +
+        '<div class="pet-card-title">' + escapeHtml(pet.name) + '</div>' +
         favBtn +
       '</div>' +
-      '<div class="pet-card-meta">' + meta + '</div>' +
+      '<div class="pet-card-meta">' + escapeHtml(meta) + '</div>' +
       '<div class="pet-card-footer">' + fee + pill(pet.status) + '</div>' +
     '</div>' +
   '</div>';
@@ -284,15 +286,15 @@ function petCardWithFav(pet, isFaved) {
 
 async function toggleFav(btn, petId) {
   if (!getToken()) { window.location.href = '/pages/login.html'; return; }
-  var isFaved = btn.textContent.trim() === '❤️';
+  var isFaved = btn.classList.contains('faved');
   try {
     if (isFaved) {
       await Favorites.remove(petId);
-      btn.textContent = '🤍';
+      btn.classList.remove('faved');
       btn.title = 'Save';
     } else {
       await Favorites.add(petId);
-      btn.textContent = '❤️';
+      btn.classList.add('faved');
       btn.title = 'Remove from favorites';
     }
   } catch(e) { showToast('Failed to update favorites.', 'error'); }

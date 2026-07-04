@@ -9,7 +9,7 @@
 
 // FIX 1: Added /chat/completions to the URL
 const QWEN_API_URL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions';
-const QWEN_MODEL   = 'qwen-turbo'; 
+const QWEN_MODEL   = 'qwen-plus'; 
 
 const SYSTEM_PROMPT = `You are PawBot, a warm and knowledgeable assistant for the Pet Rehoming & Monitoring System.
 You help users with:
@@ -21,7 +21,7 @@ You help users with:
 Keep responses friendly, concise, and helpful. Use bullet points for lists.
 Never give medical diagnoses — always recommend a vet for serious health concerns.
 If a question is unrelated to pets or the platform, still help politely as a general assistant.
-PLEASE WRITE ONLY IN BURMESE LANGUAGE EVERYTIME IN ALL CHAT`;
+`;
 
 /**
  * Non-streaming — returns full response

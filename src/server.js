@@ -46,11 +46,23 @@ app.use(cors({
   },
   credentials: true,
 }));
+
 const { handleWebhook } = require('./controllers/webhookController');
 app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Increase payload limit to 50mb (handles large base64 JSON payloads if you aren't using multer)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Serve static files with caching to improve load times and prevent redundant downloads
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+  maxAge: '30d', // Browser caches images for 30 days
+  setHeaders: (res, filepath) => {
+    if (filepath.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }
+}));
 
 const authLimiter = rateLimit({ windowMs: 15*60*1000, max: 100, message: { message: 'Too many attempts, try again in 15 minutes.' } });
 const chatLimiter = rateLimit({ windowMs: 60*1000,    max: 20, message: { message: 'Chat limit: 20 messages per minute.' } });
@@ -93,4 +105,3 @@ app.listen(PORT, async () => {
 
   await seedAdmin();
 });
-

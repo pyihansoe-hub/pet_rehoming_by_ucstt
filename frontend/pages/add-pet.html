@@ -80,15 +80,9 @@
             </label>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Location</label>
-            <input type="text" id="location" class="form-control" placeholder="e.g. Sanchaung, Yangon">
-          </div>
-          <div class="form-group">
-            <label>City</label>
-            <input type="text" id="city" class="form-control" placeholder="e.g. Yangon">
-          </div>
+        <div class="form-group">
+          <label>Location</label>
+          <input type="text" id="location" class="form-control" placeholder="e.g. Sanchaung, Yangon">
         </div>
         <div class="form-group">
           <label>Description</label>
@@ -194,7 +188,6 @@ async function loadForEdit(id) {
     document.getElementById('gender').value       = p.gender || '';
     document.getElementById('weight').value       = p.weight_kg || '';
     document.getElementById('location').value     = p.location || '';
-    document.getElementById('city').value         = p.city || '';
     document.getElementById('description').value  = p.description || '';
     document.getElementById('health-notes').value = p.health_notes || '';
     document.getElementById('is-vaccinated').checked = !!p.is_vaccinated;
@@ -263,7 +256,6 @@ async function savePet() {
     birth_date:    bd                                                    || undefined,
     is_sure:       document.getElementById('is-sure').checked,
     location:      document.getElementById('location').value.trim()    || undefined,
-    city:          document.getElementById('city').value.trim()         || undefined,
     description:   document.getElementById('description').value.trim() || undefined,
     health_notes:  document.getElementById('health-notes').value.trim()|| undefined,
     is_vaccinated: document.getElementById('is-vaccinated').checked,
