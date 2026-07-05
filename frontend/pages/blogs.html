@@ -121,9 +121,9 @@
   <div class="container">
 
     <div class="blog-hero">
-      <h1>Pet Care Blog</h1>
-      <p>Expert tips, nutritional advice, and heartwarming stories to help you give your furry friends the best life possible.</p>
-      <a href="/pages/write-blog.html" class="btn btn-primary" id="write-btn" style="display:none; margin-top:16px">Write an Article</a>
+      <h1>Pet ဆောင်းပါးများ</h1>
+      <p>Pet များနှင့်သက်ဆိုင်သောဆောင်းပါးများ ကျွမ်းကျင်ပညာရှင်များရဲ့ပြောဆိုချက်များ အကြံညဏ်များ Pet မွေးမြူရေးအတွက် အထောက်အကူပေးနိုင်သော ဆောင်းပါးများ </p>
+      <a href="/pages/write-blog.html" class="btn btn-primary" id="write-btn" style="display:none; margin-top:16px">ဆောင်းပါးရေးရန်</a>
     </div>
 
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
@@ -212,7 +212,7 @@ async function loadBlogs() {
     var blogs = res.data.blogs || [];
     var total = res.data.total || 0;
     var countEl = document.querySelector('.blog-hero p');
-    if(countEl) countEl.textContent = 'Expert tips and advice to help your pets thrive. ' + total + ' article' + (total !== 1 ? 's' : '') + ' available.';
+    if(countEl) countEl.textContent = 'Pet များနှင့်သက်ဆိုင်သောဆောင်းပါးများ ကျွမ်းကျင်ပညာရှင်များရဲ့ပြောဆိုချက်များ ဆောင်းပါး ' + total + (total !== 1 ? '' : '') + ' ရနိုင်သည်။ ';
 
     if (!blogs.length) {
       grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">No articles</div><h3>No articles found</h3><p>Try a different search or category.</p></div>';
