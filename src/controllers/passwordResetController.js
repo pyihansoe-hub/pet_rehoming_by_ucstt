@@ -37,7 +37,7 @@ const forgotPassword = async (req, res) => {
     await send(email, 'Reset your password — Pet Rehoming', `
       <p>Hi ${user.name},</p>
       <p>You requested a password reset. Click the link below — it expires in 1 hour.</p>
-      <p><a href="${resetUrl}" style="background:#2A9D8F;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;">Reset Password</a></p>
+      
       <p>If you didn't request this, ignore this email.</p>
     `);
 

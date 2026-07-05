@@ -10,11 +10,6 @@
     .editor-toolbar button { padding:4px 10px; background:#fff; border:1.5px solid #e5e7eb; border-radius:5px; font-size:0.8rem; cursor:pointer; color:#1c2b3a; }
     .editor-toolbar button:hover { background:#e6f5f3; border-color:#2a9d8f; color:#2a9d8f; }
     #content { border-radius:0 0 8px 8px; min-height:340px; font-size:0.93rem; line-height:1.8; }
-    .tag-input-wrap { display:flex; flex-wrap:wrap; gap:6px; padding:8px 10px; border:1.5px solid #e5e7eb; border-radius:8px; cursor:text; min-height:42px; align-items:center; }
-    .tag-input-wrap:focus-within { border-color:#2a9d8f; }
-    .tag-chip { display:inline-flex; align-items:center; gap:4px; background:#e6f5f3; color:#21867a; border-radius:999px; padding:2px 10px; font-size:0.8rem; font-weight:bold; }
-    .tag-chip button { background:none; border:none; color:#21867a; cursor:pointer; font-size:0.9rem; line-height:1; padding:0; }
-    #tag-input { border:none; outline:none; font-size:0.86rem; font-family:Arial,sans-serif; min-width:100px; flex:1; }
     .preview-cover { width:100%; max-height:280px; object-fit:cover; border-radius:8px; margin-top:10px; }
     .preview-content p  { margin-bottom:14px; color:#374151; }
     .preview-content h2 { font-size:1.2rem; margin:20px 0 8px; }
@@ -97,7 +92,7 @@
         </div>
       </div>
 
-      <!-- COVER + TAGS -->
+      <!-- COVER IMAGE -->
       <div class="card" style="margin-bottom:24px">
         <div class="form-group">
           <label>Cover Image</label>
@@ -111,14 +106,6 @@
           </div>
           <div id="cover-preview-area"></div>
           <div id="existing-cover-area"></div>
-        </div>
-
-        <div class="form-group">
-          <label>Tags</label>
-          <div class="tag-input-wrap" id="tag-wrap" onclick="document.getElementById('tag-input').focus()">
-            <input type="text" id="tag-input" placeholder="Type a tag, press Enter...">
-          </div>
-          <span class="form-hint">Press Enter or comma to add · max 10 tags</span>
         </div>
       </div>
 
@@ -139,7 +126,6 @@
 <script src="/js/app.js"></script>
 <script>
 var editId = null;
-var tags   = [];
 var previewVisible = false;
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -158,19 +144,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   } catch(e) {}
 
-  // tag input events
-  var tagInput = document.getElementById('tag-input');
-  tagInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      addTag(this.value.trim());
-      this.value = '';
-    }
-    if (e.key === 'Backspace' && !this.value && tags.length) {
-      removeTag(tags[tags.length - 1]);
-    }
-  });
-
   // check if editing
   var params = new URLSearchParams(window.location.search);
   editId = params.get('id');
@@ -183,7 +156,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // ── LOAD FOR EDIT ─────────────────────────────────────────────
 async function loadForEdit(id) {
-  // search published then draft to find blog by id
   var blog = null;
   try {
     var statuses = ['published', 'draft', 'archived'];
@@ -206,11 +178,6 @@ async function loadForEdit(id) {
     r.checked = r.value === (blog.status || 'draft');
   });
 
-  // tags
-  if (blog.tags && blog.tags.length) {
-    blog.tags.forEach(function(t){ addTag(t.name || t); });
-  }
-
   // existing cover
   if (blog.cover_image_url) {
     document.getElementById('existing-cover-area').innerHTML =
@@ -219,31 +186,6 @@ async function loadForEdit(id) {
         '<p style="font-size:0.78rem;color:#9baab8;margin-top:4px">Upload a new image to replace this cover.</p>' +
       '</div>';
   }
-}
-
-// ── TAGS ──────────────────────────────────────────────────────
-function addTag(val) {
-  val = val.replace(/,/g,'').trim().toLowerCase();
-  if (!val || tags.indexOf(val) !== -1 || tags.length >= 10) return;
-  tags.push(val);
-  renderTags();
-}
-
-function removeTag(val) {
-  tags = tags.filter(function(t){ return t !== val; });
-  renderTags();
-}
-
-function renderTags() {
-  var wrap  = document.getElementById('tag-wrap');
-  var input = document.getElementById('tag-input');
-  wrap.querySelectorAll('.tag-chip').forEach(function(c){ c.remove(); });
-  tags.forEach(function(t) {
-    var chip = document.createElement('span');
-    chip.className = 'tag-chip';
-    chip.innerHTML = t + '<button type="button" onclick="removeTag(\'' + t + '\')">✕</button>';
-    wrap.insertBefore(chip, input);
-  });
 }
 
 // ── EDITOR HELPERS ────────────────────────────────────────────
@@ -355,17 +297,15 @@ async function saveBlog(forceStatus) {
   if (summary) fd.append('summary',     summary);
   if (catId)   fd.append('category_id', catId);
   if (cover)   fd.append('cover', cover);
-  if (tags.length) fd.append('tags', JSON.stringify(tags));
 
-    try {
+  try {
     var res = editId
       ? await Blogs.update(editId, fd)
       : await Blogs.create(fd);
 
     if (res && res.ok) {
       var savedBlog = res.data.blog;
-      
-      // If editing, grab the ID to update the URL bar
+
       if (!editId && savedBlog) {
         editId = savedBlog.id || savedBlog._id;
         if (editId) {
@@ -377,7 +317,6 @@ async function saveBlog(forceStatus) {
 
       showToast(status === 'published' ? 'Blog published!' : 'Draft saved.', 'success');
 
-      // Always redirect to the blogs list page after publishing or saving draft
       if (status === 'published') {
         setTimeout(function(){ window.location.href = '/pages/blogs.html'; }, 500);
       } else {
