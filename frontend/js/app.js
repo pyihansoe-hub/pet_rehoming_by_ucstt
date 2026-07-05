@@ -206,10 +206,10 @@ function renderNavbar() {
 
   nav.innerHTML =
     '<div class="container">' +
-      '<a href="' + p() + '" class="nav-logo"><span>🐾</span> Pet Rehoming</a>' +
+      '<a href="' + p() + '" class="nav-logo">Pet Rehoming</a>' +
       '<nav class="nav-links">' +
         '<a href="' + p() + '">Home</a>' +
-        '<a href="' + p('pets.html') + '">Browse Pets</a>' +
+        '<a href="' + p('pets.html') + '">Pets</a>' +
         '<a href="' + p('blogs.html') + '">Blogs</a>' +
         '<a href="' + p('chat.html') + '">PawBot</a>' +
         (isAdmin ? '<a href="' + p('admin.html') + '">Admin</a>' : '') +
