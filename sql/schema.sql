@@ -1,6 +1,5 @@
 -- ============================================================
 -- PET REHOMING & MONITORING SYSTEM — FULL SCHEMA
--- Run this entire file on a fresh database to rebuild everything
 -- ============================================================
 
 -- ── ENUMS ──────────────────────────────────────────────────────
@@ -288,18 +287,13 @@ CREATE TABLE blog_categories (
   pet_type_id INT REFERENCES pet_types(id) ON DELETE SET NULL,
   created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
-
 INSERT INTO blog_categories (name, slug, description, pet_type_id) VALUES
   ('Dog Care',     'dog-care',     'Tips and advice for dog owners',     1),
   ('Cat Care',     'cat-care',     'Tips and advice for cat owners',     2),
-  ('Rabbit Care',  'rabbit-care',  'Tips and advice for rabbit owners',  3),
-  ('Bird Care',    'bird-care',    'Tips and advice for bird owners',    4),
-  ('Fish Care',    'fish-care',    'Tips and advice for fish owners',    5),
-  ('Reptile Care', 'reptile-care', 'Tips and advice for reptile owners', 6),
-  ('General',      'general',      'General pet care and rehoming advice', NULL),
-  ('Health & Vet', 'health-vet',   'Health tips and vet advice',         NULL),
-  ('Training',     'training',     'Pet training guides',                NULL),
-  ('Nutrition',    'nutrition',    'Diet and nutrition for all pets',    NULL);
+  ('Health & Vet', 'health-vet',   'Health tips and vet advice for cats and dogs', NULL),
+  ('Training',     'training',     'Training guides for cats and dogs',  NULL),
+  ('Nutrition',    'nutrition',    'Diet and nutrition for cats and dogs', NULL),
+  ('Other',        'other',        'Other pets and general pet topics',  NULL);
 
 -- ── BLOGS ──────────────────────────────────────────────────────
 CREATE TABLE blogs (
