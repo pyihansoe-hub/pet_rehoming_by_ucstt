@@ -26,4 +26,4 @@ dist-ssr
 # Add these lines if not already there:
 .env
 .env.*
-!.env.example
+!.env.exampleuploads/
