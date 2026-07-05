@@ -31,23 +31,20 @@
         <h1>My Profile</h1>
       </div>
 
-      <!-- STATS -->
       <div class="stat-row" id="stat-row">
         <div class="stat-box"><div class="stat-box-value" id="stat-pets">—</div><div class="stat-box-label">Pets Listed</div></div>
         <div class="stat-box"><div class="stat-box-value" id="stat-requests">—</div><div class="stat-box-label">Requests Sent</div></div>
         <div class="stat-box"><div class="stat-box-value" id="stat-favorites">—</div><div class="stat-box-label">Saved Pets</div></div>
       </div>
 
-      <!-- QUICK LINKS -->
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px">
-        <a href="/pages/my-pets.html" class="btn btn-outline btn-sm">🐾 My Pets</a>
-        <a href="/pages/adoption-requests.html" class="btn btn-outline btn-sm">📋 Requests</a>
-        <a href="/pages/adoption-requests.html?tab=received" class="btn btn-outline btn-sm">📬 Received</a>
-        <a href="/pages/notifications.html" class="btn btn-outline btn-sm">🔔 Notifications</a>
-        <a href="/pages/messages.html" class="btn btn-outline btn-sm">💬 Messages</a>
+        <a href="/pages/my-pets.html" class="btn btn-outline btn-sm">My Pets</a>
+        <a href="/pages/adoption-requests.html" class="btn btn-outline btn-sm">Requests</a>
+        <a href="/pages/adoption-requests.html?tab=received" class="btn btn-outline btn-sm">Received</a>
+        <a href="/pages/notifications.html" class="btn btn-outline btn-sm">Notifications</a>
+        <a href="/pages/messages.html" class="btn btn-outline btn-sm">Messages</a>
       </div>
 
-      <!-- TABS -->
       <div id="tabs-wrap">
         <div class="tabs">
           <button class="tab-btn active" data-tab="tab-info">Profile Info</button>
@@ -55,12 +52,10 @@
           <button class="tab-btn" data-tab="tab-favorites">Saved Pets</button>
         </div>
 
-        <!-- PROFILE INFO TAB -->
         <div class="tab-panel active" id="tab-info">
           <div class="card">
             <div id="profile-alert"></div>
 
-            <!-- avatar -->
             <div class="profile-avatar-wrap">
               <div id="avatar-display"></div>
               <div class="profile-name" id="display-name"></div>
@@ -95,7 +90,6 @@
           </div>
         </div>
 
-        <!-- CHANGE PASSWORD TAB -->
         <div class="tab-panel" id="tab-password">
           <div class="card">
             <div id="password-alert"></div>
@@ -117,7 +111,6 @@
           </div>
         </div>
 
-        <!-- SAVED PETS TAB -->
         <div class="tab-panel" id="tab-favorites">
           <div id="favorites-list">
             <div class="loading-wrap"><div class="spinner"></div></div>
@@ -141,32 +134,27 @@ document.addEventListener('DOMContentLoaded', async function() {
   if (!requireAuth()) return;
   initTabs('tabs-wrap');
 
-  // load profile
   try {
     var res = await User.getProfile();
     if (res && res.ok) {
       var u = res.data.user;
       currentAvatarUrl = u.avatar_url;
 
-      // avatar display
       renderAvatar(u.avatar_url, u.name);
       document.getElementById('display-name').textContent  = u.name  || '';
       document.getElementById('display-email').textContent = u.email || '';
 
-      // form fields
       document.getElementById('name').value    = u.name    || '';
       document.getElementById('phone').value   = u.phone   || '';
       document.getElementById('address').value = u.address || '';
 
-      // update localStorage
       saveAuth(getToken(), u);
+      renderNavbar();
     }
   } catch(e) { showToast('Failed to load profile.', 'error'); }
 
-  // load stats
   loadStats();
 
-  // load favorites when that tab is clicked
   document.querySelector('[data-tab="tab-favorites"]').addEventListener('click', function() {
     loadFavorites();
   });
@@ -240,7 +228,7 @@ async function saveProfile() {
       document.getElementById('avatar-preview-area').innerHTML = '';
       renderAvatar(u.avatar_url, u.name);
       document.getElementById('display-name').textContent = u.name;
-      renderNavbar(); // update navbar avatar
+      renderNavbar();
       showToast('Profile updated!', 'success');
       alertEl.innerHTML = '<div class="alert alert-success">Profile saved successfully.</div>';
     } else {
@@ -286,7 +274,6 @@ async function changePassword() {
 async function loadFavorites() {
   var el = document.getElementById('favorites-list');
   if (el.querySelector('.spinner')) {
-    // only load once
   } else return;
 
   try {
@@ -294,7 +281,7 @@ async function loadFavorites() {
     if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger">Failed to load.</div>'; return; }
     var favs = res.data.favorites || [];
     if (!favs.length) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❤️</div><h3>No saved pets</h3><p>Browse pets and save the ones you like.</p><a href="/pages/pets.html" class="btn btn-primary">Browse Pets</a></div>';
+      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon"></div><h3>No saved pets</h3><p>Browse pets and save the ones you like.</p><a href="/pages/pets.html" class="btn btn-primary">Browse Pets</a></div>';
       return;
     }
     el.innerHTML = '<div class="grid-3">' + favs.map(function(pet) {
@@ -302,7 +289,7 @@ async function loadFavorites() {
       var img = pet.primary_image || null;
       var imgHtml = img
         ? '<img class="pet-card-img" src="' + imgUrl(img) + '" alt="' + pet.name + '">'
-        : '<div class="pet-card-placeholder">🐾</div>';
+        : '<div class="pet-card-placeholder"></div>';
       return '<div class="pet-card" style="cursor:pointer" onclick="window.location.href=\'' + petDetailHref(petId) + '\'">' +
         imgHtml +
         '<div class="pet-card-body">' +
@@ -310,7 +297,7 @@ async function loadFavorites() {
           '<div class="pet-card-meta">' + (pet.pet_type_name||'') + (pet.city ? ' · ' + pet.city : '') + '</div>' +
           '<div class="pet-card-footer">' +
             (pet.fee_type === 'free' ? '<span class="pill pill-free">Free</span>' : '<span class="pill pill-paid">' + fmtMoney(pet.adoption_fee) + '</span>') +
-            '<button onclick="event.stopPropagation();removeFav(' + petId + ',this)" style="background:none;border:none;color:#e76f51;cursor:pointer;font-size:0.8rem">✕ Remove</button>' +
+            '<button onclick="event.stopPropagation();removeFav(' + petId + ',this)" style="background:none;border:none;color:#e76f51;cursor:pointer;font-size:0.8rem">Remove</button>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -325,10 +312,8 @@ async function removeFav(petId, btn) {
     var res = await Favorites.remove(petId);
     if (res && res.ok) {
       showToast('Removed from saved.', 'success');
-      // reload favorites list
       document.getElementById('favorites-list').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
       loadFavorites();
-      // update stat
       var statEl = document.getElementById('stat-favorites');
       statEl.textContent = Math.max(0, parseInt(statEl.textContent) - 1);
     }

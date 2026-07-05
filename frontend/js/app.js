@@ -1,12 +1,9 @@
-// ===== PATH HELPER =====
-// Detects if page is in /pages/ subfolder and builds correct relative path
 function p(pageName) {
   var inPages = window.location.pathname.indexOf('/pages/') !== -1;
   if (!pageName) return inPages ? '../index.html' : 'index.html';
   return inPages ? pageName : 'pages/' + pageName;
 }
 
-// ===== AUTH HELPERS =====
 function getToken() { return localStorage.getItem('token'); }
 function getUser()  {
   try { return JSON.parse(localStorage.getItem('user')); } catch(e) { return null; }
@@ -20,7 +17,21 @@ function clearAuth() {
   localStorage.removeItem('user');
 }
 
-// ===== TOAST =====
+async function refreshUser() {
+  try {
+    var res = await Auth.profile();
+    if (res && res.ok && res.data.user) {
+      setUser(res.data.user);
+      return res.data.user;
+    }
+  } catch(e) {}
+  return getUser();
+}
+
+function setUser(user) {
+  localStorage.setItem('user', JSON.stringify(user));
+}
+
 function showToast(msg, type) {
   type = type || 'info';
   var container = document.getElementById('toast-container');
@@ -37,21 +48,17 @@ function showToast(msg, type) {
   setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 3500);
 }
 
-// ===== IMAGE URL =====
 function imgUrl(path) {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  // Automatically uses 192.168.100.49:3000 when on phone, localhost:3000 when on PC
   return window.location.protocol + '//' + window.location.hostname + ':3000' + path;
 }
 
-// Safe fallback for broken images
 function handleImgError(img) {
-  img.onerror = null; // Prevent infinite loop
+  img.onerror = null;
   img.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect width='100%25' height='100%25' fill='%23eef1f4'/><text x='50%25' y='50%25' font-size='16' text-anchor='middle' dominant-baseline='middle' fill='%239baab8' font-family='sans-serif'>Image Unavailable</text></svg>";
 }
 
-// Escape HTML to prevent broken layout from quotes/special chars in names
 function escapeHtml(text) {
   if (!text) return '';
   var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
@@ -67,7 +74,6 @@ function petDetailHref(pet) {
   return '/pages/pet-detail?id=' + encodeURIComponent(id);
 }
 
-// ===== BLOG ID HELPERS (Same pattern as pets) =====
 function blogIdOf(blog) {
   return blog && (blog.id || blog._id || blog.blog_id);
 }
@@ -77,13 +83,11 @@ function blogDetailHref(blog) {
   return '/pages/blog-detail?id=' + encodeURIComponent(id);
 }
 
-// ===== INITIALS =====
 function initials(name) {
   if (!name) return '?';
   return name.trim().split(' ').map(function(w){ return w[0]; }).join('').toUpperCase().slice(0, 2);
 }
 
-// ===== FORMAT DATE =====
 function fmtDate(str) {
   if (!str) return '';
   return new Date(str).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -102,8 +106,6 @@ function timeAgo(str) {
   return fmtDate(str);
 }
 
-// ===== AGE CALCULATOR =====
-// Correctly accounts for partial months — no timezone issues
 function calcAge(birthDateStr, isSure) {
   if (!birthDateStr) return '';
   var bd = new Date(birthDateStr);
@@ -122,19 +124,16 @@ function calcAge(birthDateStr, isSure) {
   return str + (isSure ? '' : ' (est.)');
 }
 
-// ===== PILL HTML =====
 function pill(value) {
   if (!value) return '';
   return '<span class="pill pill-' + value + '">' + value.charAt(0).toUpperCase() + value.slice(1) + '</span>';
 }
 
-// ===== FORMAT MONEY =====
 function fmtMoney(n) {
   if (!n) return '0 MMK';
   return Number(n).toLocaleString() + ' MMK';
 }
 
-// ===== PAGINATION =====
 function renderPagination(containerId, total, limit, currentPage, onPageChange) {
   var container = document.getElementById(containerId);
   if (!container) return;
@@ -156,7 +155,6 @@ function renderPagination(containerId, total, limit, currentPage, onPageChange) 
   });
 }
 
-// ===== TABS =====
 function initTabs(wrapId) {
   var wrap = document.getElementById(wrapId);
   if (!wrap) return;
@@ -172,7 +170,6 @@ function initTabs(wrapId) {
   });
 }
 
-// ===== MODAL =====
 function openModal(id) {
   var m = document.getElementById(id);
   if (m) m.classList.add('open');
@@ -194,8 +191,6 @@ function initModals() {
     });
   });
 }
-
-// ===== NAVBAR =====
 function renderNavbar() {
   var user = getUser();
   var token = getToken();
@@ -203,6 +198,15 @@ function renderNavbar() {
   var isAdmin = user && user.role === 'admin';
   var nav = document.getElementById('navbar');
   if (!nav) return;
+
+  var bellSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
+
+  var avatarHtml = '';
+  if (user.avatar_url) {
+    avatarHtml = '<img src="' + imgUrl(user.avatar_url) + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover" onerror="this.outerHTML=\'' + escapeHtml(initials(user.name)) + '\'">';
+  } else {
+    avatarHtml = initials(user.name);
+  }
 
   nav.innerHTML =
     '<div class="container">' +
@@ -216,17 +220,16 @@ function renderNavbar() {
       '</nav>' +
       '<div class="nav-actions">' +
         (isLoggedIn
-          ? '<button class="nav-notif-btn" onclick="window.location.href=\'' + p('notifications.html') + '\'" id="nav-notif-btn">🔔<span class="notif-badge hidden" id="notif-badge">0</span></button>' +
-            '<button class="nav-avatar" onclick="window.location.href=\'' + p('profile.html') + '\'" title="' + escapeHtml(user.name) + '">' + initials(user.name) + '</button>' +
+          ? '<button class="nav-notif-btn" onclick="window.location.href=\'' + p('notifications.html') + '\'" id="nav-notif-btn">' + bellSvg + '<span class="notif-badge hidden" id="notif-badge">0</span></button>' +
+            '<button class="nav-avatar" onclick="window.location.href=\'' + p('profile.html') + '\'" title="' + escapeHtml(user.name) + '">' + avatarHtml + '</button>' +
             '<button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>'
           : '<a href="' + p('login.html') + '" class="btn btn-outline btn-sm">Login</a>' +
             '<a href="' + p('register.html') + '" class="btn btn-primary btn-sm">Register</a>'
         ) +
       '</div>' +
-      '<button class="nav-menu-btn" onclick="toggleMobileMenu()">☰</button>' +
+      '<button class="nav-menu-btn" onclick="toggleMobileMenu()">&#9776;</button>' +
     '</div>';
 
-  // mobile menu
   var mm = document.getElementById('mobile-menu');
   if (!mm) {
     mm = document.createElement('div');
@@ -245,7 +248,6 @@ function renderNavbar() {
     (isAdmin    ? '<a href="' + p('admin.html') + '">Admin</a>' : '') +
     (isLoggedIn ? '<a href="#" onclick="logout()">Logout</a>' : '<a href="' + p('login.html') + '">Login</a>');
 
-  // highlight active
   var path = window.location.pathname;
   nav.querySelectorAll('.nav-links a').forEach(function(a) {
     var href = a.getAttribute('href') || '';
@@ -294,7 +296,6 @@ async function pollNotifications() {
   setTimeout(pollNotifications, 30000);
 }
 
-// ===== FOOTER =====
 function renderFooter() {
   var footer = document.getElementById('footer');
   if (!footer) return;
@@ -302,7 +303,7 @@ function renderFooter() {
     '<div class="container">' +
       '<div class="footer-inner">' +
         '<div>' +
-          '<div class="footer-brand">🐾 Pet Rehoming</div>' +
+          '<div class="footer-brand">Pet Rehoming</div>' +
           '<p class="footer-desc">Connecting pets with loving homes and monitoring their welfare after adoption.</p>' +
         '</div>' +
         '<div class="footer-col"><h4>Explore</h4>' +
@@ -320,14 +321,11 @@ function renderFooter() {
     '</div>';
 }
 
-// ===== PET CARD =====
-// Uses p() so link works from both root and /pages/
 function petCardHtml(pet) {
   var img = (pet.images && pet.images[0]) ? pet.images[0].url : (pet.primary_image || null);
-  // Added loading="lazy", decoding="async", and global error handler
   var imgHtml = img
     ? '<img class="pet-card-img" src="' + imgUrl(img) + '" alt="' + escapeHtml(pet.name) + '" loading="lazy" decoding="async" onerror="handleImgError(this)">' 
-    : '<div class="pet-card-placeholder">🐾</div>';
+    : '<div class="pet-card-placeholder"></div>';
 
   var age = calcAge(pet.birth_date, pet.is_sure);
   var meta = [pet.pet_type_name, pet.breed, age, pet.city || pet.location].filter(Boolean).join(' · ');
@@ -345,13 +343,11 @@ function petCardHtml(pet) {
   '</div>';
 }
 
-// ===== BLOG CARD =====
 function blogCardHtml(blog) {
   var img = blog.cover_image_url;
-  // Added loading="lazy", decoding="async", and global error handler
   var imgHtml = img
     ? '<img class="blog-card-img" src="' + imgUrl(img) + '" alt="' + escapeHtml(blog.title) + '" loading="lazy" decoding="async" onerror="handleImgError(this)">' 
-    : '<div class="blog-card-placeholder">📝</div>';
+    : '<div class="blog-card-placeholder"></div>';
 
   return '<div class="blog-card" onclick="window.location.href=\'' + blogDetailHref(blog) + '\'" style="cursor:pointer">' +
     imgHtml +
@@ -367,7 +363,6 @@ function blogCardHtml(blog) {
   '</div>';
 }
 
-// ===== INIT =====
 document.addEventListener('DOMContentLoaded', function() {
   renderNavbar();
   renderFooter();
