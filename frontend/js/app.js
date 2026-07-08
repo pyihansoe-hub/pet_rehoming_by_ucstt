@@ -1,3 +1,25 @@
+// ===== THEME =====
+function initTheme() {
+  var t = localStorage.getItem('theme');
+  if (t === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+}
+initTheme();
+
+function toggleTheme() {
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('theme', 'light');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('theme', 'dark');
+  }
+}
+
 function p(pageName) {
   var inPages = window.location.pathname.indexOf('/pages/') !== -1;
   if (!pageName) return inPages ? '../index.html' : 'index.html';
@@ -56,7 +78,10 @@ function imgUrl(path) {
 
 function handleImgError(img) {
   img.onerror = null;
-  img.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect width='100%25' height='100%25' fill='%23eef1f4'/><text x='50%25' y='50%25' font-size='16' text-anchor='middle' dominant-baseline='middle' fill='%239baab8' font-family='sans-serif'>Image Unavailable</text></svg>";
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  var bg = isDark ? '%23334155' : '%23eef1f4';
+  var fg = isDark ? '%2394a3b8' : '%239baab8';
+  img.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect width='100%25' height='100%25' fill='" + bg + "'/><text x='50%25' y='50%25' font-size='16' text-anchor='middle' dominant-baseline='middle' fill='" + fg + "' font-family='sans-serif'>Image Unavailable</text></svg>";
 }
 
 function escapeHtml(text) {
@@ -143,7 +168,7 @@ function renderPagination(containerId, total, limit, currentPage, onPageChange) 
   html += '<button class="page-btn"' + (currentPage <= 1 ? ' disabled' : '') + ' data-p="' + (currentPage - 1) + '">&laquo;</button>';
   for (var i = 1; i <= totalPages; i++) {
     if (totalPages > 7 && Math.abs(i - currentPage) > 2 && i !== 1 && i !== totalPages) {
-      if (i === currentPage - 3 || i === currentPage + 3) html += '<span style="padding:0 4px;color:#9baab8">...</span>';
+      if (i === currentPage - 3 || i === currentPage + 3) html += '<span style="padding:0 4px;color:var(--text-muted)">...</span>';
       continue;
     }
     html += '<button class="page-btn' + (i === currentPage ? ' active' : '') + '" data-p="' + i + '">' + i + '</button>';
@@ -191,6 +216,7 @@ function initModals() {
     });
   });
 }
+
 function renderNavbar() {
   var user = getUser();
   var token = getToken();
@@ -200,6 +226,9 @@ function renderNavbar() {
   if (!nav) return;
 
   var bellSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
+
+  var sunSvg = '<svg class="theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+  var moonSvg = '<svg class="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 
   var avatarHtml = '';
   if (user.avatar_url) {
@@ -219,6 +248,7 @@ function renderNavbar() {
         (isAdmin ? '<a href="' + p('admin.html') + '">Admin</a>' : '') +
       '</nav>' +
       '<div class="nav-actions">' +
+        '<button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">' + sunSvg + moonSvg + '</button>' +
         (isLoggedIn
           ? '<button class="nav-notif-btn" onclick="window.location.href=\'' + p('notifications.html') + '\'" id="nav-notif-btn">' + bellSvg + '<span class="notif-badge hidden" id="notif-badge">0</span></button>' +
             '<button class="nav-avatar" onclick="window.location.href=\'' + p('profile.html') + '\'" title="' + escapeHtml(user.name) + '">' + avatarHtml + '</button>' +

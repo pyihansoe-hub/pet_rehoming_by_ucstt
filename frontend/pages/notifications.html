@@ -4,20 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notifications — Pet Rehoming</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
   <style>
-    .notif-item { display:flex; gap:12px; padding:14px 16px; border-bottom:1px solid #e5e7eb; cursor:pointer; transition:background 0.1s; align-items:flex-start; }
-    .notif-item:hover { background:#f9f9f7; }
-    .notif-item.unread { background:#f0fbfa; }
-    .notif-item.unread:hover { background:#e6f5f3; }
-    .notif-dot { width:9px; height:9px; border-radius:50%; background:#2a9d8f; flex-shrink:0; margin-top:6px; }
-    .notif-dot.read { background:#e5e7eb; }
-    .notif-icon { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
-    .notif-title { font-size:0.9rem; font-weight:bold; color:#1c2b3a; margin-bottom:2px; }
-    .notif-body  { font-size:0.82rem; color:#6b7a8d; margin-bottom:3px; }
-    .notif-time  { font-size:0.75rem; color:#9baab8; }
-    .notif-del   { background:none; border:none; color:#9baab8; cursor:pointer; font-size:0.9rem; flex-shrink:0; padding:2px 6px; border-radius:4px; margin-left:auto; }
-    .notif-del:hover { color:#e76f51; background:#fdf0ec; }
+    .notif-item { display:flex; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border); cursor:pointer; align-items:flex-start; }
+    .notif-item.unread { background:var(--accent-light-bg); }
+    .notif-dot { width:9px; height:9px; border-radius:50%; background:var(--accent); flex-shrink:0; margin-top:6px; }
+    .notif-dot.read { background:var(--border); }
+    .notif-icon { width:40px; height:40px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:bold; color:var(--text-secondary); flex-shrink:0; letter-spacing:0.3px; text-transform:uppercase; }
+    .notif-title { font-size:0.9rem; font-weight:bold; color:var(--text-primary); margin-bottom:2px; }
+    .notif-body  { font-size:0.82rem; color:var(--text-secondary); margin-bottom:3px; }
+    .notif-time  { font-size:0.75rem; color:var(--text-muted); }
+    .notif-del   { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.85rem; flex-shrink:0; padding:2px 6px; border-radius:4px; margin-left:auto; }
+    .chip { padding:6px 16px; border-radius:20px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-secondary); font-size:0.82rem; cursor:pointer; }
+    .chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
   </style>
 </head>
 <body>
@@ -33,7 +42,7 @@
       <div class="page-header-row">
         <div>
           <h1>Notifications</h1>
-          <p style="color:#6b7a8d;margin-top:4px" id="unread-label"></p>
+          <p style="color:var(--text-secondary);margin-top:4px" id="unread-label"></p>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-secondary btn-sm" onclick="markAllRead()">Mark All Read</button>
@@ -69,10 +78,10 @@ var allNotifications = [];
 var currentFilter = 'all';
 
 var NOTIF_ICONS = {
-  new_adoption_request: { icon:'📋', bg:'#e6f5f3' },
-  adoption_reviewed:    { icon:'✅', bg:'#eef8f2' },
-  payment_completed:    { icon:'💳', bg:'#fef9ec' },
-  follow_up_reminder:   { icon:'🐾', bg:'#e6f5f3' },
+  new_adoption_request: { label:'ADOPT',  bg:'var(--accent-light-bg)', color:'var(--accent)' },
+  adoption_reviewed:    { label:'REVIEW', bg:'var(--success-bg)', color:'var(--success-text)' },
+  payment_completed:    { label:'PAID',   bg:'var(--warning-bg)', color:'var(--warning-text)' },
+  follow_up_reminder:   { label:'Pet',    bg:'var(--accent-light-bg)', color:'var(--accent)' },
 };
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -116,35 +125,35 @@ function renderList() {
   }
 
   if (!list.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔔</div><h3>No notifications</h3><p>You\'re all caught up!</p></div>';
+    el.innerHTML = '<div class="empty-state"><h3>No notifications</h3><p>You\'re all caught up.</p></div>';
     return;
   }
 
   el.innerHTML = list.map(function(n) {
-    var meta   = NOTIF_ICONS[n.type] || { icon:'🔔', bg:'#f3f3ef' };
+    var meta   = NOTIF_ICONS[n.type] || { label:'N', bg:'var(--bg-muted)', color:'var(--text-secondary)' };
     var isRead = n.is_read;
+    var iconColor = isRead ? 'var(--text-muted)' : meta.color;
+    var iconBg    = isRead ? 'var(--bg-muted)' : meta.bg;
     return '<div class="notif-item ' + (isRead ? '' : 'unread') + '" onclick="openNotif(' + n.id + ',\'' + (n.link||'') + '\')">' +
       '<div class="notif-dot ' + (isRead ? 'read' : '') + '"></div>' +
-      '<div class="notif-icon" style="background:' + meta.bg + '">' + meta.icon + '</div>' +
+      '<div class="notif-icon" style="background:' + iconBg + ';color:' + iconColor + '">' + meta.label + '</div>' +
       '<div style="flex:1;min-width:0">' +
         '<div class="notif-title">' + (n.title||'') + '</div>' +
         (n.body ? '<div class="notif-body">' + n.body + '</div>' : '') +
         '<div class="notif-time">' + timeAgo(n.created_at) + '</div>' +
       '</div>' +
-      '<button class="notif-del" onclick="event.stopPropagation();deleteNotif(' + n.id + ')" title="Delete">✕</button>' +
+      '<button class="notif-del" onclick="event.stopPropagation();deleteNotif(' + n.id + ')" title="Delete">x</button>' +
     '</div>';
   }).join('');
 }
 
 async function openNotif(id, link) {
-  // mark as read
   var notif = allNotifications.find(function(n){ return n.id === id; });
   if (notif && !notif.is_read) {
     try {
       await Notifications.read(id);
       notif.is_read = true;
       renderList();
-      // update badge
       var badge = document.getElementById('notif-badge');
       if (badge) {
         var count = Math.max(0, parseInt(badge.textContent) - 1);
@@ -153,7 +162,6 @@ async function openNotif(id, link) {
       }
     } catch(e) {}
   }
-  // navigate
   if (link) window.location.href = link;
 }
 

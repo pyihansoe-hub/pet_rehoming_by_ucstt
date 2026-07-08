@@ -6,15 +6,15 @@
   <title>Profile — Pet Rehoming</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    .profile-avatar-wrap { text-align:center; margin-bottom:20px; }
-    .profile-avatar { width:90px; height:90px; border-radius:50%; object-fit:cover; border:3px solid #e6f5f3; }
-    .profile-avatar-placeholder { width:90px; height:90px; border-radius:50%; background:#2a9d8f; color:#fff; font-size:2rem; font-weight:bold; display:flex; align-items:center; justify-content:center; border:3px solid #e6f5f3; margin:0 auto; }
-    .profile-name { font-size:1.2rem; font-weight:bold; margin-top:10px; }
-    .profile-email { font-size:0.86rem; color:#6b7a8d; margin-top:2px; }
-    .stat-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:24px; }
-    .stat-box { background:#f9f9f7; border-radius:8px; padding:14px; text-align:center; }
-    .stat-box-value { font-size:1.4rem; font-weight:bold; color:#1c2b3a; }
-    .stat-box-label { font-size:0.76rem; color:#9baab8; margin-top:2px; }
+  .profile-avatar-wrap { text-align:center; margin-bottom:20px; }
+.profile-avatar { width:90px; height:90px; border-radius:50%; object-fit:cover; border:3px solid var(--accent-light-bg); }
+.profile-avatar-placeholder { width:90px; height:90px; border-radius:50%; background:var(--accent); color:#fff; font-size:2rem; font-weight:bold; display:flex; align-items:center; justify-content:center; border:3px solid var(--accent-light-bg); margin:0 auto; }
+.profile-name { font-size:1.2rem; font-weight:bold; margin-top:10px; }
+.profile-email { font-size:0.86rem; color:var(--text-secondary); margin-top:2px; }
+.stat-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:24px; }
+.stat-box { background:var(--bg-chat); border-radius:8px; padding:14px; text-align:center; }
+.stat-box-value { font-size:1.4rem; font-weight:bold; color:var(--text-primary); }
+.stat-box-label { font-size:0.76rem; color:var(--text-muted); margin-top:2px; }
   </style>
 </head>
 <body>
@@ -125,7 +125,7 @@
 <footer class="footer" id="footer"></footer>
 
 <script src="/js/api.js"></script>
-<script src="/js/app.js"></script>
+<script src="/../js/app.js"></script>
 <script>
 var currentAvatarUrl = null;
 var newAvatarFile    = null;
