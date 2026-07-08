@@ -4,22 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pet Detail — Pet Rehoming</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
   <style>
     .gallery { display:grid; grid-template-columns:1fr 180px; gap:8px; margin-bottom:24px; border-radius:10px; overflow:hidden; max-height:420px; }
-    .gallery-main { background:#f3f3ef; overflow:hidden; }
+    .gallery-main { background:var(--bg-muted); overflow:hidden; }
     .gallery-main img { width:100%; height:100%; object-fit:cover; cursor:pointer; }
-    .gallery-main-placeholder { width:100%; height:100%; min-height:280px; display:flex; align-items:center; justify-content:center; font-size:4rem; color:#9baab8; }
+    .gallery-main-placeholder { width:100%; height:100%; min-height:280px; display:flex; align-items:center; justify-content:center; font-size:2rem; color:var(--text-muted); font-weight:bold; }
     .gallery-thumbs { display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
     .gallery-thumb { aspect-ratio:1; object-fit:cover; cursor:pointer; opacity:0.6; border-radius:4px; width:100%; }
     .gallery-thumb.active, .gallery-thumb:hover { opacity:1; }
     .info-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 0; }
-    .info-item { background:#f3f3ef; border-radius:8px; padding:10px 14px; }
-    .info-label { font-size:0.72rem; color:#9baab8; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px; }
-    .info-value { font-size:0.88rem; font-weight:bold; color:#1c2b3a; }
-    .comment-item { padding:14px 0; border-bottom:1px solid #e5e7eb; }
+    .info-item { background:var(--bg-muted); border-radius:8px; padding:10px 14px; }
+    .info-label { font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px; }
+    .info-value { font-size:0.88rem; font-weight:bold; color:var(--text-primary); }
+    .comment-item { padding:14px 0; border-bottom:1px solid var(--border); }
     .comment-item:last-child { border-bottom:none; }
-    .comment-avatar { width:32px; height:32px; border-radius:50%; background:#2a9d8f; color:#fff; font-size:0.78rem; font-weight:bold; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .comment-avatar { width:32px; height:32px; border-radius:50%; background:var(--accent); color:#fff; font-size:0.78rem; font-weight:bold; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     @media(max-width:700px){ .gallery{ grid-template-columns:1fr; max-height:none; } .gallery-thumbs{ flex-direction:row; overflow-x:auto; } .gallery-thumb{ width:70px; height:70px; } .info-grid{ grid-template-columns:1fr 1fr; } }
   </style>
 </head>
@@ -34,19 +44,19 @@
     <div id="loading-area" class="loading-wrap"><div class="spinner"></div></div>
     <div id="error-area" class="hidden">
       <div class="alert alert-danger">Pet not found or failed to load.</div>
-      <a href="/pages/pets.html" class="btn btn-secondary" style="margin-top:8px">← Back to Browse</a>
+      <a href="/pages/pets.html" class="btn btn-secondary" style="margin-top:8px">Back to Browse</a>
     </div>
 
     <div id="content-area" class="hidden">
       <div style="margin-bottom:16px">
-        <a href="/pages/pets.html" style="font-size:0.86rem;color:#6b7a8d">← Browse Pets</a>
+        <a href="/pages/pets.html" style="font-size:0.86rem;color:var(--text-secondary)">Browse Pets</a>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 320px;gap:32px;align-items:start">
         <div>
           <div class="gallery" id="gallery">
             <div class="gallery-main" id="gallery-main">
-              <div class="gallery-main-placeholder">🐾</div>
+              <div class="gallery-main-placeholder">No Image</div>
             </div>
             <div class="gallery-thumbs" id="gallery-thumbs"></div>
           </div>
@@ -106,19 +116,19 @@
             </div>
           </div>
 
-          <div style="display:flex; align-items:center; margin:24px 0; padding:16px; background:#f9f9f7; border-radius:10px;">
-            <button id="like-btn" onclick="togglePetLike()" style="display:flex; align-items:center; background:none; border:1.5px solid #e5e7eb; padding:8px 16px; border-radius:8px; font-size:0.88rem; font-weight:bold; cursor:pointer; color:#6b7a8d; margin-right:16px;">
-              🤍 <span id="like-count" style="margin-left:6px;">0</span> Likes
+          <div style="display:flex; align-items:center; margin:24px 0; padding:16px; background:var(--bg-chat); border-radius:10px;">
+            <button id="like-btn" onclick="togglePetLike()" style="display:flex; align-items:center; background:none; border:1.5px solid var(--border); padding:8px 16px; border-radius:8px; font-size:0.88rem; font-weight:bold; cursor:pointer; color:var(--text-secondary); margin-right:16px;">
+              <span id="like-icon" style="margin-right:6px;">Like</span> <span id="like-count">0</span> Likes
             </button>
-            <span style="font-size:0.84rem; color:#9baab8;">Love this pet? Give them a heart!</span>
+            <span style="font-size:0.84rem; color:var(--text-muted);">Love this pet? Give them a heart!</span>
           </div>
 
           <hr class="divider">
 
           <div>
-            <h3 style="margin-bottom:16px;">Questions & Comments <span id="comment-count" style="font-size:0.9rem; color:#9baab8; font-weight:normal;"></span></h3>
+            <h3 style="margin-bottom:16px;">Questions & Comments <span id="comment-count" style="font-size:0.9rem; color:var(--text-muted); font-weight:normal;"></span></h3>
             <div id="comments-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
-            <div style="margin-top:20px; padding-top:20px; border-top:1px solid #e5e7eb;">
+            <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border);">
               <div id="comment-login-prompt" class="hidden" style="margin-bottom:16px;">
                 <div class="alert alert-info"><a href="/pages/login.html">Log in</a> to leave a comment.</div>
               </div>
@@ -139,12 +149,12 @@
               <h2 id="pet-name" style="font-size:1.4rem"></h2>
               <span id="pet-status-pill"></span>
             </div>
-            <p id="pet-type-breed" style="color:#6b7a8d;font-size:0.88rem;margin-bottom:12px"></p>
-            <div id="fee-area" style="margin-bottom:16px;padding:12px;background:#f3f3ef;border-radius:8px">
-              <div style="font-size:0.78rem;color:#9baab8;margin-bottom:2px">Adoption Fee</div>
+            <p id="pet-type-breed" style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:12px"></p>
+            <div id="fee-area" style="margin-bottom:16px;padding:12px;background:var(--bg-muted);border-radius:8px">
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:2px">Adoption Fee</div>
               <div id="fee-value" style="font-size:1.3rem;font-weight:bold"></div>
             </div>
-            <div style="font-size:0.82rem;color:#6b7a8d;margin-bottom:16px" id="location-area"></div>
+            <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:16px" id="location-area"></div>
             <div id="action-area"></div>
           </div>
           <div class="card" id="owner-card" style="margin-bottom:16px">
@@ -152,7 +162,7 @@
             <div id="owner-info"></div>
           </div>
           <div style="text-align:center">
-            <button onclick="openReportModal()" style="background:none;border:none;color:#9baab8;font-size:0.8rem;cursor:pointer;text-decoration:underline">Report this listing</button>
+            <button onclick="openReportModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.8rem;cursor:pointer;text-decoration:underline">Report this listing</button>
           </div>
         </div>
       </div>
@@ -165,33 +175,32 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Request Adoption</h3>
-      <button class="modal-close" onclick="closeModal('adopt-modal')">✕</button>
+      <button class="modal-close" onclick="closeModal('adopt-modal')">x</button>
     </div>
     <div id="adopt-alert"></div>
     
-    <div id="adopt-fee-area" style="display:none; margin-bottom:16px; padding:16px;background:#fef3c7; border:1px solid #fcd34d; border-radius:10px;">
+    <div id="adopt-fee-area" style="display:none; margin-bottom:16px; padding:16px;background:var(--warning-bg); border:1px solid var(--warning-border); border-radius:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <div style="font-size:0.84rem;color:#92400e;font-weight:bold;">Adoption Fee</div>
-          <div id="adopt-fee-amount" style="font-size:1.4rem;font-weight:bold;color:#92400e;"></div>
+          <div style="font-size:0.84rem;color:var(--warning-text);font-weight:bold;">Adoption Fee</div>
+          <div id="adopt-fee-amount" style="font-size:1.4rem;font-weight:bold;color:var(--warning-text);"></div>
         </div>
         <div style="text-align:right;">
-          <span style="font-size:0.76rem;color:#78716c;">Secure Payment</span>
+          <span style="font-size:0.76rem;color:var(--text-secondary);">Secure Payment</span>
         </div>
       </div>
     </div>
 
-    <p style="color:#6b7a8d;font-size:0.88rem;margin-bottom:16px">Tell the owner a bit about yourself and why you'd be a great fit.</p>
+    <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:16px">Tell the owner a bit about yourself and why you'd be a great fit.</p>
     <div class="form-group">
       <label for="adopt-message">Message (optional)</label>
       <textarea id="adopt-message" class="form-control" rows="4" placeholder="I have a large garden, work from home..."></textarea>
     </div>
 
     <div id="adopt-pay-area" style="display:none; margin-bottom:16px;">
-      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-        <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;justify-content:center;padding:10px;background:#f0fdf4;border-radius:6px;">
-          <span style="font-size:1.5rem;">🔒</span>
-          <span style="font-size:0.88rem;color:#166534;font-weight:600;">Secure Payment Gateway</span>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:20px;box-shadow:0 2px 8px var(--shadow-sm);">
+        <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;justify-content:center;padding:10px;background:var(--success-bg);border-radius:6px;">
+          <span style="font-size:0.88rem;color:var(--success-text);font-weight:600;">Secure Payment Gateway</span>
         </div>
         
         <div class="form-group">
@@ -209,7 +218,7 @@
           </div>
           <div class="form-group">
             <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">CVV</label>
-            <input type="password" id="adopt-pay-cvv" class="form-control" placeholder="•••" maxlength="4" inputmode="numeric">
+            <input type="password" id="adopt-pay-cvv" class="form-control" placeholder="***" maxlength="4" inputmode="numeric">
           </div>
         </div>
       </div>
@@ -217,7 +226,7 @@
 
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button class="btn btn-secondary" onclick="closeModal('adopt-modal')">Cancel</button>
-      <button class="btn btn-primary" id="adopt-submit-btn" onclick="submitAdoption()" style="background:#166534;min-width:160px;">Submit Request</button>
+      <button class="btn btn-primary" id="adopt-submit-btn" onclick="submitAdoption()" style="min-width:160px;">Submit Request</button>
     </div>
   </div>
 </div>
@@ -226,7 +235,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Report Listing</h3>
-      <button class="modal-close" onclick="closeModal('report-modal')">✕</button>
+      <button class="modal-close" onclick="closeModal('report-modal')">x</button>
     </div>
     <div id="report-alert"></div>
     <div class="form-group">
@@ -259,7 +268,7 @@
 var petId = null;
 var petData = null;
 var currentUser = getUser();
-var LOG_ICONS = { vaccination:'💉', vet_visit:'🏥', deworming:'💊', weight:'⚖️', other:'📋' };
+var LOG_ICONS = { vaccination:'VAC', vet_visit:'VET', deworming:'DEW', weight:'WT', other:'LOG' };
 
 document.addEventListener('DOMContentLoaded', async function() {
   var params = new URLSearchParams(window.location.search);
@@ -277,7 +286,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('content-area').classList.remove('hidden');
   } catch(e) { showErr(); }
   
-  // Card formatting listeners
   var cardInput = document.getElementById('adopt-pay-card');
   var expiryInput = document.getElementById('adopt-pay-expiry');
   if (cardInput) {
@@ -325,14 +333,14 @@ function renderPet(pet) {
   document.getElementById('pet-type-breed').textContent = typeBreed;
 
   document.getElementById('fee-value').textContent = pet.fee_type === 'free' ? 'Free' : fmtMoney(pet.adoption_fee);
-  document.getElementById('fee-area').style.background = pet.fee_type === 'free' ? '#eef8f2' : '#fef9ec';
+  document.getElementById('fee-area').style.background = pet.fee_type === 'free' ? 'var(--success-bg)' : 'var(--warning-bg)';
 
-  if (pet.city || pet.location) document.getElementById('location-area').innerHTML = '📍 ' + (pet.city || pet.location);
+  if (pet.city || pet.location) document.getElementById('location-area').innerHTML = (pet.city || pet.location);
   renderActions(pet);
 
   document.getElementById('owner-info').innerHTML =
     '<div style="font-weight:bold;margin-bottom:4px">' + (pet.owner_name || 'Unknown') + '</div>' +
-    (pet.owner_phone ? '<div style="font-size:0.86rem;color:#6b7a8d">📞 ' + pet.owner_phone + '</div>' : '');
+    (pet.owner_phone ? '<div style="font-size:0.86rem;color:var(--text-secondary)">' + pet.owner_phone + '</div>' : '');
 
   var age = '';
   if (pet.birth_date) {
@@ -356,15 +364,15 @@ function renderPet(pet) {
   }).join('');
 
   if (pet.description) {
-    document.getElementById('description-area').innerHTML = '<h4 style="margin-bottom:8px;margin-top:16px">About ' + pet.name + '</h4><p style="color:#6b7a8d;font-size:0.9rem;line-height:1.7">' + pet.description + '</p>';
+    document.getElementById('description-area').innerHTML = '<h4 style="margin-bottom:8px;margin-top:16px">About ' + pet.name + '</h4><p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.7">' + pet.description + '</p>';
   }
 
   var badges = '';
-  if (pet.is_vaccinated) badges += '<span class="pill pill-available">✓ Vaccinated</span> ';
-  if (pet.is_neutered) badges += '<span class="pill pill-available">✓ Neutered</span> ';
-  if (!pet.is_vaccinated) badges += '<span class="pill pill-withdrawn">✗ Not Vaccinated</span> ';
+  if (pet.is_vaccinated) badges += '<span class="pill pill-available">Vaccinated</span> ';
+  if (pet.is_neutered) badges += '<span class="pill pill-available">Neutered</span> ';
+  if (!pet.is_vaccinated) badges += '<span class="pill pill-withdrawn">Not Vaccinated</span> ';
   document.getElementById('health-badges').innerHTML = badges;
-  if (pet.health_notes) document.getElementById('health-notes-area').innerHTML = '<p style="color:#6b7a8d;font-size:0.9rem;line-height:1.7">' + pet.health_notes + '</p>';
+  if (pet.health_notes) document.getElementById('health-notes-area').innerHTML = '<p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.7">' + pet.health_notes + '</p>';
 
   var isOwner = currentUser && pet.owner_id === currentUser.id;
   var isAdmin = currentUser && currentUser.role === 'admin';
@@ -387,7 +395,7 @@ function renderActions(pet) {
   var isOwner = currentUser && pet.owner_id === currentUser.id;
 
   if (isOwner) {
-    area.innerHTML = '<a href="/pages/add-pet.html?id=' + pet.id + '" class="btn btn-secondary btn-full" style="margin-bottom:8px">✏️ Edit Listing</a><a href="/pages/my-pets.html" class="btn btn-outline btn-full">My Pets</a>';
+    area.innerHTML = '<a href="/pages/add-pet.html?id=' + pet.id + '" class="btn btn-secondary btn-full" style="margin-bottom:8px">Edit Listing</a><a href="/pages/my-pets.html" class="btn btn-outline btn-full">My Pets</a>';
     return;
   }
   if (pet.status !== 'available') {
@@ -398,13 +406,13 @@ function renderActions(pet) {
     area.innerHTML = '<a href="/pages/login.html" class="btn btn-primary btn-full">Login to Adopt</a>';
     return;
   }
-  area.innerHTML = '<button class="btn btn-primary btn-full" style="margin-bottom:8px" onclick="openAdoptModal()">🐾 Request Adoption</button><button onclick="toggleFavDetail()" id="fav-btn" class="btn btn-outline btn-full">🤍 Save</button>';
+  area.innerHTML = '<button class="btn btn-primary btn-full" style="margin-bottom:8px" onclick="openAdoptModal()">Request Adoption</button><button onclick="toggleFavDetail()" id="fav-btn" class="btn btn-outline btn-full">Save</button>';
   
   Favorites.list().then(function(res) {
     if (res && res.ok) {
       var faved = (res.data.favorites || []).find(function(f){ return f.id === pet.id; });
       var favBtn = document.getElementById('fav-btn');
-      if (favBtn) favBtn.innerHTML = faved ? '❤️ Saved' : '🤍 Save';
+      if (favBtn) favBtn.innerHTML = faved ? 'Saved' : 'Save';
     }
   }).catch(function(){});
 }
@@ -418,10 +426,10 @@ function setMainImg(thumb, url) {
 
 async function toggleFavDetail() {
   var btn = document.getElementById('fav-btn');
-  var isFaved = btn && btn.innerHTML.includes('❤️');
+  var isFaved = btn && btn.innerHTML.includes('Saved');
   try {
-    if (isFaved) { await Favorites.remove(petId); if (btn) btn.innerHTML = '🤍 Save'; }
-    else { await Favorites.add(petId); if (btn) btn.innerHTML = '❤️ Saved'; }
+    if (isFaved) { await Favorites.remove(petId); if (btn) btn.innerHTML = 'Save'; }
+    else { await Favorites.add(petId); if (btn) btn.innerHTML = 'Saved'; }
   } catch(e) { showToast('Failed to update favorites.', 'error'); }
 }
 
@@ -475,7 +483,7 @@ async function submitAdoption() {
 
   btn.disabled = true; 
   btn.innerHTML = 'Processing...';
-  alertEl.innerHTML = '<div style="text-align:center;padding:10px;color:#6b7a8d;font-size:0.88rem;">Submitting request...</div>';
+  alertEl.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:0.88rem;">Submitting request...</div>';
 
   try {
     var res = await Adoption.request(petData.id, { message: msg || undefined });
@@ -488,7 +496,7 @@ async function submitAdoption() {
     var requestId = res.data.request ? res.data.request.id : null;
 
     if (feeType === 'paid' && feeAmount > 0 && requestId) {
-      alertEl.innerHTML = '<div style="text-align:center;padding:10px;color:#6b7a8d;font-size:0.88rem;">Processing payment securely...</div>';
+      alertEl.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:0.88rem;">Processing payment securely...</div>';
       var payRes = await Payments.simulate({ adoption_request_id: requestId, amount: feeAmount, description: 'Adoption fee for ' + petData.name });
       await new Promise(function(resolve) { setTimeout(resolve, 2500); });
       
@@ -529,9 +537,9 @@ async function loadStatusHistory() {
   try {
     var res = await Pets.statusHistory(petId);
     var el = document.getElementById('status-history-list');
-    if (!res || !res.ok || !res.data.history.length) { el.innerHTML = '<p style="color:#6b7a8d">No status changes recorded yet.</p>'; return; }
+    if (!res || !res.ok || !res.data.history.length) { el.innerHTML = '<p style="color:var(--text-secondary)">No status changes recorded yet.</p>'; return; }
     el.innerHTML = res.data.history.map(function(h) {
-      return '<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #e5e7eb;align-items:flex-start"><div style="font-size:0.78rem;color:#9baab8;white-space:nowrap;margin-top:2px">' + fmtDate(h.created_at) + '</div><div>' + (h.old_status ? pill(h.old_status) + ' → ' : '') + pill(h.new_status) + (h.reason ? '<div style="font-size:0.8rem;color:#6b7a8d;margin-top:3px">' + h.reason + '</div>' : '') + (h.changed_by_name ? '<div style="font-size:0.78rem;color:#9baab8">by ' + h.changed_by_name + '</div>' : '') + '</div></div>';
+      return '<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);align-items:flex-start"><div style="font-size:0.78rem;color:var(--text-muted);white-space:nowrap;margin-top:2px">' + fmtDate(h.created_at) + '</div><div>' + (h.old_status ? pill(h.old_status) + ' → ' : '') + pill(h.new_status) + (h.reason ? '<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:3px">' + h.reason + '</div>' : '') + (h.changed_by_name ? '<div style="font-size:0.78rem;color:var(--text-muted)">by ' + h.changed_by_name + '</div>' : '') + '</div></div>';
     }).join('');
   } catch(e) {}
 }
@@ -540,9 +548,9 @@ async function loadHealthLogs() {
   try {
     var res = await Monitoring.getHealthLogs(petId);
     var el = document.getElementById('health-logs-list');
-    if (!res || !res.ok || !res.data.logs.length) { el.innerHTML = '<p style="color:#6b7a8d;margin-bottom:12px">No health logs yet.</p>'; return; }
+    if (!res || !res.ok || !res.data.logs.length) { el.innerHTML = '<p style="color:var(--text-secondary);margin-bottom:12px">No health logs yet.</p>'; return; }
     el.innerHTML = res.data.logs.map(function(log) {
-      return '<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #e5e7eb"><div style="width:36px;height:36px;border-radius:50%;background:#e6f5f3;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">' + (LOG_ICONS[log.type]||'📋') + '</div><div style="flex:1"><div style="font-weight:bold;font-size:0.88rem">' + log.type.replace(/_/g,' ') + '</div>' + (log.description ? '<div style="font-size:0.82rem;color:#6b7a8d">' + log.description + '</div>' : '') + '<div style="font-size:0.76rem;color:#9baab8;margin-top:3px">' + fmtDate(log.created_at) + (log.vet_name ? ' · ' + log.vet_name : '') + (log.weight_kg ? ' · ' + log.weight_kg + 'kg' : '') + (log.next_due ? ' · Next: ' + fmtDate(log.next_due) : '') + '</div></div><button onclick="deleteLog(' + log.id + ',this)" style="background:none;border:none;color:#e76f51;cursor:pointer;font-size:0.8rem;flex-shrink:0">✕</button></div>';
+      return '<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)"><div style="width:36px;height:36px;border-radius:50%;background:var(--accent-light-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:bold;flex-shrink:0">' + (LOG_ICONS[log.type]||'LOG') + '</div><div style="flex:1"><div style="font-weight:bold;font-size:0.88rem">' + log.type.replace(/_/g,' ') + '</div>' + (log.description ? '<div style="font-size:0.82rem;color:var(--text-secondary)">' + log.description + '</div>' : '') + '<div style="font-size:0.76rem;color:var(--text-muted);margin-top:3px">' + fmtDate(log.created_at) + (log.vet_name ? ' · ' + log.vet_name : '') + (log.weight_kg ? ' · ' + log.weight_kg + 'kg' : '') + (log.next_due ? ' · Next: ' + fmtDate(log.next_due) : '') + '</div></div><button onclick="deleteLog(' + log.id + ',this)" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:0.8rem;flex-shrink:0">x</button></div>';
     }).join('');
   } catch(e) {}
 }
@@ -564,7 +572,6 @@ async function deleteLog(logId, btn) {
     else showToast('Failed to delete.', 'error');
   } catch(e) { showToast('Something went wrong.', 'error'); }
 }
-
 async function togglePetLike() {
   if (!getToken()) { window.location.href = '/pages/login.html'; return; }
   var btn = document.getElementById('like-btn');
@@ -572,10 +579,9 @@ async function togglePetLike() {
     var res = await Pets.like(petId);
     if (res && res.ok) {
       var liked = res.data.liked;
-      var countEl = document.getElementById('like-count');
-      var current = parseInt(countEl.textContent) || 0;
+      var current = parseInt(document.getElementById('like-count').textContent) || 0;
       var newCount = liked ? current + 1 : Math.max(0, current - 1);
-      btn.innerHTML = (liked ? '❤️' : '🤍') + ' <span id="like-count" style="margin-left:6px;">' + newCount + '</span> Likes';
+      btn.innerHTML = (liked ? '❤️' : '🤍') + ' <span id="like-count" style="margin-left:6px;">' + newCount + '</span>  Likes';
     }
   } catch(e) { showToast('Failed to update like.', 'error'); }
 }
@@ -584,15 +590,15 @@ async function loadPetComments(id) {
   var list = document.getElementById('comments-list');
   try {
     var res = await Pets.getComments(id);
-    if (!res || !res.ok) { list.innerHTML = '<p style="color:#e76f51">Failed to load comments.</p>'; return; }
+    if (!res || !res.ok) { list.innerHTML = '<p style="color:var(--danger)">Failed to load comments.</p>'; return; }
     var comments = res.data.comments || [];
     document.getElementById('comment-count').textContent = '(' + comments.length + ')';
-    if (!comments.length) { list.innerHTML = '<p style="color:#9baab8; font-size:0.86rem;">No comments yet. Be the first!</p>'; return; }
+    if (!comments.length) { list.innerHTML = '<p style="color:var(--text-muted); font-size:0.86rem;">No comments yet. Be the first!</p>'; return; }
     list.innerHTML = comments.map(function(c) {
       var canDelete = currentUser && (currentUser.id === c.user_id || currentUser.role === 'admin');
-      return '<div class="comment-item"><div style="display:flex; gap:10px; align-items:flex-start;"><div class="comment-avatar">' + initials(c.user_name || 'U') + '</div><div style="flex:1;"><div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;"><div style="font-weight:bold; font-size:0.86rem;">' + (c.user_name || 'User') + '</div><div style="display:flex; align-items:center; gap:8px;"><span style="font-size:0.76rem; color:#9baab8;">' + timeAgo(c.created_at) + '</span>' + (canDelete ? '<button onclick="deletePetComment(' + c.id + ')" style="background:none; border:none; color:#e76f51; font-size:0.76rem; cursor:pointer;">Delete</button>' : '') + '</div></div><p style="font-size:0.88rem; color:#374151; margin-top:4px; white-space:pre-wrap;">' + c.content + '</p></div></div></div>';
+      return '<div class="comment-item"><div style="display:flex; gap:10px; align-items:flex-start;"><div class="comment-avatar">' + initials(c.user_name || 'U') + '</div><div style="flex:1;"><div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;"><div style="font-weight:bold; font-size:0.86rem;">' + (c.user_name || 'User') + '</div><div style="display:flex; align-items:center; gap:8px;"><span style="font-size:0.76rem; color:var(--text-muted);">' + timeAgo(c.created_at) + '</span>' + (canDelete ? '<button onclick="deletePetComment(' + c.id + ')" style="background:none; border:none; color:var(--danger); font-size:0.76rem; cursor:pointer;">Delete</button>' : '') + '</div></div><p style="font-size:0.88rem; color:var(--text-primary); margin-top:4px; white-space:pre-wrap;">' + c.content + '</p></div></div></div>';
     }).join('');
-  } catch(e) { list.innerHTML = '<p style="color:#e76f51">Failed to load comments.</p>'; }
+  } catch(e) { list.innerHTML = '<p style="color:var(--danger)">Failed to load comments.</p>'; }
 }
 
 async function submitPetComment() {

@@ -4,20 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Write Blog — Pet Rehoming</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
   <style>
-    .editor-toolbar { display:flex; gap:6px; flex-wrap:wrap; padding:10px 12px; background:#f9f9f7; border:1.5px solid #e5e7eb; border-bottom:none; border-radius:8px 8px 0 0; }
-    .editor-toolbar button { padding:4px 10px; background:#fff; border:1.5px solid #e5e7eb; border-radius:5px; font-size:0.8rem; cursor:pointer; color:#1c2b3a; }
-    .editor-toolbar button:hover { background:#e6f5f3; border-color:#2a9d8f; color:#2a9d8f; }
+    .editor-toolbar { display:flex; gap:6px; flex-wrap:wrap; padding:10px 12px; background:var(--bg-chat); border:1.5px solid var(--border); border-bottom:none; border-radius:8px 8px 0 0; }
+    .editor-toolbar button { padding:4px 10px; background:var(--bg-card); border:1.5px solid var(--border); border-radius:5px; font-size:0.8rem; cursor:pointer; color:var(--text-primary); }
+    .editor-toolbar button:hover { background:var(--accent-light-bg); border-color:var(--accent); color:var(--accent); }
     #content { border-radius:0 0 8px 8px; min-height:340px; font-size:0.93rem; line-height:1.8; }
     .preview-cover { width:100%; max-height:280px; object-fit:cover; border-radius:8px; margin-top:10px; }
-    .preview-content p  { margin-bottom:14px; color:#374151; }
-    .preview-content h2 { font-size:1.2rem; margin:20px 0 8px; }
-    .preview-content h3 { font-size:1.05rem; margin:16px 0 6px; }
+    .preview-content p  { margin-bottom:14px; color:var(--text-primary); }
+    .preview-content h2 { font-size:1.2rem; margin:20px 0 8px; color:var(--text-primary); }
+    .preview-content h3 { font-size:1.05rem; margin:16px 0 6px; color:var(--text-primary); }
     .preview-content ul { margin:0 0 14px 22px; }
-    .preview-content li { margin-bottom:4px; color:#374151; }
-    .preview-content blockquote { border-left:3px solid #2a9d8f; padding:8px 14px; background:#e6f5f3; border-radius:0 6px 6px 0; margin:14px 0; color:#21867a; font-style:italic; }
-    .preview-content hr { border:none; border-top:1px solid #e5e7eb; margin:18px 0; }
+    .preview-content li { margin-bottom:4px; color:var(--text-primary); }
+    .preview-content blockquote { border-left:3px solid var(--accent); padding:8px 14px; background:var(--accent-light-bg); border-radius:0 6px 6px 0; margin:14px 0; color:var(--accent-hover); font-style:italic; }
+    .preview-content hr { border:none; border-top:1px solid var(--border); margin:18px 0; }
   </style>
 </head>
 <body>
@@ -31,7 +41,7 @@
     <div style="max-width:800px;margin:0 auto">
 
       <div class="page-header">
-        <a href="/pages/blogs.html" style="font-size:0.86rem;color:#6b7a8d">← Back to Blogs</a>
+        <a href="/pages/blogs.html" style="font-size:0.86rem;color:var(--text-secondary)">Back to Blogs</a>
         <h1 style="margin-top:8px" id="page-title">Write a Blog</h1>
       </div>
 
@@ -40,7 +50,7 @@
       <!-- TITLE + META -->
       <div class="card" style="margin-bottom:20px">
         <div class="form-group">
-          <label for="title">Title <span style="color:#e76f51">*</span></label>
+          <label for="title">Title <span style="color:var(--danger)">*</span></label>
           <input type="text" id="title" class="form-control" placeholder="Write a helpful, descriptive title...">
         </div>
         <div class="form-row">
@@ -71,23 +81,23 @@
       <!-- CONTENT EDITOR -->
       <div class="card" style="margin-bottom:20px">
         <label style="font-size:0.86rem;font-weight:bold;margin-bottom:8px;display:block">
-          Content <span style="color:#e76f51">*</span>
+          Content <span style="color:var(--danger)">*</span>
         </label>
         <div class="editor-toolbar">
-          <button onclick="fmt('**','**')" title="Bold"><b>B</b></button>
-          <button onclick="fmt('*','*')" title="Italic"><i>I</i></button>
-          <button onclick="fmtLine('## ')" title="Heading 2">H2</button>
-          <button onclick="fmtLine('### ')" title="Heading 3">H3</button>
-          <button onclick="fmtLine('- ')" title="Bullet">• List</button>
-          <button onclick="fmtLine('> ')" title="Quote">❝ Quote</button>
-          <button onclick="insertDivider()" title="Divider">— Line</button>
+          <button onclick="fmt('**','**')" title="Bold">Bold</button>
+          <button onclick="fmt('*','*')" title="Italic">Italic</button>
+          <button onclick="fmtLine('## ')" title="Heading 2">Heading 2</button>
+          <button onclick="fmtLine('### ')" title="Heading 3">Heading 3</button>
+          <button onclick="fmtLine('- ')" title="List">List</button>
+          <button onclick="fmtLine('> ')" title="Quote">Quote</button>
+          <button onclick="insertDivider()" title="Divider">Divider</button>
           <span style="flex:1"></span>
-          <button onclick="togglePreview()" id="preview-btn">👁 Preview</button>
+          <button onclick="togglePreview()" id="preview-btn">Preview</button>
         </div>
-        <textarea id="content" class="form-control" placeholder="Write your blog here...&#10;&#10;**bold**  *italic*  ## Heading  - bullet  > quote"></textarea>
+        <textarea id="content" class="form-control" placeholder="Write your blog here..."></textarea>
 
-        <div id="preview-panel" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid #e5e7eb">
-          <div style="font-size:0.76rem;font-weight:bold;color:#9baab8;text-transform:uppercase;margin-bottom:10px">Preview</div>
+        <div id="preview-panel" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <div style="font-size:0.76rem;font-weight:bold;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px">Preview</div>
           <div id="preview-content" class="preview-content"></div>
         </div>
       </div>
@@ -98,11 +108,11 @@
           <label>Cover Image</label>
           <div class="file-upload" onclick="document.getElementById('cover-input').click()">
             <input type="file" id="cover-input" accept="image/*" onchange="previewCover(this)">
-            <div style="font-size:1.8rem;margin-bottom:6px">🖼️</div>
-            <div style="font-size:0.86rem;color:#6b7a8d">
-              <span style="color:#2a9d8f;font-weight:bold">Click to upload</span> a cover image
+            <div style="font-size:1.8rem;margin-bottom:6px">+</div>
+            <div style="font-size:0.86rem;color:var(--text-secondary)">
+              <span style="color:var(--accent);font-weight:bold">Click to upload</span> a cover image
             </div>
-            <div style="font-size:0.76rem;color:#9baab8;margin-top:3px">JPG, PNG, WEBP · max 5MB</div>
+            <div style="font-size:0.76rem;color:var(--text-muted);margin-top:3px">JPG, PNG, WEBP · max 5MB</div>
           </div>
           <div id="cover-preview-area"></div>
           <div id="existing-cover-area"></div>
@@ -183,7 +193,7 @@ async function loadForEdit(id) {
     document.getElementById('existing-cover-area').innerHTML =
       '<div style="margin-top:8px">' +
         '<img src="' + imgUrl(blog.cover_image_url) + '" class="preview-cover">' +
-        '<p style="font-size:0.78rem;color:#9baab8;margin-top:4px">Upload a new image to replace this cover.</p>' +
+        '<p style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">Upload a new image to replace this cover.</p>' +
       '</div>';
   }
 }
@@ -222,7 +232,7 @@ function insertDivider() {
 function togglePreview() {
   previewVisible = !previewVisible;
   document.getElementById('preview-panel').style.display = previewVisible ? 'block' : 'none';
-  document.getElementById('preview-btn').textContent = previewVisible ? '✏️ Edit' : '👁 Preview';
+  document.getElementById('preview-btn').textContent = previewVisible ? 'Edit' : 'Preview';
   if (previewVisible) renderPreview();
 }
 

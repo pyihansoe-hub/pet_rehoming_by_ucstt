@@ -4,30 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Adoption Requests — Pet Rehoming</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
   <style>
-    /* Request Cards */
-    .req-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:20px; margin-bottom:16px; box-shadow:0 2px 4px rgba(0,0,0,0.03); transition:transform 0.2s; }
-    .req-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.06); }
-    .req-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
-    .req-user-info { display:flex; gap:12px; align-items:center; }
-    .req-avatar { width:44px; height:44px; border-radius:50%; background:#2a9d8f; color:#fff; font-size:1rem; font-weight:bold; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .req-pet-badge { background:#f3f3ef; padding:6px 12px; border-radius:8px; font-size:0.85rem; color:#1c2b3a; font-weight:bold; }
-    .req-message { background:#f9f9f7; padding:12px 16px; border-radius:8px; font-size:0.9rem; color:#4b5563; line-height:1.6; margin-bottom:16px; border-left:3px solid #2a9d8f; }
-    .req-actions { display:flex; gap:10px; flex-wrap:wrap; padding-top:14px; border-top:1px solid #f3f3ef; }
-    
-    /* Status Highlights */
-    .status-pending { background:#fef3c7; color:#92400e; padding:4px 12px; border-radius:20px; font-size:0.78rem; font-weight:bold; }
-    .status-approved { background:#d1fae5; color:#065f46; padding:4px 12px; border-radius:20px; font-size:0.78rem; font-weight:bold; }
-    .status-rejected { background:#fee2e2; color:#991b1b; padding:4px 12px; border-radius:20px; font-size:0.78rem; font-weight:bold; }
-    .status-cancelled { background:#e5e7eb; color:#4b5563; padding:4px 12px; border-radius:20px; font-size:0.78rem; font-weight:bold; }
-    
-    /* Payment Alert */
-    .pay-alert { background:#fffbeb; border:1px solid #fcd34d; border-radius:8px; padding:14px; margin-bottom:14px; display:flex; align-items:center; gap:12px; }
-    .pay-alert-icon { font-size:1.5rem; }
-    .pay-alert-text h4 { margin:0 0 4px; color:#92400e; font-size:0.9rem; }
-    .pay-alert-text p { margin:0; color:#78716c; font-size:0.84rem; }
-  </style>
+  /* Request Cards */
+.req-card { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:16px; box-shadow:0 2px 4px var(--shadow-sm); transition:transform 0.2s; }
+.req-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px var(--shadow-md); }
+.req-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
+.req-user-info { display:flex; gap:12px; align-items:center; }
+.req-avatar { width:44px; height:44px; border-radius:50%; background:var(--accent); color:#fff; font-size:1rem; font-weight:bold; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.req-pet-badge { background:var(--bg-muted); padding:6px 12px; border-radius:8px; font-size:0.85rem; color:var(--text-primary); font-weight:bold; }
+.req-message { background:var(--bg-chat); padding:12px 16px; border-radius:8px; font-size:0.9rem; color:var(--text-secondary); line-height:1.6; margin-bottom:16px; border-left:3px solid var(--accent); }
+.req-actions { display:flex; gap:10px; flex-wrap:wrap; padding-top:14px; border-top:1px solid var(--border-light); }
+
+/* Status Highlights */
+.status-pending { background:var(--warning-bg); color:var(--warning-text); padding:4px 12px; border-radius:20px; font-size:0.78rem; font-weight:bold; }
+.status-approved { background:var(--success-bg); color:var(--success-text); padding:4px 12px; border-radius:20px; font-size:0.78rem; font-weight:bold; }
+.status-rejected { background:var(--danger-bg); color:var(--danger-text); padding:4px 12px; border-radius:20px; font-size:0.78rem; font-weight:bold; }
+.status-cancelled { background:var(--bg-muted); color:var(--text-secondary); padding:4px 12px; border-radius:20px; font-size:0.78rem; font-weight:bold; }
+
+/* Payment Alert */
+.pay-alert { background:var(--warning-bg); border:1px solid var(--warning-border); border-radius:8px; padding:14px; margin-bottom:14px; display:flex; align-items:center; gap:12px; }
+.pay-alert-icon { font-size:1.5rem; }
+.pay-alert-text h4 { margin:0 0 4px; color:var(--warning-text); font-size:0.9rem; }
+.pay-alert-text p { margin:0; color:var(--text-secondary); font-size:0.84rem; }</style>
 </head>
 <body>
 
@@ -40,7 +49,7 @@
 
     <div class="page-header">
       <h1>Adoption Requests</h1>
-      <p style="color:#6b7a8d;margin-top:4px">Manage requests you sent and requests on your pets</p>
+      <p style="color:var(--text-secondary);margin-top:4px">Manage requests you sent and requests on your pets</p>
     </div>
 
     <div id="tabs-wrap">
@@ -68,7 +77,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Adoption Agreement</h3>
-      <button class="modal-close" onclick="closeModal('agreement-modal')">✕</button>
+      <button class="modal-close" onclick="closeModal('agreement-modal')">x</button>
     </div>
     <div id="agreement-content"></div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
@@ -83,7 +92,7 @@
   <div class="modal" style="max-width:500px;">
     <div class="modal-header">
       <h3>Submit Follow-up</h3>
-      <button class="modal-close" onclick="closeModal('followup-modal')">✕</button>
+      <button class="modal-close" onclick="closeModal('followup-modal')">x</button>
     </div>
     <div id="followup-alert"></div>
     <div class="form-group">
@@ -147,7 +156,7 @@ async function loadMine() {
     var reqs = res.data.requests || [];
     
     if (!reqs.length) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h3>No requests sent</h3><p>Browse pets and submit an adoption request.</p><a href="/pages/pets.html" class="btn btn-primary" style="margin-top:12px;display:inline-block">Browse Pets</a></div>';
+      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">No requests</div><h3>No requests sent</h3><p>Browse pets and submit an adoption request.</p><a href="/pages/pets.html" class="btn btn-primary" style="margin-top:12px;display:inline-block">Browse Pets</a></div>';
       return;
     }
     
@@ -156,17 +165,15 @@ async function loadMine() {
       var alertHtml = '';
       
       if (r.status === 'pending') {
-        // Updated logic: Payment already happened during request, so we just wait for approval now.
-        alertHtml = '<div class="pay-alert" style="background:#eff6ff; border-color:#bfdbfe"><div class="pay-alert-icon">⏳</div><div class="pay-alert-text"><h4 style="color:#1e40af">Pending Approval</h4><p>' + (r.fee_type === 'paid' ? 'Your payment was successful. Waiting for the owner to approve your request.' : 'Waiting for the owner to approve your request.') + '</p></div></div>';
+        alertHtml = '<div class="pay-alert" style="background:var(--info-bg); border-color:var(--info-border)"><div class="pay-alert-text"><h4 style="color:var(--info-text)">Pending Approval</h4><p>' + (r.fee_type === 'paid' ? 'Your payment was successful. Waiting for the owner to approve your request.' : 'Waiting for the owner to approve your request.') + '</p></div></div>';
         actions += '<button onclick="cancelRequest(' + r.id + ')" class="btn btn-secondary btn-sm">Cancel Request</button>';
       } else if (r.status === 'approved') {
-        // If approved, unlock the chat button and show other connected options
-        alertHtml = '<div class="pay-alert" style="background:#d1fae5; border-color:#6ee7b7"><div class="pay-alert-icon">✅</div><div class="pay-alert-text"><h4 style="color:#065f46">Approved!</h4><p>Your request was approved. You can now chat with the owner to arrange pickup!</p></div></div>';
-        actions += '<a href="/pages/messages.html" class="btn btn-primary btn-sm">💬 Message Owner</a>';
+        alertHtml = '<div class="pay-alert" style="background:var(--success-bg); border-color:var(--success-border)"><div class="pay-alert-text"><h4 style="color:var(--success-text)">Approved!</h4><p>Your request was approved. You can now chat with the owner to arrange pickup!</p></div></div>';
+        actions += '<a href="/pages/messages.html" class="btn btn-primary btn-sm">Message Owner</a>';
         actions += '<button onclick="openAgreementModal(' + r.id + ')" class="btn btn-outline btn-sm">View Agreement</button>';
         actions += '<button onclick="openFollowupModal(' + r.id + ')" class="btn btn-outline btn-sm">Submit Follow-up</button>';
       } else if (r.status === 'rejected') {
-        alertHtml = '<div style="background:#fee2e2; border:1px solid #fca5a5; padding:12px; border-radius:8px; font-size:0.88rem; color:#991b1b; margin-bottom:14px;">The owner decided not to proceed with this request at this time. ' + (r.fee_type === 'paid' ? 'Any held payments have been released.' : '') + '</div>';
+        alertHtml = '<div style="background:var(--danger-bg); border:1px solid var(--danger-border); padding:12px; border-radius:8px; font-size:0.88rem; color:var(--danger-text); margin-bottom:14px;">The owner decided not to proceed with this request at this time. ' + (r.fee_type === 'paid' ? 'Any held payments have been released.' : '') + '</div>';
       }
 
       return '<div class="req-card">' +
@@ -174,7 +181,7 @@ async function loadMine() {
           '<div class="req-pet-badge">' + (r.pet_name||'Pet') + (r.pet_type ? ' · ' + r.pet_type : '') + '</div>' +
           '<span class="status-' + r.status + '">' + r.status.charAt(0).toUpperCase() + r.status.slice(1) + '</span>' +
         '</div>' +
-        '<div style="font-size:0.82rem;color:#9baab8;margin-bottom:14px;">Requested on ' + fmtDate(r.created_at) + '</div>' +
+        '<div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;">Requested on ' + fmtDate(r.created_at) + '</div>' +
         alertHtml +
         (r.message ? '<div class="req-message">"' + r.message + '"</div>' : '') +
         '<div class="req-actions">' + actions + '</div>' +
@@ -192,7 +199,7 @@ async function loadReceived() {
     var reqs = res.data.requests || [];
     
     if (!reqs.length) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📬</div><h3>No requests received</h3><p>Requests from adopters will appear here.</p></div>';
+      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">No requests</div><h3>No requests received</h3><p>Requests from adopters will appear here.</p></div>';
       return;
     }
     
@@ -201,19 +208,19 @@ async function loadReceived() {
       var statusNote = '';
       
       if (r.status === 'pending') {
-        statusNote = '<div style="margin-bottom:14px;padding:10px;background:#eff6ff;border-radius:8px;font-size:0.86rem;color:#1e40af;border:1px solid #bfdbfe;">⏳ Waiting for your review. ' + (r.fee_type === 'paid' ? 'Adopter has already paid.' : '') + '</div>';
+        statusNote = '<div style="margin-bottom:14px;padding:10px;background:var(--info-bg);border-radius:8px;font-size:0.86rem;color:var(--info-text);border:1px solid var(--info-border);">Waiting for your review. ' + (r.fee_type === 'paid' ? 'Adopter has already paid.' : '') + '</div>';
         actionsHtml = 
           '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">' +
             '<button onclick="reviewRequest(' + r.id + ',\'approved\')" class="btn btn-primary btn-sm" style="flex:1;justify-content:center">Approve Request</button>' +
             '<button onclick="reviewRequest(' + r.id + ',\'rejected\')" class="btn btn-danger btn-sm" style="flex:1;justify-content:center">Reject</button>' +
           '</div>' +
-          '<div style="font-size:0.78rem;color:#9baab8;text-align:center;">Approving will unlock the chat so you can message the adopter.</div>';
+          '<div style="font-size:0.78rem;color:var(--text-muted);text-align:center;">Approving will unlock the chat so you can message the adopter.</div>';
       } else if (r.status === 'approved') {
-        statusNote = '<div style="margin-bottom:14px;padding:10px;background:#d1fae5;border-radius:8px;font-size:0.86rem;color:#065f46;border:1px solid #6ee7b7;">✅ Approved. You can now chat with the adopter.</div>';
-        actionsHtml = '<a href="/pages/messages.html" class="btn btn-primary btn-sm">💬 Message Adopter</a>' +
+        statusNote = '<div style="margin-bottom:14px;padding:10px;background:var(--success-bg);border-radius:8px;font-size:0.86rem;color:var(--success-text);border:1px solid var(--success-border);">Approved. You can now chat with the adopter.</div>';
+        actionsHtml = '<a href="/pages/messages.html" class="btn btn-primary btn-sm">Message Adopter</a>' +
                       '<button onclick="openAgreementModal(' + r.id + ')" class="btn btn-outline btn-sm">View Agreement</button>';
       } else if (r.status === 'rejected') {
-        statusNote = '<div style="margin-bottom:14px;padding:10px;background:#fee2e2;border-radius:8px;font-size:0.86rem;color:#991b1b;border:1px solid #fca5a5;">❌ Rejected.</div>';
+        statusNote = '<div style="margin-bottom:14px;padding:10px;background:var(--danger-bg);border-radius:8px;font-size:0.86rem;color:var(--danger-text);border:1px solid var(--danger-border);">Rejected.</div>';
       }
 
       return '<div class="req-card">' +
@@ -221,17 +228,18 @@ async function loadReceived() {
           '<div class="req-user-info">' +
             '<div class="req-avatar">' + initials(r.requester_name || 'U') + '</div>' +
             '<div>' +
-              '<div style="font-weight:bold;font-size:0.95rem;color:#1c2b3a">' + (r.requester_name||'User') + '</div>' +
-              '<div style="font-size:0.82rem;color:#6b7a8d;display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;">' +
-                (r.requester_email ? '✉️ ' + r.requester_email : '') +
-                (r.requester_phone ? '📞 ' + r.requester_phone : '') +
+              '<div style="font-weight:bold;font-size:0.95rem;color:var(--text-primary)">' + (r.requester_name||'User') + '</div>' +
+              '<div style="font-size:0.82rem;color:var(--text-secondary);display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;">' +
+                (r.requester_email ? r.requester_email : '') +
+                (r.requester_email && r.requester_phone ? ' · ' : '') +
+                (r.requester_phone ? r.requester_phone : '') +
               '</div>' +
             '</div>' +
           '</div>' +
           '<div style="text-align:right;">' +
             '<div class="req-pet-badge" style="margin-bottom:6px;">' + (r.pet_name||'Pet') + '</div>' +
             '<span class="status-' + r.status + '">' + r.status.charAt(0).toUpperCase() + r.status.slice(1) + '</span>' +
-            '<div style="font-size:0.76rem;color:#9baab8;margin-top:4px;">' + timeAgo(r.created_at) + '</div>' +
+            '<div style="font-size:0.76rem;color:var(--text-muted);margin-top:4px;">' + timeAgo(r.created_at) + '</div>' +
           '</div>' +
         '</div>' +
         statusNote +
@@ -321,20 +329,20 @@ async function openAgreementModal(requestId) {
     var a = res.data.agreement;
 
     content.innerHTML =
-      '<div style="background:#f9f9f7;padding:16px;border-radius:8px;margin-bottom:20px;font-size:0.9rem;color:#4b5563;line-height:1.7;border:1px solid #e5e7eb;">' +
+      '<div style="background:var(--bg-chat);padding:16px;border-radius:8px;margin-bottom:20px;font-size:0.9rem;color:var(--text-secondary);line-height:1.7;border:1px solid var(--border);">' +
         (a.terms || 'By signing this agreement, both parties agree to the adoption terms. The adopter agrees to provide a safe and loving home, adequate food, water, and veterinary care. The owner agrees to accurately represent the pet\'s health and temperament.') +
       '</div>' +
       '<div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;">' +
-        '<div style="display:flex;align-items:center;gap:8px;font-size:0.9rem;padding:10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;flex:1;">' +
-          (a.owner_agreed ? '✅' : '⬜') + ' <strong>Owner</strong>' +
-          (a.owner_agreed_at ? '<br><span style="font-size:0.78rem;color:#9baab8">Signed ' + fmtDate(a.owner_agreed_at) + '</span>' : '') +
+        '<div style="display:flex;align-items:center;gap:8px;font-size:0.9rem;padding:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;flex:1;">' +
+          (a.owner_agreed ? 'Signed' : 'Pending') + ' <strong>Owner</strong>' +
+          (a.owner_agreed_at ? '<br><span style="font-size:0.78rem;color:var(--text-muted)">Signed ' + fmtDate(a.owner_agreed_at) + '</span>' : '') +
         '</div>' +
-        '<div style="display:flex;align-items:center;gap:8px;font-size:0.9rem;padding:10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;flex:1;">' +
-          (a.adopter_agreed ? '✅' : '⬜') + ' <strong>Adopter</strong>' +
-          (a.adopter_agreed_at ? '<br><span style="font-size:0.78rem;color:#9baab8">Signed ' + fmtDate(a.adopter_agreed_at) + '</span>' : '') +
+        '<div style="display:flex;align-items:center;gap:8px;font-size:0.9rem;padding:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;flex:1;">' +
+          (a.adopter_agreed ? 'Signed' : 'Pending') + ' <strong>Adopter</strong>' +
+          (a.adopter_agreed_at ? '<br><span style="font-size:0.78rem;color:var(--text-muted)">Signed ' + fmtDate(a.adopter_agreed_at) + '</span>' : '') +
         '</div>' +
       '</div>' +
-      (a.owner_agreed && a.adopter_agreed ? '<div class="alert alert-success">✅ Both parties have signed. Adoption is finalised.</div>' : '');
+      (a.owner_agreed && a.adopter_agreed ? '<div class="alert alert-success">Both parties have signed. Adoption is finalised.</div>' : '');
 
     if (a.owner_agreed && a.adopter_agreed) agreeBtn.style.display = 'none';
   } catch(e) {
