@@ -23,7 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
-# Add these lines if not already there:
+
 .env
 .env.*
 !.env.exampleuploads/
+uploads/
