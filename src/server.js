@@ -68,7 +68,7 @@ const authLimiter = rateLimit({ windowMs: 15*60*1000, max: 100, message: { messa
 const chatLimiter = rateLimit({ windowMs: 60*1000,    max: 20, message: { message: 'Chat limit: 20 messages per minute.' } });
 app.use(rateLimit({ windowMs: 15*60*1000, max: 1000,   message: { message: 'Too many requests.' } }));
 
-app.get('/', (_req, res) => res.json({ message: '🐾 Pet Rehoming & Monitoring System' }));
+app.get('/', (_req, res) => res.json({ message: ' Pet Rehoming & Monitoring System' }));
 
 app.use('/api/auth',              authLimiter, require('./routes/auth'));
 app.use('/api/user',              require('./routes/user'));

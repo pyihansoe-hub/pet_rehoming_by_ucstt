@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pet Detail — Pet Rehoming</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="../css/style.css">
   <script>
     (function(){
       var t = localStorage.getItem('theme');
@@ -31,6 +31,13 @@
     .comment-item:last-child { border-bottom:none; }
     .comment-avatar { width:32px; height:32px; border-radius:50%; background:var(--accent); color:#fff; font-size:0.78rem; font-weight:bold; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     @media(max-width:700px){ .gallery{ grid-template-columns:1fr; max-height:none; } .gallery-thumbs{ flex-direction:row; overflow-x:auto; } .gallery-thumb{ width:70px; height:70px; } .info-grid{ grid-template-columns:1fr 1fr; } }
+    .pay-method-option { display:flex; align-items:center; gap:10px; padding:12px 14px; border:2px solid var(--border); border-radius:8px; cursor:pointer; transition:border-color 0.15s; margin-bottom:8px; }
+    .pay-method-option:hover { border-color:var(--accent); }
+    .pay-method-option.active { border-color:var(--accent); background:var(--accent-light-bg, #eef2ff); }
+    .pay-method-option input { display:none; }
+    .pay-method-dot { width:18px; height:18px; border-radius:50%; border:2px solid var(--border); flex-shrink:0; position:relative; }
+    .pay-method-option.active .pay-method-dot { border-color:var(--accent); }
+    .pay-method-option.active .pay-method-dot::after { content:''; position:absolute; top:3px; left:3px; width:8px; height:8px; border-radius:50%; background:var(--accent); }
   </style>
 </head>
 <body>
@@ -44,12 +51,12 @@
     <div id="loading-area" class="loading-wrap"><div class="spinner"></div></div>
     <div id="error-area" class="hidden">
       <div class="alert alert-danger">Pet not found or failed to load.</div>
-      <a href="/pages/pets.html" class="btn btn-secondary" style="margin-top:8px">Back to Browse</a>
+      <a href="pets.html" class="btn btn-secondary" style="margin-top:8px">Back to Browse</a>
     </div>
 
     <div id="content-area" class="hidden">
       <div style="margin-bottom:16px">
-        <a href="/pages/pets.html" style="font-size:0.86rem;color:var(--text-secondary)">Browse Pets</a>
+        <a href="pets.html" style="font-size:0.86rem;color:var(--text-secondary)">Browse Pets</a>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 320px;gap:32px;align-items:start">
@@ -130,7 +137,7 @@
             <div id="comments-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
             <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border);">
               <div id="comment-login-prompt" class="hidden" style="margin-bottom:16px;">
-                <div class="alert alert-info"><a href="/pages/login.html">Log in</a> to leave a comment.</div>
+                <div class="alert alert-info"><a href="login.html">Log in</a> to leave a comment.</div>
               </div>
               <div id="comment-form" class="hidden">
                 <div id="comment-alert"></div>
@@ -170,7 +177,6 @@
   </div>
 </div>
 
-<!-- ADOPT & PAY MODAL -->
 <div class="modal-overlay" id="adopt-modal">
   <div class="modal">
     <div class="modal-header">
@@ -203,30 +209,106 @@
           <span style="font-size:0.88rem;color:var(--success-text);font-weight:600;">Secure Payment Gateway</span>
         </div>
         
-        <div class="form-group">
-          <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">Name on Card</label>
-          <input type="text" id="adopt-pay-name" class="form-control" placeholder="John Doe">
-        </div>
-        <div class="form-group">
-          <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">Card Number</label>
-          <input type="text" id="adopt-pay-card" class="form-control" placeholder="4242 4242 4242 4242" maxlength="19" autocomplete="cc-number">
-        </div>
-        <div class="form-row">
+        <label class="pay-method-option active" onclick="selectPayMethod('card', this)">
+          <input type="radio" name="pay-method" value="card" checked>
+          <div class="pay-method-dot"></div>
+          <span style="font-size:0.9rem;font-weight:500;">Credit / Debit Card</span>
+        </label>
+        <label class="pay-method-option" onclick="selectPayMethod('kpay', this)">
+          <input type="radio" name="pay-method" value="kpay">
+          <div class="pay-method-dot"></div>
+          <span style="font-size:0.9rem;font-weight:500;">KBZ Pay</span>
+        </label>
+        <label class="pay-method-option" onclick="selectPayMethod('wavepay', this)">
+          <input type="radio" name="pay-method" value="wavepay">
+          <div class="pay-method-dot"></div>
+          <span style="font-size:0.9rem;font-weight:500;">Wave Pay</span>
+        </label>
+        <label class="pay-method-option" onclick="selectPayMethod('ayapay', this)">
+          <input type="radio" name="pay-method" value="ayapay">
+          <div class="pay-method-dot"></div>
+          <span style="font-size:0.9rem;font-weight:500;">AYA Pay</span>
+        </label>
+
+        <div id="pay-card-fields" style="margin-top:16px;">
           <div class="form-group">
-            <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">Expiry Date</label>
-            <input type="text" id="adopt-pay-expiry" class="form-control" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp">
+            <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">Name on Card</label>
+            <input type="text" id="adopt-pay-name" class="form-control" placeholder="John Doe">
           </div>
           <div class="form-group">
-            <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">CVV</label>
-            <input type="password" id="adopt-pay-cvv" class="form-control" placeholder="***" maxlength="4" inputmode="numeric">
+            <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">Card Number</label>
+            <input type="text" id="adopt-pay-card" class="form-control" placeholder="4242 4242 4242 4242" maxlength="19" autocomplete="cc-number">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">Expiry Date</label>
+              <input type="text" id="adopt-pay-expiry" class="form-control" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp">
+            </div>
+            <div class="form-group">
+              <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">CVV</label>
+              <input type="password" id="adopt-pay-cvv" class="form-control" placeholder="***" maxlength="4" inputmode="numeric">
+            </div>
           </div>
         </div>
+
+        <div id="pay-kpay-fields" style="margin-top:16px;display:none;">
+          <div style="text-align:center;">
+            <img src="../images/qr-kpay.png" alt="KBZ Pay QR" style="width:200px;height:200px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+            <p style="font-size:0.84rem;color:var(--text-secondary);margin-top:12px;">Scan with KBZ Pay</p>
+          </div>
+          <div class="form-group" style="margin-top:16px;">
+            <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">Phone Number (Optional)</label>
+            <input type="tel" id="phone-kpay" class="form-control" placeholder="09xxxxxxxxx">
+          </div>
+        </div>
+
+        <div id="pay-wavepay-fields" style="margin-top:16px;display:none;">
+          <div style="text-align:center;">
+            <img src="../images/qr-wavepay.png" alt="Wave Pay QR" style="width:200px;height:200px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+            <p style="font-size:0.84rem;color:var(--text-secondary);margin-top:12px;">Scan with Wave Pay</p>
+          </div>
+          <div class="form-group" style="margin-top:16px;">
+            <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">Phone Number (Optional)</label>
+            <input type="tel" id="phone-wavepay" class="form-control" placeholder="09xxxxxxxxx">
+          </div>
+        </div>
+
+        <div id="pay-ayapay-fields" style="margin-top:16px;display:none;">
+          <div style="text-align:center;">
+            <img src="../images/qr-ayapay.png" alt="AYA Pay QR" style="width:200px;height:200px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+            <p style="font-size:0.84rem;color:var(--text-secondary);margin-top:12px;">Scan with AYA Pay</p>
+          </div>
+          <div class="form-group" style="margin-top:16px;">
+            <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">Phone Number (Optional)</label>
+            <input type="tel" id="phone-ayapay" class="form-control" placeholder="09xxxxxxxxx">
+          </div>
+        </div>
+
       </div>
     </div>
 
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button class="btn btn-secondary" onclick="closeModal('adopt-modal')">Cancel</button>
       <button class="btn btn-primary" id="adopt-submit-btn" onclick="submitAdoption()" style="min-width:160px;">Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="verify-modal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <h3>Verify Payment</h3>
+      <button class="modal-close" onclick="closeModal('verify-modal')">x</button>
+    </div>
+    <div id="verify-alert"></div>
+    <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:16px;">Enter the 4-digit code to confirm your payment.</p>
+    <div class="form-group">
+      <label>Verification Code</label>
+      <input type="text" id="verify-code-input" class="form-control" placeholder="####" maxlength="4" inputmode="numeric" style="text-align:center;font-size:1.5rem;letter-spacing:12px;font-weight:bold;">
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal('verify-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmCodePayment()">Confirm</button>
     </div>
   </div>
 </div>
@@ -269,6 +351,7 @@ var petId = null;
 var petData = null;
 var currentUser = getUser();
 var LOG_ICONS = { vaccination:'VAC', vet_visit:'VET', deworming:'DEW', weight:'WT', other:'LOG' };
+var selectedPayMethod = 'card';
 
 document.addEventListener('DOMContentLoaded', async function() {
   var params = new URLSearchParams(window.location.search);
@@ -301,7 +384,26 @@ document.addEventListener('DOMContentLoaded', async function() {
       e.target.value = val;
     });
   }
+  
+  var codeInput = document.getElementById('verify-code-input');
+  if (codeInput) {
+    codeInput.addEventListener('input', function(e) {
+      e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+    });
+  }
 });
+
+function selectPayMethod(method, el) {
+  selectedPayMethod = method;
+  document.querySelectorAll('.pay-method-option').forEach(function(opt) { opt.classList.remove('active'); });
+  el.classList.add('active');
+  
+  var methods = ['card', 'kpay', 'wavepay', 'ayapay'];
+  methods.forEach(function(m) {
+    var fieldEl = document.getElementById('pay-' + m + '-fields');
+    if (fieldEl) fieldEl.style.display = m === method ? 'block' : 'none';
+  });
+}
 
 function showErr() {
   document.getElementById('loading-area').classList.add('hidden');
@@ -395,7 +497,7 @@ function renderActions(pet) {
   var isOwner = currentUser && pet.owner_id === currentUser.id;
 
   if (isOwner) {
-    area.innerHTML = '<a href="/pages/add-pet.html?id=' + pet.id + '" class="btn btn-secondary btn-full" style="margin-bottom:8px">Edit Listing</a><a href="/pages/my-pets.html" class="btn btn-outline btn-full">My Pets</a>';
+    area.innerHTML = '<a href="add-pet.html?id=' + pet.id + '" class="btn btn-secondary btn-full" style="margin-bottom:8px">Edit Listing</a><a href="my-pets.html" class="btn btn-outline btn-full">My Pets</a>';
     return;
   }
   if (pet.status !== 'available') {
@@ -403,7 +505,7 @@ function renderActions(pet) {
     return;
   }
   if (!getToken()) {
-    area.innerHTML = '<a href="/pages/login.html" class="btn btn-primary btn-full">Login to Adopt</a>';
+    area.innerHTML = '<a href="login.html" class="btn btn-primary btn-full">Login to Adopt</a>';
     return;
   }
   area.innerHTML = '<button class="btn btn-primary btn-full" style="margin-bottom:8px" onclick="openAdoptModal()">Request Adoption</button><button onclick="toggleFavDetail()" id="fav-btn" class="btn btn-outline btn-full">Save</button>';
@@ -438,6 +540,16 @@ function openAdoptModal() {
   document.getElementById('adopt-message').value = '';
   document.getElementById('adopt-alert').innerHTML = '';
   document.getElementById('adopt-submit-btn').disabled = false;
+  selectedPayMethod = 'card';
+  document.querySelectorAll('.pay-method-option').forEach(function(opt) { opt.classList.remove('active'); });
+  document.querySelector('.pay-method-option input[value="card"]').checked = true;
+  document.querySelector('.pay-method-option input[value="card"]').parentNode.classList.add('active');
+  
+  var methods = ['card', 'kpay', 'wavepay', 'ayapay'];
+  methods.forEach(function(m) {
+    var fieldEl = document.getElementById('pay-' + m + '-fields');
+    if (fieldEl) fieldEl.style.display = m === 'card' ? 'block' : 'none';
+  });
   
   var feeArea = document.getElementById('adopt-fee-area');
   var payArea = document.getElementById('adopt-pay-area');
@@ -468,27 +580,87 @@ async function submitAdoption() {
   var feeAmount = petData.adoption_fee;
 
   if (feeType === 'paid' && feeAmount > 0) {
-    var cardEl = document.getElementById('adopt-pay-card');
-    var expiryEl = document.getElementById('adopt-pay-expiry');
-    var cvvEl = document.getElementById('adopt-pay-cvv');
-    if (cardEl && expiryEl && cvvEl) {
-      var card = cardEl.value.replace(/\s/g, '').replace(/[^0-9]/g, '');
-      var expiry = expiryEl.value.trim();
-      var cvv = cvvEl.value.trim();
-      if (card.length < 13 || card.length > 19) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">Please enter a valid card number.</div>'; return; }
-      if (!/^\d{2}\/\d{2}$/.test(expiry)) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">Please enter a valid expiry date (MM/YY).</div>'; return; }
-      if (cvv.length < 3) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">Please enter a valid CVV.</div>'; return; }
+    if (selectedPayMethod === 'card') {
+      var cardEl = document.getElementById('adopt-pay-card');
+      var expiryEl = document.getElementById('adopt-pay-expiry');
+      var cvvEl = document.getElementById('adopt-pay-cvv');
+      if (cardEl && expiryEl && cvvEl) {
+        var card = cardEl.value.replace(/\s/g, '').replace(/[^0-9]/g, '');
+        var expiry = expiryEl.value.trim();
+        var cvv = cvvEl.value.trim();
+        if (card.length < 13 || card.length > 19) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">Please enter a valid card number.</div>'; return; }
+        if (!/^\d{2}\/\d{2}$/.test(expiry)) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">Please enter a valid expiry date (MM/YY).</div>'; return; }
+        if (cvv.length < 3) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">Please enter a valid CVV.</div>'; return; }
+      }
+      processPayment(msg, feeType, feeAmount, btn);
+    } else {
+      var phoneEl = document.getElementById('phone-' + selectedPayMethod);
+      if (phoneEl && phoneEl.value.trim() && !/^09\d{7,9}$/.test(phoneEl.value.trim())) {
+        alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">Please enter a valid phone number (09xxxxxxxxx).</div>';
+        return;
+      }
+      closeModal('adopt-modal');
+      document.getElementById('verify-code-input').value = '';
+      document.getElementById('verify-alert').innerHTML = '';
+      openModal('verify-modal');
+      setTimeout(function() { document.getElementById('verify-code-input').focus(); }, 100);
     }
+    return;
   }
 
-  btn.disabled = true; 
-  btn.innerHTML = 'Processing...';
-  alertEl.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:0.88rem;">Submitting request...</div>';
+  processPayment(msg, feeType, feeAmount, btn);
+}
+
+async function confirmCodePayment() {
+  var code = document.getElementById('verify-code-input').value.trim();
+  var alertEl = document.getElementById('verify-alert');
+  
+  if (code !== '1234') {
+    alertEl.innerHTML = '<div class="alert alert-danger">Invalid code.</div>';
+    return;
+  }
+
+  closeModal('verify-modal');
+  showToast('Processing payment...', 'info');
+  
+  var msg = document.getElementById('adopt-message').value.trim();
+  var feeType = petData.fee_type;
+  var feeAmount = petData.adoption_fee;
 
   try {
     var res = await Adoption.request(petData.id, { message: msg || undefined });
     if (!res || !res.ok) {
-      alertEl.innerHTML = '<div class="alert alert-danger">' + ((res && res.data && res.data.message) || 'Failed to submit request.') + '</div>';
+      showToast((res && res.data && res.data.message) || 'Failed to submit request.', 'error');
+      return;
+    }
+    var requestId = res.data.request ? res.data.request.id : null;
+
+    if (feeType === 'paid' && feeAmount > 0 && requestId) {
+      var payRes = await Payments.simulate({ adoption_request_id: requestId, amount: feeAmount, method: selectedPayMethod, description: 'Adoption fee for ' + petData.name });
+      await new Promise(function(resolve) { setTimeout(resolve, 1500); });
+      
+      if (!payRes || !payRes.ok) {
+        showToast('Payment failed.', 'error');
+        return;
+      }
+    }
+
+    showToast('Payment successful! Request submitted.', 'success');
+    setTimeout(function(){ window.location.href = p('adoption-requests.html?tab=mine'); }, 1500);
+  } catch(e) { 
+    showToast('Something went wrong.', 'error');
+  }
+}
+
+async function processPayment(msg, feeType, feeAmount, btn) {
+  btn.disabled = true; 
+  btn.innerHTML = 'Processing...';
+  document.getElementById('adopt-alert').innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:0.88rem;">Submitting request...</div>';
+
+  try {
+    var res = await Adoption.request(petData.id, { message: msg || undefined });
+    if (!res || !res.ok) {
+      document.getElementById('adopt-alert').innerHTML = '<div class="alert alert-danger">' + ((res && res.data && res.data.message) || 'Failed to submit request.') + '</div>';
       btn.disabled = false; btn.innerHTML = feeType === 'paid' ? 'Pay ' + fmtMoney(feeAmount) + ' & Request' : 'Submit Request';
       return;
     }
@@ -496,12 +668,12 @@ async function submitAdoption() {
     var requestId = res.data.request ? res.data.request.id : null;
 
     if (feeType === 'paid' && feeAmount > 0 && requestId) {
-      alertEl.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:0.88rem;">Processing payment securely...</div>';
-      var payRes = await Payments.simulate({ adoption_request_id: requestId, amount: feeAmount, description: 'Adoption fee for ' + petData.name });
+      document.getElementById('adopt-alert').innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:0.88rem;">Processing payment securely...</div>';
+      var payRes = await Payments.simulate({ adoption_request_id: requestId, amount: feeAmount, method: selectedPayMethod, description: 'Adoption fee for ' + petData.name });
       await new Promise(function(resolve) { setTimeout(resolve, 2500); });
       
       if (!payRes || !payRes.ok) {
-        alertEl.innerHTML = '<div class="alert alert-danger">Payment failed. Request submitted but payment pending.</div>';
+        document.getElementById('adopt-alert').innerHTML = '<div class="alert alert-danger">Payment failed. Request submitted but payment pending.</div>';
         btn.disabled = false; btn.innerHTML = 'Pay ' + fmtMoney(feeAmount);
         return;
       }
@@ -509,15 +681,15 @@ async function submitAdoption() {
 
     closeModal('adopt-modal');
     showToast(feeType === 'paid' ? 'Payment successful! Request submitted. Waiting for owner approval.' : 'Adoption request submitted! Waiting for owner approval.', 'success');
-    setTimeout(function(){ window.location.href = '/pages/adoption-requests.html?tab=mine'; }, 1500);
+    setTimeout(function(){ window.location.href = p('adoption-requests.html?tab=mine'); }, 1500);
   } catch(e) { 
-    alertEl.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>'; 
+    document.getElementById('adopt-alert').innerHTML = '<div class="alert alert-danger">Something went wrong.</div>'; 
     btn.disabled = false; btn.innerHTML = feeType === 'paid' ? 'Pay ' + fmtMoney(feeAmount) : 'Submit Request';
   }
 }
 
 function openReportModal() {
-  if (!getToken()) { window.location.href = '/pages/login.html'; return; }
+  if (!getToken()) { window.location.href = p('login.html'); return; }
   openModal('report-modal');
 }
 
@@ -573,7 +745,7 @@ async function deleteLog(logId, btn) {
   } catch(e) { showToast('Something went wrong.', 'error'); }
 }
 async function togglePetLike() {
-  if (!getToken()) { window.location.href = '/pages/login.html'; return; }
+  if (!getToken()) { window.location.href = p('login.html'); return; }
   var btn = document.getElementById('like-btn');
   try {
     var res = await Pets.like(petId);
