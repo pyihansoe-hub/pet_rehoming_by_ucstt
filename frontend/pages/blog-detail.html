@@ -4,18 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blog — Pet Rehoming</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
   <style>
-    .blog-content { line-height:1.85; color:#374151; font-size:0.97rem; }
+    .blog-content { line-height:1.85; color:var(--text-primary); font-size:0.97rem; }
     .blog-content p  { margin-bottom:16px; }
-    .blog-content h2 { font-size:1.2rem; margin:24px 0 10px; color:#1c2b3a; }
-    .blog-content h3 { font-size:1.05rem; margin:20px 0 8px; color:#1c2b3a; }
+    .blog-content h2 { font-size:1.2rem; margin:24px 0 10px; color:var(--text-primary); }
+    .blog-content h3 { font-size:1.05rem; margin:20px 0 8px; color:var(--text-primary); }
     .blog-content ul, .blog-content ol { margin:0 0 16px 24px; }
     .blog-content li { margin-bottom:6px; }
-    .blog-content blockquote { border-left:3px solid #2a9d8f; padding:10px 16px; background:#e6f5f3; border-radius:0 8px 8px 0; margin:16px 0; color:#21867a; font-style:italic; }
-    .comment-item { padding:14px 0; border-bottom:1px solid #e5e7eb; }
+    .blog-content blockquote { border-left:3px solid var(--accent); padding:10px 16px; background:var(--accent-light-bg); border-radius:0 8px 8px 0; margin:16px 0; color:var(--accent-hover); font-style:italic; }
+    .comment-item { padding:14px 0; border-bottom:1px solid var(--border); }
     .comment-item:last-child { border-bottom:none; }
-    .comment-avatar { width:32px; height:32px; border-radius:50%; background:#2a9d8f; color:#fff; font-size:0.78rem; font-weight:bold; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .comment-avatar { width:32px; height:32px; border-radius:50%; background:var(--accent); color:#fff; font-size:0.78rem; font-weight:bold; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   </style>
 </head>
 <body>
@@ -30,7 +40,7 @@
     <div id="loading-area" class="loading-wrap"><div class="spinner"></div></div>
     <div id="error-area" class="hidden">
       <div class="alert alert-danger" id="error-msg">Blog not found.</div>
-      <a href="/pages/blogs.html" class="btn btn-secondary" style="margin-top:8px">← Back to Blogs</a>
+      <a href="/pages/blogs.html" class="btn btn-secondary" style="margin-top:8px">Back to Blogs</a>
     </div>
 
     <div id="content-area" class="hidden">
@@ -39,18 +49,18 @@
         <!-- MAIN -->
         <div>
           <div style="margin-bottom:16px">
-            <a href="/pages/blogs.html" style="font-size:0.86rem;color:#6b7a8d">← All Blogs</a>
+            <a href="/pages/blogs.html" style="font-size:0.86rem;color:var(--text-secondary)">All Blogs</a>
           </div>
 
-          <div id="cat-label" style="font-size:0.76rem;font-weight:bold;color:#2a9d8f;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px"></div>
+          <div id="cat-label" style="font-size:0.76rem;font-weight:bold;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px"></div>
           <h1 id="blog-title" style="font-size:1.7rem;margin-bottom:12px;line-height:1.3"></h1>
 
           <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap">
-            <div id="author-info" style="display:flex;align-items:center;gap:8px;font-size:0.86rem;color:#6b7a8d"></div>
-            <span style="color:#e5e7eb">|</span>
-            <span id="blog-date" style="font-size:0.84rem;color:#9baab8"></span>
-            <span style="color:#e5e7eb">|</span>
-            <span id="blog-views" style="font-size:0.84rem;color:#9baab8"></span>
+            <div id="author-info" style="display:flex;align-items:center;gap:8px;font-size:0.86rem;color:var(--text-secondary)"></div>
+            <span style="color:var(--border)">|</span>
+            <span id="blog-date" style="font-size:0.84rem;color:var(--text-muted)"></span>
+            <span style="color:var(--border)">|</span>
+            <span id="blog-views" style="font-size:0.84rem;color:var(--text-muted)"></span>
           </div>
 
           <div id="cover-img-area" style="margin-bottom:24px"></div>
@@ -60,26 +70,24 @@
           <div id="tags-area" style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap"></div>
 
           <!-- LIKE -->
-          <div style="display:flex;align-items:center;gap:16px;margin:28px 0;padding:16px;background:#f9f9f7;border-radius:10px">
-            <button id="like-btn" onclick="togglePetLike()" style="display:flex; align-items:center; background:none; border:1.5px solid var(--border); padding:8px 16px; border-radius:8px; font-size:0.88rem; font-weight:bold; cursor:pointer; color:var(--text-secondary); margin-right:16px;">
-  🤍 <span id="like-count" style="margin-left:6px;">0</span> Likes
-</button>
-            <span style="font-size:0.84rem;color:#9baab8">Found this helpful? Share with other pet owners.</span>
+          <div style="display:flex;align-items:center;gap:16px;margin:28px 0;padding:16px;background:var(--bg-chat);border-radius:10px">
+            <button id="like-btn" onclick="toggleLike()" style="display:flex; align-items:center; background:none; border:1.5px solid var(--border); padding:8px 16px; border-radius:8px; font-size:0.88rem; font-weight:bold; cursor:pointer; color:var(--text-secondary); margin-right:16px;">
+              🤍 <span id="like-count" style="margin-left:6px;">0</span> Likes
+            </button>
+            <span style="font-size:0.84rem;color:var(--text-muted)">Found this helpful? Share with other pet owners.</span>
           </div>
 
           <hr class="divider">
 
           <!-- COMMENTS -->
           <div>
-            <h3 style="margin-bottom:16px">Comments <span id="comment-count" style="font-size:0.9rem;color:#9baab8;font-weight:normal"></span></h3>
+            <h3 style="margin-bottom:16px">Comments <span id="comment-count" style="font-size:0.9rem;color:var(--text-muted);font-weight:normal"></span></h3>
 
-            <!-- MOVED: Comment list is now FIRST so new comments appear above the box -->
             <div id="comments-list">
               <div class="loading-wrap"><div class="spinner"></div></div>
             </div>
 
-            <!-- MOVED: Login prompt and form are now BELOW the list -->
-            <div style="margin-top:20px; border-top:1px solid #e5e7eb; padding-top:20px;">
+            <div style="margin-top:20px; border-top:1px solid var(--border); padding-top:20px;">
               <div id="comment-login-prompt" class="hidden" style="margin-bottom:16px">
                 <div class="alert alert-info">
                   <a href="/pages/login.html">Log in</a> to leave a comment.
@@ -113,7 +121,7 @@
             <div class="card">
               <h4 style="margin-bottom:10px">Manage Blog</h4>
               <div style="display:flex;flex-direction:column;gap:8px">
-                <a id="edit-link" href="#" class="btn btn-secondary btn-sm">✏️ Edit</a>
+                <a id="edit-link" href="#" class="btn btn-secondary btn-sm">Edit</a>
                 <button onclick="deleteBlog()" class="btn btn-danger btn-sm">Delete</button>
               </div>
             </div>
@@ -131,7 +139,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Report Blog</h3>
-      <button class="modal-close" onclick="closeModal('report-modal')">✕</button>
+      <button class="modal-close" onclick="closeModal('report-modal')">x</button>
     </div>
     <div id="report-alert"></div>
     <div class="form-group">
@@ -157,8 +165,8 @@
 
 <footer class="footer" id="footer"></footer>
 
-<script src="../js/api.js"></script>
-<script src="/../js/app.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/app.js"></script>
 <script>
 var blogId   = null;
 var currentUser = getUser();
@@ -204,15 +212,15 @@ function renderBlog(blog) {
 
   var authorInitials = initials(blog.author_name || 'A');
   document.getElementById('author-info').innerHTML =
-    '<div style="width:28px;height:28px;border-radius:50%;background:#2a9d8f;color:#fff;font-size:0.72rem;font-weight:bold;display:flex;align-items:center;justify-content:center">' + authorInitials + '</div>' +
+    '<div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:0.72rem;font-weight:bold;display:flex;align-items:center;justify-content:center">' + authorInitials + '</div>' +
     '<span>' + (blog.author_name || 'Author') + '</span>';
 
   document.getElementById('author-card').innerHTML =
     '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
-      '<div style="width:40px;height:40px;border-radius:50%;background:#2a9d8f;color:#fff;font-size:0.9rem;font-weight:bold;display:flex;align-items:center;justify-content:center">' + authorInitials + '</div>' +
+      '<div style="width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;font-size:0.9rem;font-weight:bold;display:flex;align-items:center;justify-content:center">' + authorInitials + '</div>' +
       '<div><div style="font-weight:bold;font-size:0.9rem">' + (blog.author_name || 'Author') + '</div></div>' +
     '</div>' +
-    '<p style="font-size:0.82rem;color:#6b7a8d">Pet care enthusiast sharing knowledge on the Pet Rehoming platform.</p>';
+    '<p style="font-size:0.82rem;color:var(--text-secondary)">Pet care enthusiast sharing knowledge on the Pet Rehoming platform.</p>';
 
   if (blog.cover_image_url) {
     document.getElementById('cover-img-area').innerHTML =
@@ -231,20 +239,19 @@ function renderBlog(blog) {
   if (tags.length) {
     document.getElementById('tags-area').innerHTML = tags.map(function(t) {
       var name = t.name || t;
-      return '<a href="/pages/blogs.html?tag=' + encodeURIComponent(name) + '" style="display:inline-block;padding:3px 12px;background:#f3f3ef;border-radius:999px;font-size:0.78rem;color:#6b7a8d;text-decoration:none">#' + name + '</a>';
+      return '<a href="/pages/blogs.html?tag=' + encodeURIComponent(name) + '" style="display:inline-block;padding:3px 12px;background:var(--bg-muted);border-radius:999px;font-size:0.78rem;color:var(--text-secondary);text-decoration:none">#' + name + '</a>';
     }).join('');
   }
 
   if (blog.category_name && blog.category_slug) {
     document.getElementById('related-links').innerHTML =
-      '<a href="/pages/blogs.html?category=' + blog.category_slug + '" style="display:block;font-size:0.86rem;color:#2a9d8f;margin-bottom:6px">More ' + blog.category_name + ' articles →</a>' +
-      '<a href="/pages/blogs.html" style="display:block;font-size:0.86rem;color:#6b7a8d">All articles →</a>';
+      '<a href="/pages/blogs.html?category=' + blog.category_slug + '" style="display:block;font-size:0.86rem;color:var(--accent);margin-bottom:6px">More ' + blog.category_name + ' articles →</a>' +
+      '<a href="/pages/blogs.html" style="display:block;font-size:0.86rem;color:var(--text-secondary)">All articles →</a>';
   } else {
     document.getElementById('related-links').innerHTML =
-      '<a href="/pages/blogs.html" style="display:block;font-size:0.86rem;color:#6b7a8d">All articles →</a>';
+      '<a href="/pages/blogs.html" style="display:block;font-size:0.86rem;color:var(--text-secondary)">All articles →</a>';
   }
 
-  // This will now pull the correct number from the backend!
   document.getElementById('like-count').textContent = blog.like_count || 0;
 
   if (currentUser) {
@@ -262,21 +269,20 @@ function renderBlog(blog) {
 
   if (currentUser && !isOwner) {
     document.getElementById('related-links').innerHTML +=
-      '<button onclick="openModal(\'report-modal\')" style="background:none;border:none;font-size:0.78rem;color:#9baab8;cursor:pointer;text-decoration:underline;padding:0;margin-top:12px;display:block">Report this blog</button>';
+      '<button onclick="openModal(\'report-modal\')" style="background:none;border:none;font-size:0.78rem;color:var(--text-muted);cursor:pointer;text-decoration:underline;padding:0;margin-top:12px;display:block">Report this blog</button>';
   }
 }
 
 async function toggleLike() {
   if (!getToken()) { window.location.href = '/pages/login.html'; return; }
   var btn = document.getElementById('like-btn');
-  var countEl = document.getElementById('like-count');
   try {
     var res = await Blogs.like(blogId);
     if (res && res.ok) {
       var liked = res.data.liked;
-      var current = parseInt(countEl.textContent) || 0;
+      var current = parseInt(document.getElementById('like-count').textContent) || 0;
       var newCount = liked ? current + 1 : Math.max(0, current - 1);
-      btn.innerHTML = (liked ? '❤️' : '🤍') + ' <span id="like-count">' + newCount + '</span> Likes';
+      btn.innerHTML = (liked ? '❤️' : '🤍') + ' <span id="like-count" style="margin-left:6px;">' + newCount + '</span> Likes';
     }
   } catch(e) { showToast('Failed to update like.', 'error'); }
 }
@@ -285,12 +291,12 @@ async function loadComments(id) {
   var list = document.getElementById('comments-list');
   try {
     var res = await Blogs.getComments(id);
-    if (!res || !res.ok) { list.innerHTML = '<p style="color:#e76f51">Failed to load comments.</p>'; return; }
+    if (!res || !res.ok) { list.innerHTML = '<p style="color:var(--danger)">Failed to load comments.</p>'; return; }
     var comments = res.data.comments || [];
     document.getElementById('comment-count').textContent = '(' + comments.length + ')';
 
     if (!comments.length) {
-      list.innerHTML = '<p style="color:#9baab8;font-size:0.86rem">No comments yet. Be the first!</p>';
+      list.innerHTML = '<p style="color:var(--text-muted);font-size:0.86rem">No comments yet. Be the first!</p>';
       return;
     }
 
@@ -303,16 +309,16 @@ async function loadComments(id) {
             '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">' +
               '<div style="font-weight:bold;font-size:0.86rem">' + (c.user_name || 'User') + '</div>' +
               '<div style="display:flex;align-items:center;gap:8px">' +
-                '<span style="font-size:0.76rem;color:#9baab8">' + timeAgo(c.created_at) + '</span>' +
-                (canDelete ? '<button onclick="deleteComment(' + c.id + ')" style="background:none;border:none;color:#e76f51;font-size:0.76rem;cursor:pointer">Delete</button>' : '') +
+                '<span style="font-size:0.76rem;color:var(--text-muted)">' + timeAgo(c.created_at) + '</span>' +
+                (canDelete ? '<button onclick="deleteComment(' + c.id + ')" style="background:none;border:none;color:var(--danger);font-size:0.76rem;cursor:pointer">Delete</button>' : '') +
               '</div>' +
             '</div>' +
-            '<p style="font-size:0.88rem;color:#374151;margin-top:4px;white-space:pre-wrap">' + c.content + '</p>' +
+            '<p style="font-size:0.88rem;color:var(--text-primary);margin-top:4px;white-space:pre-wrap">' + c.content + '</p>' +
           '</div>' +
         '</div>' +
       '</div>';
     }).join('');
-  } catch(e) { list.innerHTML = '<p style="color:#e76f51">Failed to load comments.</p>'; }
+  } catch(e) { list.innerHTML = '<p style="color:var(--danger)">Failed to load comments.</p>'; }
 }
 
 async function submitComment() {

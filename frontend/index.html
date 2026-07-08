@@ -27,23 +27,18 @@
   <div class="container">
     <h1>Pet လှလှလေးတွေမွေးဖို့ <span>Pet Net </span>ကိုသတိရပါ</h1>
     <p>PetNests နှင့်အတူ သင့်ရဲ့အချစ်ဆုံး <br/>သူငယ်ချင်းအသစ်လေးကို ရှာဖွေမွေးစားလိုက်ပါ။</p>
-    <div class="hero-actions">
-      <a href="/pages/pets.html" class="btn btn-amber btn-lg">မွေးစားဖို့ရှာမယ်</a>
-    </div>
-    <!-- <div class="hero-stats">
-      <div>
-        <div class="hero-stat-value" id="stat-pets">—</div>
-        <div class="hero-stat-label">လက်ရှိ Pet အရေအတွက်</div>
-      </div>
-    </div> -->
+        <div class="hero-actions">
+          <a href="pages/pets.html" class="btn btn-amber btn-lg">မွေးစားဖို့ရှာမယ်</a>
+          <a href="pages/login.html" id="hero-login-btn" class="btn btn-amber btn-lg" style="display:none;">အကောင့်ဝင်ရန်</a>
+        </div>
+<script>if(!localStorage.getItem('token')){document.getElementById('hero-login-btn').style.display='';}</script></div>
   </div>
-</div>
 
 <!-- TRENDING PETS -->
 <div style="padding:48px 0">
   <div class="container">
     <div class="section-header">
-      <h2>လူကြိုက်များနေသော</h2>
+      <h2>နောက်ဆုံးရ အိမ်မွေးတိရစ္ဆာန်လေးများ</h2>
       <a href="/pages/pets.html" class="btn btn-outline btn-sm">အားလုံးကိုကြည့်ရန်</a>
     </div>
     <div id="trending-grid" class="grid-4">
