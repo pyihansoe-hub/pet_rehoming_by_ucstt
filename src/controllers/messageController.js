@@ -136,5 +136,17 @@ const getUnreadCount = async (req, res) => {
     res.json({ unread: +rows[0].unread });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
+// DELETE /api/messages/conversations/:id
+const deleteConversation = async (req, res) => {
+  try {
+    const access = await getConversationAccess(req.params.id, req.user.id, req.user.role);
+    if (access.notFound) return res.status(404).json({ message: 'Conversation not found.' });
+    if (!access.allowed) return res.status(403).json({ message: 'Not authorized.' });
 
-module.exports = { getOrCreateConversation, listConversations, getMessages, sendMessage, getUnreadCount };
+    await pool.query('DELETE FROM conversations WHERE id = $1', [req.params.id]);
+    res.json({ ok: true, message: 'Conversation deleted.' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
+};
+module.exports = { getOrCreateConversation, listConversations, getMessages, sendMessage, getUnreadCount, deleteConversation};

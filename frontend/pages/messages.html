@@ -6,6 +6,27 @@
   <title>Messages — Pet Rehoming</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
+    .conv-item-row { display:flex; align-items:flex-start; gap:6px; }
+.conv-item-content { flex:1; min-width:0; }
+.conv-del-btn { background:none; border:none; color:var(--text-muted); cursor:pointer; padding:2px 4px; border-radius:4px; font-size:0.82rem; line-height:1; opacity:0; transition:opacity 0.15s, color 0.15s; flex-shrink:0; margin-top:2px; }
+.conv-item:hover .conv-del-btn { opacity:1; }
+.conv-del-btn:hover { color:#e76f51; background:rgba(231,111,81,0.1); }
+
+/* Delete confirmation modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; display:flex; align-items:center; justify-content:center; animation:fadeIn 0.15s ease; }
+.modal-box { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:28px; max-width:380px; width:90%; text-align:center; animation:scaleIn 0.15s ease; }
+.modal-box h3 { margin:0 0 8px; font-size:1.05rem; color:var(--text-primary); }
+.modal-box p { margin:0 0 22px; font-size:0.86rem; color:var(--text-muted); line-height:1.5; }
+.modal-actions { display:flex; gap:10px; justify-content:center; }
+.modal-actions button { padding:8px 22px; border-radius:8px; border:none; font-size:0.86rem; font-weight:600; cursor:pointer; transition:background 0.15s; }
+.btn-modal-cancel { background:var(--bg-muted); color:var(--text-primary); }
+.btn-modal-cancel:hover { background:var(--border); }
+.btn-modal-danger { background:#e76f51; color:#fff; }
+.btn-modal-danger:hover { background:#d35d40; }
+.btn-modal-danger:disabled { opacity:0.5; cursor:not-allowed; }
+
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes scaleIn { from{transform:scale(0.95);opacity:0} to{transform:scale(1);opacity:1} }
   .msg-wrap { display:grid; grid-template-columns:280px 1fr; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--bg-card); height:calc(100vh - 120px); }
 .msg-sidebar { border-right:1px solid var(--border); display:flex; flex-direction:column; background:var(--bg-chat); }
 .msg-sidebar-header { padding:14px 16px; border-bottom:1px solid var(--border); background:var(--bg-card); display:flex; align-items:center; justify-content:space-between; }
@@ -92,7 +113,7 @@
     </div>
   </div>
 </div>
-
+<div id="delete-modal"></div>
 <footer class="footer" id="footer"></footer>
 
 <script src="../js/api.js"></script>
@@ -133,20 +154,25 @@ async function loadConversations() {
     }
 
     var u = getUser();
-    el.innerHTML = convs.map(function(c) {
-      var isOwner  = u && c.owner_name !== u.name;
+        el.innerHTML = convs.map(function(c) {
+      var isOwner   = u && c.owner_name !== u.name;
       var otherName = isOwner ? c.owner_name : c.adopter_name;
       var hasUnread = +c.unread_count > 0;
       return '<div class="conv-item' + (c.id === activeConvId ? ' active' : '') + (hasUnread ? ' unread' : '') + '" onclick="openConversation(' + c.id + ',this)">' +
-        '<div class="conv-meta">' +
-          '<div class="conv-name">' + (otherName || 'User') + '</div>' +
-          '<div style="display:flex;align-items:center;gap:6px">' +
-            '<span class="conv-time">' + (c.last_message_at ? timeAgo(c.last_message_at) : '') + '</span>' +
-            (hasUnread ? '<div class="unread-dot"></div>' : '') +
+        '<div class="conv-item-row">' +
+          '<div class="conv-item-content">' +
+            '<div class="conv-meta">' +
+              '<div class="conv-name">' + (otherName || 'User') + '</div>' +
+              '<div style="display:flex;align-items:center;gap:6px">' +
+                '<span class="conv-time">' + (c.last_message_at ? timeAgo(c.last_message_at) : '') + '</span>' +
+                (hasUnread ? '<div class="unread-dot"></div>' : '') +
+              '</div>' +
+            '</div>' +
+            '<div class="conv-pet"> ' + (c.pet_name || '') + '</div>' +
+            '<div class="conv-preview">' + (c.last_message || 'No messages yet') + '</div>' +
           '</div>' +
+          '<button class="conv-del-btn" onclick="event.stopPropagation();showDeleteModal(' + c.id + ',\'' + (c.pet_name || '').replace(/'/g, "\\'") + '\')" title="Delete conversation">✕</button>' +
         '</div>' +
-        '<div class="conv-pet"> ' + (c.pet_name || '') + '</div>' +
-        '<div class="conv-preview">' + (c.last_message || 'No messages yet') + '</div>' +
       '</div>';
     }).join('');
   } catch(e) {
@@ -280,6 +306,62 @@ function handleMsgKey(e) {
 function autoResize(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+/* ── Delete conversation ─────────────────────────── */
+function showDeleteModal(convId, petName) {
+  var modal = document.getElementById('delete-modal');
+  modal.innerHTML =
+    '<div class="modal-overlay" onclick="closeDeleteModal(event)">' +
+      '<div class="modal-box" onclick="event.stopPropagation()">' +
+        '<h3>Delete Conversation</h3>' +
+        '<p>Are you sure you want to delete the conversation about <strong>' + escapeHtml(petName || 'this pet') + '</strong>? This action cannot be undone.</p>' +
+        '<div class="modal-actions">' +
+          '<button class="btn-modal-cancel" onclick="closeDeleteModal()">Cancel</button>' +
+          '<button class="btn-modal-danger" id="confirm-delete-btn" onclick="confirmDelete(' + convId + ')">Delete</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function closeDeleteModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('delete-modal').innerHTML = '';
+}
+async function confirmDelete(convId) {
+  var btn = document.getElementById('confirm-delete-btn');
+  btn.disabled = true;
+  btn.textContent = 'Deleting…';
+
+  try {
+    var res = await Messages.deleteConversation(convId);
+    if (res && res.ok) {
+      closeDeleteModal();
+      if (activeConvId === convId) {
+        activeConvId = null;
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        document.getElementById('msg-header-area').style.display = 'none';
+        document.getElementById('msg-input-area').style.display  = 'none';
+        document.getElementById('msg-messages-area').innerHTML =
+          '<div class="msg-empty">' +
+            '<div style="font-size:2.5rem;margin-bottom:12px">💬</div>' +
+            '<div style="font-weight:bold;margin-bottom:6px">No conversation selected</div>' +
+            '<div style="font-size:0.86rem">Select a conversation from the left to start messaging.</div>' +
+          '</div>';
+      }
+      loadConversations();
+      showToast('Conversation deleted.', 'success');
+    } else {
+      showToast(res.data.message || 'Failed to delete.', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Delete';
+    }
+  } catch (e) {
+    console.error('DELETE error:', e);
+    showToast('Error: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Delete';
+  }
 }
 </script>
 </body>
