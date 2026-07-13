@@ -170,6 +170,7 @@ var Messages = {
   getOrCreate:   function(b)      { return post('/api/messages/conversations', b); },
   getMessages:   function(cid)    { return get('/api/messages/conversations/' + cid); },
   send:          function(cid, b) { return post('/api/messages/conversations/' + cid, b); },
+  deleteConversation:  function(cid)    { return del('/api/messages/conversations/' + cid); },
 };
 
 var Admin = {
