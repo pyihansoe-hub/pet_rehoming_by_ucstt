@@ -23,15 +23,49 @@ const requestAdoption = async (req, res) => {
     if (pet.status !== 'available') return res.status(400).json({ message: 'Pet is not available for adoption.' });
     if (pet.owner_id === req.user.id) return res.status(400).json({ message: 'You cannot adopt your own pet.' });
 
-    const { rows } = await pool.query(
-      `INSERT INTO adoption_requests (pet_id, requester_id, message)
-       VALUES ($1,$2,$3) RETURNING *`,
-      [petId, req.user.id, message || null]
+    // 1. Check if user already has an ACTIVE request for this pet
+    const { rows: activeReqs } = await pool.query(
+      `SELECT id FROM adoption_requests 
+       WHERE pet_id=$1 AND requester_id=$2 AND status IN ('pending', 'approved')`,
+      [petId, req.user.id]
     );
+
+    if (activeReqs.length > 0) {
+      return res.status(409).json({ message: 'You already have an active request for this pet.' });
+    }
+
+    // 2. Check if user has a CANCELLED or REJECTED request we can reuse
+    const { rows: oldReqs } = await pool.query(
+      `SELECT id FROM adoption_requests 
+       WHERE pet_id=$1 AND requester_id=$2 AND status IN ('cancelled', 'rejected')
+       ORDER BY created_at DESC LIMIT 1`,
+      [petId, req.user.id]
+    );
+
+    let requestRow;
+
+    if (oldReqs.length > 0) {
+      // Update the existing cancelled/rejected request back to pending
+      const upd = await pool.query(
+        `UPDATE adoption_requests 
+         SET status='pending', message=$2, reviewed_at=NULL, created_at=NOW(), updated_at=NOW()
+         WHERE id=$1 RETURNING *`,
+        [oldReqs[0].id, message || null]
+      );
+      requestRow = upd.rows[0];
+    } else {
+      // Insert a brand new request
+      const ins = await pool.query(
+        `INSERT INTO adoption_requests (pet_id, requester_id, message)
+         VALUES ($1,$2,$3) RETURNING *`,
+        [petId, req.user.id, message || null]
+      );
+      requestRow = ins.rows[0];
+    }
 
     res.status(201).json({
       message: 'Adoption request submitted.',
-      request: rows[0],
+      request: requestRow,
       paymentRequired: pet.fee_type === 'paid',
       adoptionFee: pet.fee_type === 'paid' ? pet.adoption_fee : 0,
     });
@@ -52,11 +86,10 @@ const requestAdoption = async (req, res) => {
       .catch(err => console.error('Email failed:', err.message));
 
   } catch (err) {
-    if (err.code === '23505') return res.status(409).json({ message: 'You already have a pending request for this pet.' });
+    if (err.code === '23505') return res.status(409).json({ message: 'You already have an active request for this pet.' });
     res.status(500).json({ message: 'Server error.', error: err.message });
   }
 };
-
 // GET /api/adoption-requests/mine
 const myRequests = async (req, res) => {
   try {
