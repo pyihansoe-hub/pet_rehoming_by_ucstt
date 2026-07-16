@@ -1,15 +1,15 @@
 /**
- * Qwen AI Service — uses DashScope OpenAI-Compatible API with streaming (SSE)
- * Free tier: https://dashscope.aliyun.com
- * Get API key: https://dashscope.console.aliyun.com/apiKey
+ * PawBot AI Service — now powered by OpenRouter (Free Tier)
+ * OpenRouter Console: https://openrouter.ai/keys
  *
  * Add to .env:
- *   QWEN_API_KEY=sk-xxxxxxxxxxxx
+ *   OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxx
  */
 
-// FIX 1: Added /chat/completions to the URL
-const QWEN_API_URL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions';
-const QWEN_MODEL   = 'qwen-turbo'; 
+const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+
+const AI_MODEL = 'google/gemma-4-26b-a4b-it:free'; 
 
 const SYSTEM_PROMPT = `You are PawBot, a warm and knowledgeable assistant for the Pet Rehoming & Monitoring System.
 You help users with:
@@ -21,32 +21,34 @@ You help users with:
 Keep responses friendly, concise, and helpful. Use bullet points for lists.
 Never give medical diagnoses — always recommend a vet for serious health concerns.
 If a question is unrelated to pets or the platform, still help politely as a general assistant.
- PLEASE WRITE ONLY BURMESE`;
+Reply directly and concisely with only the final answer.
+PLEASE WRITE ONLY IN THE LANGUAGE OF THE USER'S QUERY`;
 
 /**
  * Non-streaming — returns full response
  */
 const chat = async (messages) => {
-  const res = await fetch(QWEN_API_URL, {
+  const res = await fetch(API_URL, {
     method: 'POST',
     headers: {
       'Content-Type':  'application/json',
-      'Authorization': `Bearer ${process.env.QWEN_API_KEY}`,
+      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'HTTP-Referer':  'http://localhost:3000', 
+      'X-Title':       'PawBot',
     },
-    // FIX 2: Changed to standard OpenAI format
     body: JSON.stringify({
-      model: QWEN_MODEL,
+      model: AI_MODEL,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         ...messages,
       ],
-      max_tokens: 1024,
+      max_tokens: 8000,
     }),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || err.message || `Qwen API error: ${res.status}`);
+    throw new Error(err.error?.message || err.message || `OpenRouter API error: ${res.status}`);
   }
 
   const data = await res.json();
@@ -57,28 +59,30 @@ const chat = async (messages) => {
  * Streaming — sends tokens word by word via SSE
  */
 const chatStream = async (messages, res, onDone) => {
-  const response = await fetch(QWEN_API_URL, {
+  const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
       'Content-Type':  'application/json',
-      'Authorization': `Bearer ${process.env.QWEN_API_KEY}`,
+      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'HTTP-Referer':  'http://localhost:3000',
+      'X-Title':       'PawBot',
       'Accept':        'text/event-stream',
     },
-    // FIX 2: Standard OpenAI format + stream: true
     body: JSON.stringify({
-      model: QWEN_MODEL,
+      model: AI_MODEL,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         ...messages,
       ],
-      max_tokens: 1024,
-      stream: true, 
+      max_tokens: 8000,
+      stream: true,
     }),
   });
 
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    res.write(`data: ${JSON.stringify({ error: err.error?.message || err.message || 'Qwen API error' })}\n\n`);
+    const errText = await response.text(); 
+    console.error("OPENROUTER RAW ERROR:", errText); 
+    res.write(`data: ${JSON.stringify({ error: errText })}\n\n`);
     res.end();
     return;
   }
@@ -105,11 +109,9 @@ const chatStream = async (messages, res, onDone) => {
 
         try {
           const parsed  = JSON.parse(raw);
-          // FIX 3: OpenAI format uses parsed.choices, NOT parsed.output.choices
           const choices = parsed.choices;
           if (!choices || !choices.length) continue;
 
-          // FIX 4: OpenAI streaming uses "delta", not "message"
           const delta = choices[0]?.delta?.content || '';
           if (delta) {
             fullText += delta;
@@ -120,7 +122,6 @@ const chatStream = async (messages, res, onDone) => {
     }
   }
 
-  // signal end to frontend
   res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
   res.end();
 
