@@ -245,6 +245,8 @@ function renderNavbar() {
         '<a href="' + p('pets.html') + '">Pets</a>' +
         '<a href="' + p('blogs.html') + '">Blogs</a>' +
         '<a href="' + p('chat.html') + '">PawBot</a>' +
+        '<a href="' + p('messages.html') + '">Messages</a>' +
+        '<a href="' + p('my-pets.html') + '">My Pets</a>' +
         (isAdmin ? '<a href="' + p('admin.html') + '">Admin</a>' : '') +
       '</nav>' +
       '<div class="nav-actions">' +
@@ -272,6 +274,8 @@ function renderNavbar() {
     '<a href="' + p('pets.html') + '">Browse Pets</a>' +
     '<a href="' + p('blogs.html') + '">Blogs</a>' +
     '<a href="' + p('chat.html') + '">PawBot</a>' +
+    '<a href="' + p('messages.html') + '">Messages</a>' +
+    '<a href="' + p('my-pets.html') + '">My Pets</a>' +
     (isLoggedIn ? '<a href="' + p('profile.html') + '">Profile</a>' : '') +
     (isLoggedIn ? '<a href="' + p('adoption-requests.html') + '">Adoptions</a>' : '') +
     (isLoggedIn ? '<a href="' + p('messages.html') + '">Messages</a>' : '') +

@@ -314,6 +314,31 @@ async function sendMsg() {
   }
 }
 
+// ── HIDE THINKING TAGS (Streaming Safe) ──────────────────────
+function stripThinking(text) {
+  if (!text) return '';
+  
+  // 1. Remove complete <think>...</think> blocks
+  let result = text.replace(/<think>[\s\S]*?<\/think>/g, '');
+  
+  // 2. Remove unclosed <think> blocks (if the stream is still thinking)
+  result = result.replace(/<think>[\s\S]*$/g, '');
+  
+  // 3. Remove stray complete </think> tags (just in case)
+  result = result.replace(/<\/think>/g, '');
+  
+  // 4. Buffer partial tags at the end of the stream to avoid flickering
+  // Matches partial tags like: <t, <th, <thi, <thin, <think, <think>, </t, </th, etc.
+  const partialRegex = /<\/?(t(h(i(n(k(>)?)?)?)?)?)?$/;
+  const match = result.match(partialRegex);
+  if (match && match[0] !== '<') {
+    // Truncate the partial tag, it will be completed on the next stream chunk
+    result = result.substring(0, match.index);
+  }
+  
+  return result;
+}
+
 // ── Stream handler ───────────────────────────────────────────
 function streamResponse(url, bubbleEl, onDone) {
   var token = getToken();
@@ -337,18 +362,30 @@ function streamResponse(url, bubbleEl, onDone) {
       }
 
       if (data.token) {
-        if (!started) {
+        fullText += data.token;
+        
+        // Filter out thinking blocks before showing
+        var visibleText = stripThinking(fullText);
+        
+        if (visibleText.trim() && !started) {
           bubbleEl.innerHTML = '';
           started = true;
         }
-        fullText += data.token;
-        bubbleEl.innerHTML = escapeAndFormat(fullText);
-        scrollToBottom();
+        
+        if (started) {
+          bubbleEl.innerHTML = escapeAndFormat(visibleText);
+          scrollToBottom();
+        }
       }
 
       if (data.done) {
         es.close();
-        bubbleEl.innerHTML = escapeAndFormat(fullText);
+        var finalVisible = stripThinking(fullText);
+        if (finalVisible.trim()) {
+          bubbleEl.innerHTML = escapeAndFormat(finalVisible);
+        } else if (!started) {
+          bubbleEl.innerHTML = '<span style="color:var(--text-muted)">No response received.</span>';
+        }
         scrollToBottom();
         if (onDone) onDone();
       }
@@ -413,9 +450,10 @@ function addBotMessage(text) {
   var area = document.getElementById('pawbot-messages');
   var div  = document.createElement('div');
   div.className = 'chat-msg bot';
+  // Also strip thinking from saved history when loading old chats
   div.innerHTML =
     '<div class="chat-msg-avatar">PB</div>' +
-    '<div><div class="chat-bubble">' + escapeAndFormat(text) + '</div></div>';
+    '<div><div class="chat-bubble">' + escapeAndFormat(stripThinking(text)) + '</div></div>';
   area.appendChild(div);
   scrollToBottom();
 }
