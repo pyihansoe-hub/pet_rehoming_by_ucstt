@@ -1,5 +1,5 @@
 -- ============================================================
--- PET REHOMING & MONITORING SYSTEM — FULL SCHEMA
+-- PET REHOMING & MONITORING SYSTEM — FULL CLEAN SCHEMA
 -- ============================================================
 
 -- ── ENUMS ──────────────────────────────────────────────────────
@@ -9,15 +9,15 @@ CREATE TYPE adoption_fee_type  AS ENUM ('free', 'paid');
 CREATE TYPE blog_status        AS ENUM ('draft', 'published', 'archived');
 CREATE TYPE request_status     AS ENUM ('pending', 'approved', 'rejected', 'cancelled');
 CREATE TYPE report_status      AS ENUM ('pending', 'reviewed', 'dismissed');
+CREATE TYPE payment_method_type AS ENUM ('credit_card', 'ayapay', 'wavepay', 'kpay');
 
 -- ── TRIGGER FUNCTION ──────────────────────────────────────────
 CREATE OR REPLACE FUNCTION set_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
+RETURNS TRIGGER AS $$ BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+ $$ LANGUAGE plpgsql;
 
 -- ── USERS ──────────────────────────────────────────────────────
 CREATE TABLE users (
@@ -40,6 +40,28 @@ CREATE TABLE users (
 );
 CREATE TRIGGER users_updated_at BEFORE UPDATE ON users
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ── USER PAYMENT METHODS ──────────────────────────────────────
+CREATE TABLE user_payment_methods (
+  id                  SERIAL PRIMARY KEY,
+  user_id             INT                 NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  method_type         payment_method_type NOT NULL,
+  card_holder_name    VARCHAR(100),
+  card_last_four      VARCHAR(4),
+  card_brand          VARCHAR(20),
+  card_expiry_month   INT,
+  card_expiry_year    INT,
+  wallet_phone        VARCHAR(30),
+  wallet_account_name VARCHAR(100),
+  is_default          BOOLEAN NOT NULL DEFAULT FALSE,
+  is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+  metadata            JSONB,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TRIGGER user_payment_methods_updated_at BEFORE UPDATE ON user_payment_methods
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE INDEX idx_user_payment_methods_user ON user_payment_methods(user_id);
 
 -- ── SYSTEM CONFIG (admin seed tracking) ───────────────────────
 CREATE TABLE system_config (
@@ -81,7 +103,6 @@ CREATE TABLE pet_types (
   icon_url    TEXT,
   created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
-
 INSERT INTO pet_types (name, description) VALUES
   ('Dog', 'Domestic dogs of all breeds'),
   ('Cat', 'Domestic cats of all breeds'),
@@ -233,7 +254,6 @@ CREATE TABLE adoption_followups (
 );
 CREATE INDEX idx_followups_adoption ON adoption_followups(adoption_request_id);
 
--- link monitoring_checkins.followup_id now that table exists
 ALTER TABLE monitoring_checkins
   ADD CONSTRAINT fk_checkins_followup
   FOREIGN KEY (followup_id) REFERENCES adoption_followups(id) ON DELETE SET NULL;
@@ -322,7 +342,6 @@ CREATE TABLE tags (
   id    SERIAL PRIMARY KEY,
   name  VARCHAR(80) NOT NULL UNIQUE
 );
-
 CREATE TABLE blog_tags (
   blog_id INT NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
   tag_id  INT NOT NULL REFERENCES tags(id)  ON DELETE CASCADE,
@@ -408,7 +427,6 @@ CREATE TABLE conversations (
   adoption_request_id INT  NOT NULL UNIQUE REFERENCES adoption_requests(id) ON DELETE CASCADE,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
 CREATE TABLE messages (
   id              SERIAL PRIMARY KEY,
   conversation_id INT   NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
@@ -420,16 +438,13 @@ CREATE TABLE messages (
 CREATE INDEX idx_messages_conversation ON messages(conversation_id);
 CREATE INDEX idx_messages_sender       ON messages(sender_id);
 
---blog's comment and likes
--- Pet Likes
+-- ── PET LIKES & COMMENTS ──────────────────────────────────────
 CREATE TABLE pet_likes (
   user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   pet_id  INT NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (user_id, pet_id)
 );
-
--- Pet Comments
 CREATE TABLE pet_comments (
   id       SERIAL PRIMARY KEY,
   pet_id   INT NOT NULL REFERENCES pets(id) ON DELETE CASCADE,

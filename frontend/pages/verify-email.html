@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Email — Pet Rehoming</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar" id="navbar"></nav>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+    <div style="max-width:460px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:28px">
+        <h1 style="font-size:1.5rem">Verify your email</h1>
+        <p style="color:#6b7a8d;font-size:0.9rem" id="msg">
+          We sent a verification link to <strong id="email-display"></strong>.
+          Click the link in the email to activate your account.
+        </p>
+      </div>
+
+      <div class="card">
+        <div id="alert-area"></div>
+
+        <div class="form-group">
+          <label for="token">Or paste your verification code</label>
+          <input type="text" id="token" class="form-control" placeholder="Paste token from email">
+        </div>
+
+        <button class="btn btn-primary btn-full" id="verify-btn" onclick="doVerify()">Verify</button>
+        <hr class="divider">
+        <p style="text-align:center;font-size:0.86rem;color:#6b7a8d">
+          Didn't get the email?
+          <a href="#" onclick="resend(event)">Resend verification link</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script>
+var params = new URLSearchParams(window.location.search);
+var email  = params.get('email') || '';
+document.getElementById('email-display').textContent = email || 'your email';
+
+// Auto-verify if ?token=... present in URL (clicked from email)
+var tok = params.get('token');
+if (tok) {
+  document.getElementById('token').value = tok;
+  doVerify();
+}
+
+async function doVerify() {
+  var token = document.getElementById('token').value.trim();
+  var alertArea = document.getElementById('alert-area');
+  alertArea.innerHTML = '';
+  if (!token) {
+    alertArea.innerHTML = '<div class="alert alert-danger">Please enter the token.</div>';
+    return;
+  }
+  try {
+    var res = await apiFetch('/auth/verify-email', 'POST', { token: token });
+    if (res.ok) {
+      showToast('Email verified! You can log in now.', 'success');
+      setTimeout(function(){ window.location.href = '/pages/login.html'; }, 1000);
+    } else {
+      alertArea.innerHTML = '<div class="alert alert-danger">' +
+        (res.data.message || 'Verification failed.') + '</div>';
+    }
+  } catch(e) {
+    alertArea.innerHTML = '<div class="alert alert-danger">Something went wrong.</div>';
+  }
+}
+
+async function resend(e) {
+  e.preventDefault();
+  if (!email) { showToast('Email missing.', 'error'); return; }
+  try {
+    var res = await apiFetch('/auth/resend-verification', 'POST', { email: email });
+    if (res.ok) showToast('Verification email re-sent.', 'success');
+    else        showToast(res.data.message || 'Failed.', 'error');
+  } catch(_) { showToast('Failed.', 'error'); }
+}
+</script>
+</body>
+</html>
