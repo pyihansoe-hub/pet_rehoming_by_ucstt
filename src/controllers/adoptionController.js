@@ -6,12 +6,12 @@ const { scheduleFollowupReminders } = require('../services/reminderScheduler');
 const { logStatusChange } = require('../services/petStatusHistory');
 
 // POST /api/pets/:id/adopt  — submit adoption request
+// POST /api/pets/:id/adopt  — submit adoption request
 const requestAdoption = async (req, res) => {
   const petId = req.params.id;
   const { message } = req.body;
 
   try {
-    // FIX: Added 'name' to the SELECT query so it isn't undefined in the notification
     const { rows: pets } = await pool.query(
       'SELECT id, name, owner_id, status, fee_type, adoption_fee FROM pets WHERE id=$1', 
       [petId]
@@ -23,7 +23,7 @@ const requestAdoption = async (req, res) => {
     if (pet.status !== 'available') return res.status(400).json({ message: 'Pet is not available for adoption.' });
     if (pet.owner_id === req.user.id) return res.status(400).json({ message: 'You cannot adopt your own pet.' });
 
-    // 1. Check if user already has an ACTIVE request for this pet
+    // 1. Only check if they have an ACTIVE request right now
     const { rows: activeReqs } = await pool.query(
       `SELECT id FROM adoption_requests 
        WHERE pet_id=$1 AND requester_id=$2 AND status IN ('pending', 'approved')`,
@@ -31,37 +31,16 @@ const requestAdoption = async (req, res) => {
     );
 
     if (activeReqs.length > 0) {
-      return res.status(409).json({ message: 'You already have an active request for this pet.' });
+      return res.status(409).json({ message: 'You already have an active request for this pet. Please cancel it first to submit a new one.' });
     }
 
-    // 2. Check if user has a CANCELLED or REJECTED request we can reuse
-    const { rows: oldReqs } = await pool.query(
-      `SELECT id FROM adoption_requests 
-       WHERE pet_id=$1 AND requester_id=$2 AND status IN ('cancelled', 'rejected')
-       ORDER BY created_at DESC LIMIT 1`,
-      [petId, req.user.id]
+    // 2. Insert a BRAND NEW request every time (preserves history of old cancelled ones)
+    const ins = await pool.query(
+      `INSERT INTO adoption_requests (pet_id, requester_id, message)
+       VALUES ($1,$2,$3) RETURNING *`,
+      [petId, req.user.id, message || null]
     );
-
-    let requestRow;
-
-    if (oldReqs.length > 0) {
-      // Update the existing cancelled/rejected request back to pending
-      const upd = await pool.query(
-        `UPDATE adoption_requests 
-         SET status='pending', message=$2, reviewed_at=NULL, created_at=NOW(), updated_at=NOW()
-         WHERE id=$1 RETURNING *`,
-        [oldReqs[0].id, message || null]
-      );
-      requestRow = upd.rows[0];
-    } else {
-      // Insert a brand new request
-      const ins = await pool.query(
-        `INSERT INTO adoption_requests (pet_id, requester_id, message)
-         VALUES ($1,$2,$3) RETURNING *`,
-        [petId, req.user.id, message || null]
-      );
-      requestRow = ins.rows[0];
-    }
+    const requestRow = ins.rows[0];
 
     res.status(201).json({
       message: 'Adoption request submitted.',
@@ -70,23 +49,30 @@ const requestAdoption = async (req, res) => {
       adoptionFee: pet.fee_type === 'paid' ? pet.adoption_fee : 0,
     });
 
+    // ✅ UPDATED NOTIFICATION LOGIC
+    let notifBody = `${req.user.name} wants to adopt your pet.`;
+    if (pet.fee_type === 'paid') {
+      notifBody = `Fee of ${pet.adoption_fee} MMK has been added to your payment account by ${req.user.name}.`;
+    }
+
     notify(pet.owner_id, {
       type: 'new_adoption_request',
       title: `New adoption request for ${pet.name}`,
-      body: `${req.user.name} wants to adopt your pet.`,
+      body: notifBody,
       link: `/pages/adoption-requests.html?tab=received`,
     });
 
     const { send, emails } = require('../services/email');
     pool.query('SELECT name, email FROM users WHERE id=$1', [pet.owner_id])
       .then(({ rows }) => {
-        const tmpl = emails.adoptionRequestReceived(rows[0].name, pet.name, req.user.name);
-        return send(rows[0].email, tmpl.subject, tmpl.html);
+        if (rows.length > 0) {
+          const tmpl = emails.adoptionRequestReceived(rows[0].name, pet.name, req.user.name);
+          return send(rows[0].email, tmpl.subject, tmpl.html);
+        }
       })
       .catch(err => console.error('Email failed:', err.message));
 
   } catch (err) {
-    if (err.code === '23505') return res.status(409).json({ message: 'You already have an active request for this pet.' });
     res.status(500).json({ message: 'Server error.', error: err.message });
   }
 };
@@ -153,11 +139,9 @@ const reviewRequest = async (req, res) => {
       [status, req.params.id]
     );
 
-    // Mark pet as adopted for BOTH free and paid when approved
     if (status === 'approved') {
       await client.query(`UPDATE pets SET status='adopted' WHERE id=$1`, [req_.pet_id]);
 
-      // Auto-reject any other pending requests for this pet
       await client.query(
         `UPDATE adoption_requests SET status='rejected', reviewed_at=NOW()
          WHERE pet_id=$1 AND id<>$2 AND status='pending'`,
@@ -167,7 +151,6 @@ const reviewRequest = async (req, res) => {
 
     await client.query('COMMIT');
 
-    // Run post-approval tasks for both free and paid
     if (status === 'approved') {
       await createAgreement(req.params.id);
       await scheduleFollowupReminders(req.params.id);
@@ -219,7 +202,6 @@ const reviewRequest = async (req, res) => {
       console.error('Email failed (non-fatal):', emailErr.message);
     }
 
-    // Auto-create chat room when approved so they can message each other
     if (status === 'approved') {
       try {
         await pool.query(

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard — Pet Rehoming</title>
+  <title>အက်ဒမင် ဒက်ရှ်ဘုတ် — အိမ်မွေးတိရစ္ဆာန် ပြန်လည်နေရာချထားရေး</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
     .admin-wrap { display:grid; grid-template-columns:210px 1fr; gap:0; min-height:calc(100vh - 60px); }
@@ -49,65 +49,62 @@
 <div id="mobile-menu" class="mobile-menu"></div>
 <div id="toast-container" class="toast-container"></div>
 
-<!-- Suspend Modal -->
 <div class="modal-overlay" id="suspend-modal">
   <div class="modal">
     <div class="modal-header">
-      <h3>Suspend User</h3>
+      <h3>အသုံးပြုသူအား ဆိုင်းငံ့ရန်</h3>
       <button class="modal-close" onclick="closeModal('suspend-modal')">&#10005;</button>
     </div>
     <div id="suspend-alert"></div>
-    <p style="color:#6b7a8d;font-size:0.88rem;margin-bottom:14px">The user will be immediately blocked from logging in.</p>
+    <p style="color:#6b7a8d;font-size:0.88rem;margin-bottom:14px">အသုံးပြုသူသည် ချက်ချင်း အကောင့်ဝင်ခွင့် ပိတ်ပင်ခံရမည်။</p>
     <div class="form-group">
-      <label>Reason (shown to user)</label>
-      <textarea id="suspend-reason" class="form-control" rows="3" placeholder="Violation of terms, spam, etc..."></textarea>
+      <label>အကြောင်းပြချက် (အသုံးပြုသူအား ပြသမည်)</label>
+      <textarea id="suspend-reason" class="form-control" rows="3" placeholder="စည်းမျဉ်းချိုးဖောက်မှု၊ စပမ်းမက်ဆေ့ခ်ျ စသည်ဖြင့်..."></textarea>
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn btn-secondary" onclick="closeModal('suspend-modal')">Cancel</button>
-      <button class="btn btn-danger" id="suspend-confirm-btn" onclick="confirmSuspend()">Suspend</button>
+      <button class="btn btn-secondary" onclick="closeModal('suspend-modal')">မလုပ်တော့ပါ</button>
+      <button class="btn btn-danger" id="suspend-confirm-btn" onclick="confirmSuspend()">ဆိုင်းငံ့မည်</button>
     </div>
   </div>
 </div>
 
-<!-- Close Adoption Modal -->
 <div class="modal-overlay" id="close-adoption-modal">
   <div class="modal">
     <div class="modal-header">
-      <h3>Force Close Adoption</h3>
+      <h3>မွေးစားခြင်းအား အတင်းအကျပ် ပိတ်သိမ်းရန်</h3>
       <button class="modal-close" onclick="closeModal('close-adoption-modal')">&#10005;</button>
     </div>
     <div class="form-group">
-      <label>Reason</label>
-      <textarea id="close-adoption-reason" class="form-control" rows="3" placeholder="Why is this being force closed?"></textarea>
+      <label>အကြောင်းပြချက်</label>
+      <textarea id="close-adoption-reason" class="form-control" rows="3" placeholder="အဘယ်ကြောင့် အတင်းအကျပ် ပိတ်သိမ်းနေသနည်း။"></textarea>
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn btn-secondary" onclick="closeModal('close-adoption-modal')">Cancel</button>
-      <button class="btn btn-danger" onclick="confirmCloseAdoption()">Force Close</button>
+      <button class="btn btn-secondary" onclick="closeModal('close-adoption-modal')">မလုပ်တော့ပါ</button>
+      <button class="btn btn-danger" onclick="confirmCloseAdoption()">အတင်းအကျပ် ပိတ်သိမ်းမည်</button>
     </div>
   </div>
 </div>
 
-<!-- Resolve Report Modal -->
 <div class="modal-overlay" id="resolve-report-modal">
   <div class="modal">
     <div class="modal-header">
-      <h3>Resolve Report</h3>
+      <h3>တိုင်ကြားချက်အား ဖြေရှင်းရန်</h3>
       <button class="modal-close" onclick="closeModal('resolve-report-modal')">&#10005;</button>
     </div>
     <div id="resolve-report-info" style="background:#f9f9f7;padding:12px;border-radius:8px;margin-bottom:16px;font-size:0.86rem"></div>
     <div class="form-group">
-      <label>Action</label>
+      <label>လုပ်ဆောင်ချက်</label>
       <select id="resolve-action" class="form-control">
-        <option value="">No action -- just mark reviewed</option>
-        <option value="remove_pet">Remove pet listing</option>
-        <option value="remove_blog">Archive blog post</option>
-        <option value="suspend_reporter">Suspend the reporter</option>
+        <option value="">လုပ်ဆောင်ချက်မရှိ -- ပြန်လည်သုံးသပ်ပြီးဟုသာ မှတ်သားမည်</option>
+        <option value="remove_pet">အိမ်မွေးတိရစ္ဆာန် စာရင်းကို ဖယ်ရှားမည်</option>
+        <option value="remove_blog">ဘလော့ခ်ပို့စ်ကို သိမ်းဆည်းမည်</option>
+        <option value="suspend_reporter">တိုင်ကြားသူအား ဆိုင်းငံ့မည်</option>
       </select>
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn btn-secondary" onclick="closeModal('resolve-report-modal')">Cancel</button>
-      <button class="btn btn-danger" onclick="confirmResolveReport('reviewed')">Resolve</button>
-      <button class="btn btn-outline" onclick="confirmResolveReport('dismissed')">Dismiss</button>
+      <button class="btn btn-secondary" onclick="closeModal('resolve-report-modal')">မလုပ်တော့ပါ</button>
+      <button class="btn btn-danger" onclick="confirmResolveReport('reviewed')">ဖြေရှင်းမည်</button>
+      <button class="btn btn-outline" onclick="confirmResolveReport('dismissed')">ပယ်ချမည်</button>
     </div>
   </div>
 </div>
@@ -115,92 +112,88 @@
 <div style="margin-top:60px">
   <div class="admin-wrap">
 
-    <!-- Sidebar -->
     <div class="admin-sidebar">
       <div class="admin-sidebar-logo">
-        <div style="color:#fff;font-weight:bold;font-size:1rem">Pet Rehoming</div>
-        <div>Admin Panel</div>
+        <div style="color:#fff;font-weight:bold;font-size:1rem">အိမ်မွေးတိရစ္ဆာန် ပြန်လည်နေရာချထားရေး</div>
+        <div>အက်ဒမ�င် ပန်နယ်</div>
       </div>
 
-      <div class="admin-nav-section">Overview</div>
+      <div class="admin-nav-section">ခြုံငုံသုံးသပ်ချက်</div>
       <button class="admin-nav-item active" onclick="showPanel('dashboard',this)">
-        <span class="icon"><!-- chart icon --></span> Dashboard
+        <span class="icon"><!-- chart icon --></span> ဒက်ရှ်ဘုတ်
       </button>
 
-      <div class="admin-nav-section">Manage</div>
+      <div class="admin-nav-section">စီမံခန့်ခွဲရန်</div>
       <button class="admin-nav-item" onclick="showPanel('users',this)">
-        <span class="icon"><!-- users icon --></span> Users
+        <span class="icon"><!-- users icon --></span> အသုံးပြုသူများ
       </button>
       <button class="admin-nav-item" onclick="showPanel('pets',this)">
-        <span class="icon"><!-- pet icon --></span> Pets
+        <span class="icon"><!-- pet icon --></span> အိမ်မွေးတိရစ္ဆာန်များ
       </button>
       <button class="admin-nav-item" onclick="showPanel('blogs',this)">
-        <span class="icon"><!-- blog icon --></span> Blogs
+        <span class="icon"><!-- blog icon --></span> ဘလော့ခ်များ
       </button>
       <button class="admin-nav-item" onclick="showPanel('adoptions',this)">
-        <span class="icon"><!-- handshake icon --></span> Adoptions
+        <span class="icon"><!-- handshake icon --></span> မွေးစားခြင်းများ
       </button>
 
-      <div class="admin-nav-section">Monitor</div>
+      <div class="admin-nav-section">စောင့်ကြည့်ရန်</div>
       <button class="admin-nav-item" onclick="showPanel('followups',this)">
-        <span class="icon"><!-- followup icon --></span> Follow-ups
+        <span class="icon"><!-- followup icon --></span> နောက်ဆက်တွဲများ
       </button>
       <button class="admin-nav-item" onclick="showPanel('healthlogs',this)">
-        <span class="icon"><!-- health icon --></span> Health Logs
+        <span class="icon"><!-- health icon --></span> ကျန်းမာရေး မှတ်တမ်းများ
       </button>
       <button class="admin-nav-item" onclick="showPanel('reports',this)" id="reports-nav">
-        <span class="icon"><!-- report icon --></span> Reports
+        <span class="icon"><!-- report icon --></span> တိုင်ကြားချက်များ
         <span id="reports-badge" style="margin-left:auto;background:#e76f51;color:#fff;border-radius:999px;padding:1px 7px;font-size:0.7rem;display:none"></span>
       </button>
 
-      <div class="admin-nav-section">Logs</div>
+      <div class="admin-nav-section">မှတ်တမ်းများ</div>
       <button class="admin-nav-item" onclick="showPanel('auditlog',this)">
-        <span class="icon"><!-- log icon --></span> Audit Log
+        <span class="icon"><!-- log icon --></span> စစ်ဆေးမှတ်တမ်း
       </button>
 
       <div style="padding:20px;margin-top:auto;border-top:1px solid rgba(255,255,255,0.08)">
-        <a href="/index.html" style="font-size:0.82rem;color:rgba(255,255,255,0.4)">&larr; Back to Site</a>
+        <a href="/index.html" style="font-size:0.82rem;color:rgba(255,255,255,0.4)">&larr; ဆိုက်သို့ ပြန်သွားရန်</a>
       </div>
     </div>
 
-    <!-- Content -->
     <div class="admin-content" id="admin-content">
 
-      <!-- Dashboard -->
       <div class="admin-panel active" id="panel-dashboard">
-        <h2 style="margin-bottom:20px">Dashboard</h2>
+        <h2 style="margin-bottom:20px">ဒက်ရှ်ဘုတ်</h2>
         <div id="stats-grid" class="stat-grid">
           <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
         </div>
         <div class="grid-2" style="gap:20px">
           <div>
-            <h3 style="margin-bottom:14px">Pet Status Breakdown</h3>
+            <h3 style="margin-bottom:14px">အိမ်မွေးတိရစ္ဆာန် အခြေအနေ ခွဲခြမ်းစိတ်ဖြာချက်</h3>
             <div id="pet-stats-breakdown" class="card" style="padding:16px"></div>
           </div>
           <div>
-            <h3 style="margin-bottom:14px">Adoption Status</h3>
+            <h3 style="margin-bottom:14px">မွေးစားခြင်း အခြေအနေ</h3>
             <div id="adoption-stats-breakdown" class="card" style="padding:16px"></div>
           </div>
         </div>
       </div>
 
-      <!-- Users -->
       <div class="admin-panel" id="panel-users">
         <div class="page-header-row">
-          <h2>Users</h2>
+          <h2>အသုံးပြုသူများ</h2>
           <span id="users-total" style="font-size:0.86rem;color:#6b7a8d"></span>
         </div>
         <div class="search-filter-row">
-          <input type="text" id="user-search" class="form-control" placeholder="Search name or email..." oninput="debounceUsers()">
+          <input type="text" id="user-search" class="form-control" placeholder="အမည် သို့မဟုတ် အီးမေးလ်ဖြင့် ရှာဖွေရန်..." oninput="debounceUsers()">
           <select id="user-role-filter" class="form-control" style="width:130px" onchange="loadUsers()">
-            <option value="">All Roles</option>
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
+            <option value="">ရာထူးအားလုံး</option>
+            <option value="user">အသုံးပြုသူ</option>
+            <option value="admin">အက်ဒမင်</option>
           </select>
           <select id="user-suspended-filter" class="form-control" style="width:150px" onchange="loadUsers()">
-            <option value="">All Status</option>
-            <option value="false">Active</option>
-            <option value="true">Suspended</option>
+            <option value="">အခြေအနေအားလုံး</option>
+            <option value="false">အသုံးပြုနိုင်သည်</option>
+            <option value="true">ဆိုင်းငံ့ထားသည်</option>
           </select>
         </div>
         <div id="users-table-wrap">
@@ -209,20 +202,19 @@
         <div id="users-pagination"></div>
       </div>
 
-      <!-- Pets -->
       <div class="admin-panel" id="panel-pets">
         <div class="page-header-row">
-          <h2>Pet Listings</h2>
+          <h2>အိမ်မွေးတိရစ္ဆာန် စာရင်းများ</h2>
           <span id="pets-total" style="font-size:0.86rem;color:#6b7a8d"></span>
         </div>
         <div class="search-filter-row">
-          <input type="text" id="pet-search" class="form-control" placeholder="Search pets or owner..." oninput="debouncePets()">
+          <input type="text" id="pet-search" class="form-control" placeholder="အိမ်မွေးတိရစ္ဆာန် သို့မဟုတ် ပိုင်ရှင်ဖြင့် ရှာဖွေရန်..." oninput="debouncePets()">
           <select id="pet-status-filter" class="form-control" style="width:160px" onchange="loadAdminPets()">
-            <option value="">All Status</option>
-            <option value="available">Available</option>
-            <option value="pending">Pending</option>
-            <option value="adopted">Adopted</option>
-            <option value="withdrawn">Withdrawn</option>
+            <option value="">အခြေအနေအားလုံး</option>
+            <option value="available">ရရှိနိုင်သည်</option>
+            <option value="pending">ဆိုင်းငံ့ဆဲ</option>
+            <option value="adopted">မွေးစားပြီး</option>
+            <option value="withdrawn">ပြန်လည်ရုပ်သိမ်းထားသည်</option>
           </select>
         </div>
         <div id="pets-table-wrap">
@@ -231,19 +223,18 @@
         <div id="pets-pagination"></div>
       </div>
 
-      <!-- Blogs -->
       <div class="admin-panel" id="panel-blogs">
         <div class="page-header-row">
-          <h2>Blog Posts</h2>
+          <h2>ဘလော့ခ် ပို့စ်များ</h2>
           <span id="blogs-total" style="font-size:0.86rem;color:#6b7a8d"></span>
         </div>
         <div class="search-filter-row">
-          <input type="text" id="blog-search" class="form-control" placeholder="Search title..." oninput="debounceBlogs()">
+          <input type="text" id="blog-search" class="form-control" placeholder="ခေါင်းစဉ်ဖြင့် ရှာဖွေရန်..." oninput="debounceBlogs()">
           <select id="blog-status-filter" class="form-control" style="width:160px" onchange="loadAdminBlogs()">
-            <option value="">All Status</option>
-            <option value="published">Published</option>
-            <option value="draft">Draft</option>
-            <option value="archived">Archived</option>
+            <option value="">အခြေအနေအားလုံး</option>
+            <option value="published">ထုတ်ဝေပြီး</option>
+            <option value="draft">မူကြမ်း</option>
+            <option value="archived">သိမ်းဆည်းထားသည်</option>
           </select>
         </div>
         <div id="blogs-table-wrap">
@@ -252,19 +243,18 @@
         <div id="blogs-pagination"></div>
       </div>
 
-      <!-- Adoptions -->
       <div class="admin-panel" id="panel-adoptions">
         <div class="page-header-row">
-          <h2>Adoption Requests</h2>
+          <h2>မွေးစားရန် တောင်းဆိုချက်များ</h2>
           <span id="adoptions-total" style="font-size:0.86rem;color:#6b7a8d"></span>
         </div>
         <div class="search-filter-row">
           <select id="adoption-status-filter" class="form-control" style="width:160px" onchange="loadAdminAdoptions()">
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="">အခြေအနေအားလုံး</option>
+            <option value="pending">ဆိုင်းငံ့ဆဲ</option>
+            <option value="approved">အတည်ပြုပြီး</option>
+            <option value="rejected">ငြင်းပယ်ထားသည်</option>
+            <option value="cancelled">ဖျက်သိမ်းထားသည်</option>
           </select>
         </div>
         <div id="adoptions-table-wrap">
@@ -273,18 +263,17 @@
         <div id="adoptions-pagination"></div>
       </div>
 
-      <!-- Follow-ups -->
       <div class="admin-panel" id="panel-followups">
         <div class="page-header-row">
-          <h2>Post-Adoption Follow-ups</h2>
+          <h2>မွေးစားပြီးနောက် နောက်ဆက်တွဲများ</h2>
           <span id="followups-total" style="font-size:0.86rem;color:#6b7a8d"></span>
         </div>
         <div class="search-filter-row">
           <select id="followup-health-filter" class="form-control" style="width:160px" onchange="loadFollowups()">
-            <option value="">All Health Status</option>
-            <option value="good">Good</option>
-            <option value="fair">Fair</option>
-            <option value="poor">Poor</option>
+            <option value="">ကျန်းမာရေး အခြေအနေအားလုံး</option>
+            <option value="good">ကောင်းမွန်သည်</option>
+            <option value="fair">သင့်တင့်သည်</option>
+            <option value="poor">ညံ့ဖျင်းသည်</option>
           </select>
         </div>
         <div id="followups-table-wrap">
@@ -293,20 +282,19 @@
         <div id="followups-pagination"></div>
       </div>
 
-      <!-- Health Logs -->
       <div class="admin-panel" id="panel-healthlogs">
         <div class="page-header-row">
-          <h2>Pet Health Logs</h2>
+          <h2>အိမ်မွေးတိရစ္ဆာန် ကျန်းမာရေး မှတ်တမ်းများ</h2>
           <span id="healthlogs-total" style="font-size:0.86rem;color:#6b7a8d"></span>
         </div>
         <div class="search-filter-row">
           <select id="healthlog-type-filter" class="form-control" style="width:180px" onchange="loadHealthLogs()">
-            <option value="">All Types</option>
-            <option value="vaccination">Vaccination</option>
-            <option value="vet_visit">Vet Visit</option>
-            <option value="deworming">Deworming</option>
-            <option value="weight">Weight</option>
-            <option value="other">Other</option>
+            <option value="">အမျိုးအစားအားလုံး</option>
+            <option value="vaccination">ကာကွယ်ဆေးထိုးခြင်း</option>
+            <option value="vet_visit">တိရစ္ဆာန်ဆေးကုဆရာဝန်ထံ သွားရောက်ခြင်း</option>
+            <option value="deworming">သန်ချခြင်း</option>
+            <option value="weight">ကိုယ်အလေးချိန်</option>
+            <option value="other">အခြား</option>
           </select>
         </div>
         <div id="healthlogs-table-wrap">
@@ -315,17 +303,16 @@
         <div id="healthlogs-pagination"></div>
       </div>
 
-      <!-- Reports -->
       <div class="admin-panel" id="panel-reports">
         <div class="page-header-row">
-          <h2>Reports</h2>
+          <h2>တိုင်ကြားချက်များ</h2>
           <span id="reports-total" style="font-size:0.86rem;color:#6b7a8d"></span>
         </div>
         <div class="search-filter-row">
           <select id="report-status-filter" class="form-control" style="width:160px" onchange="loadReports()">
-            <option value="pending">Pending</option>
-            <option value="reviewed">Reviewed</option>
-            <option value="dismissed">Dismissed</option>
+            <option value="pending">ဆိုင်းငံ့ဆဲ</option>
+            <option value="reviewed">ပြန်လည်သုံးသပ်ပြီး</option>
+            <option value="dismissed">ပယ်ချပြီး</option>
           </select>
         </div>
         <div id="reports-table-wrap">
@@ -334,20 +321,19 @@
         <div id="reports-pagination"></div>
       </div>
 
-      <!-- Audit Log -->
       <div class="admin-panel" id="panel-auditlog">
         <div class="page-header-row">
-          <h2>Audit Log</h2>
+          <h2>စစ်ဆေးမှတ်တမ်း</h2>
           <span id="auditlog-total" style="font-size:0.86rem;color:#6b7a8d"></span>
         </div>
         <div class="search-filter-row">
           <select id="audit-target-filter" class="form-control" style="width:160px" onchange="loadAuditLog()">
-            <option value="">All Types</option>
-            <option value="user">User actions</option>
-            <option value="pet">Pet actions</option>
-            <option value="blog">Blog actions</option>
-            <option value="adoption">Adoption actions</option>
-            <option value="report">Report actions</option>
+            <option value="">အမျိုးအစားအားလုံး</option>
+            <option value="user">အသုံးပြုသူ လုပ်ဆောင်ချက်များ</option>
+            <option value="pet">အိမ်မွေးတိရစ္ဆာန် လုပ်ဆောင်ချက်များ</option>
+            <option value="blog">ဘလော့ခ် လုပ်ဆောင်ချက်များ</option>
+            <option value="adoption">မွေးစားခြင်း လုပ်ဆောင်ချက်များ</option>
+            <option value="report">တိုင်ကြားချက် လုပ်ဆောင်ချက်များ</option>
           </select>
         </div>
         <div class="card" style="padding:0;overflow:hidden">
@@ -382,7 +368,6 @@ document.addEventListener('DOMContentLoaded', async function() {
   loadDashboard();
 });
 
-// Navigation
 function showPanel(name, navEl) {
   document.querySelectorAll('.admin-panel').forEach(function(p) { p.classList.remove('active'); });
   document.querySelectorAll('.admin-nav-item').forEach(function(n) { n.classList.remove('active'); });
@@ -399,7 +384,6 @@ function showPanel(name, navEl) {
   if (name === 'auditlog'   && document.getElementById('auditlog-list').querySelector('.spinner'))         loadAuditLog();
 }
 
-// Dashboard
 async function loadDashboard() {
   try {
     var res = await Admin.stats();
@@ -407,14 +391,14 @@ async function loadDashboard() {
     var s = res.data;
 
     document.getElementById('stats-grid').innerHTML =
-      statCard('', s.users.total, 'Total Users',  s.users.newThisWeek + ' new this week \u00b7 ' + s.users.suspended + ' suspended') +
-      statCard('', Object.values(s.pets).reduce(function(a,b){ return a+b; }, 0), 'Total Pets', (s.pets.available||0) + ' available') +
-      statCard('', Object.values(s.adoptions).reduce(function(a,b){ return a+b; }, 0), 'Total Adoptions', (s.adoptions.approved||0) + ' approved') +
-      statCard('', (s.payments.completed ? fmtMoney(s.payments.completed.total) : '0 MMK'), 'Revenue', (s.payments.completed ? s.payments.completed.count : 0) + ' completed payments') +
-      statCard('', (s.blogs.published||0), 'Published Blogs', (s.blogs.draft||0) + ' drafts') +
-      statCard('', s.followups||0, 'Follow-ups Submitted', 'Post-adoption monitoring') +
-      statCard('', s.reports.pending||0, 'Pending Reports', 'Require review', s.reports.pending > 0 ? '#fdf0ec' : null) +
-      statCard('', s.users.admins||0, 'Admins', 'Platform administrators');
+      statCard('', s.users.total, 'စုစုပေါင်း အသုံးပြုသူများ',  s.users.newThisWeek + ' ယခုအပတ် အသစ်များ \u00b7 ' + s.users.suspended + ' ဆိုင်းငံ့ထားသည်') +
+      statCard('', Object.values(s.pets).reduce(function(a,b){ return a+b; }, 0), 'စုစုပေါင်း အိမ်မွေးတိရစ္ဆာန်များ', (s.pets.available||0) + ' ရရှိနိုင်သည်') +
+      statCard('', Object.values(s.adoptions).reduce(function(a,b){ return a+b; }, 0), 'စုစုပေါင်း မွေးစားခြင်းများ', (s.adoptions.approved||0) + ' အတည်ပြုပြီး') +
+      statCard('', (s.payments.completed ? fmtMoney(s.payments.completed.total) : '0 MMK'), 'ဝင်ငွေ', (s.payments.completed ? s.payments.completed.count : 0) + ' ငွေပေးချေမှု ပြီးစီးသည်') +
+      statCard('', (s.blogs.published||0), 'ထုတ်ဝေထားသော ဘလော့ခ်များ', (s.blogs.draft||0) + ' မူကြမ်းများ') +
+      statCard('', s.followups||0, 'နောက်ဆက်တွဲများ တင်သွင်းပြီး', 'မွေးစားပြီးနောက် စောင့်ကြည့်ခြင်း') +
+      statCard('', s.reports.pending||0, 'ဆိုင်းငံ့ဆဲ တိုင်ကြားချက်များ', 'ပြန်လည်သုံးသပ်ရန် လိုအပ်သည်', s.reports.pending > 0 ? '#fdf0ec' : null) +
+      statCard('', s.users.admins||0, 'အက်ဒမင်များ', 'ပလက်ဖောင်း စီမံခန့်ခွဲသူများ');
 
     if (s.reports.pending > 0) {
       var badge = document.getElementById('reports-badge');
@@ -439,7 +423,7 @@ function statCard(icon, value, label, sub, bg) {
 function renderBreakdown(elId, data, colors) {
   var el = document.getElementById(elId);
   var total = Object.values(data).reduce(function(a,b){ return a+b; }, 0);
-  if (!total) { el.innerHTML = '<p style="color:#9baab8;font-size:0.86rem">No data yet.</p>'; return; }
+  if (!total) { el.innerHTML = '<p style="color:#9baab8;font-size:0.86rem">ဒေတာ မရှိသေးပါ။</p>'; return; }
   el.innerHTML = Object.entries(data).map(function(entry) {
     var key = entry[0], val = entry[1];
     var pct = Math.round((val / total) * 100);
@@ -456,7 +440,6 @@ function renderBreakdown(elId, data, colors) {
   }).join('');
 }
 
-// Users
 function debounceUsers() { clearTimeout(userTimer); userTimer = setTimeout(function(){ userPage=1; loadUsers(); }, 400); }
 
 async function loadUsers() {
@@ -472,38 +455,38 @@ async function loadUsers() {
 
   try {
     var res = await Admin.users(q);
-    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
+    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">မအောင်မြင်ပါ။</div>'; return; }
     var users = res.data.users || [];
     var total = res.data.total || 0;
-    document.getElementById('users-total').textContent = total + ' users';
+    document.getElementById('users-total').textContent = total + ' အသုံးပြုသူများ';
 
-    if (!users.length) { el.innerHTML = '<div class="empty-state"><h3>No users found</h3></div>'; return; }
+    if (!users.length) { el.innerHTML = '<div class="empty-state"><h3>အသုံးပြုသူ မတွေ့ရှိပါ</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
-      '<th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th>' +
+      '<th>အမည်</th><th>အီးမေးလ်</th><th>ရာထူး</th><th>အခြေအနေ</th><th>ပါဝင်ချိန်</th><th>လုပ်ဆောင်ချက်များ</th>' +
     '</tr></thead><tbody>' +
     users.map(function(u) {
       return '<tr>' +
         '<td style="font-weight:bold">' + (u.name||'\u2014') + '</td>' +
         '<td style="color:#6b7a8d">' + u.email + '</td>' +
-        '<td>' + (u.role === 'admin' ? '<span class="badge-yellow">Admin</span>' : '<span class="badge-gray">User</span>') + '</td>' +
-        '<td>' + (u.is_suspended ? '<span class="badge-red">Suspended</span>' : '<span class="badge-green">Active</span>') + '</td>' +
+        '<td>' + (u.role === 'admin' ? '<span class="badge-yellow">အက်ဒမင်</span>' : '<span class="badge-gray">အသုံးပြုသူ</span>') + '</td>' +
+        '<td>' + (u.is_suspended ? '<span class="badge-red">ဆိုင်းငံ့ထားသည်</span>' : '<span class="badge-green">အသုံးပြုနိုင်သည်</span>') + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + fmtDate(u.created_at) + '</td>' +
         '<td><div class="actions">' +
           (u.is_suspended
-            ? '<button onclick="unsuspendUser(' + u.id + ')" class="btn btn-outline btn-sm">Unsuspend</button>'
-            : '<button onclick="openSuspendModal(' + u.id + ')" class="btn btn-secondary btn-sm">Suspend</button>') +
+            ? '<button onclick="unsuspendUser(' + u.id + ')" class="btn btn-outline btn-sm">ဆိုင်းငံ့ခြင်း ပြန်ဖျက်ရန်</button>'
+            : '<button onclick="openSuspendModal(' + u.id + ')" class="btn btn-secondary btn-sm">ဆိုင်းငံ့ရန်</button>') +
           (u.role !== 'admin'
-            ? '<button onclick="makeAdmin(' + u.id + ')" class="btn btn-outline btn-sm">Make Admin</button>'
-            : '<button onclick="removeAdmin(' + u.id + ')" class="btn btn-outline btn-sm">Remove Admin</button>') +
-          '<button onclick="deleteUser(' + u.id + ',\'' + u.name + '\')" class="btn btn-danger btn-sm">Delete</button>' +
+            ? '<button onclick="makeAdmin(' + u.id + ')" class="btn btn-outline btn-sm">အက်ဒမင် ခန့်အပ်ရန်</button>'
+            : '<button onclick="removeAdmin(' + u.id + ')" class="btn btn-outline btn-sm">အက်ဒမင် ဖယ်ရှားရန်</button>') +
+          '<button onclick="deleteUser(' + u.id + ',\'' + u.name + '\')" class="btn btn-danger btn-sm">ဖျက်ရန်</button>' +
         '</div></td>' +
       '</tr>';
     }).join('') +
     '</tbody></table>';
 
     renderPagination('users-pagination', total, LIMIT, userPage, function(p){ userPage=p; loadUsers(); });
-  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Something went wrong.</div>'; }
+  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
 }
 
 function openSuspendModal(id) {
@@ -518,53 +501,52 @@ async function confirmSuspend() {
   var reason = document.getElementById('suspend-reason').value.trim();
   var btn = document.getElementById('suspend-confirm-btn');
   btn.disabled = true;
-  btn.textContent = 'Suspending...';
+  btn.textContent = 'ဆိုင်းငံ့နေသည်...';
   try {
     var res = await Admin.suspend(suspendUserId, { reason: reason || undefined });
-    if (res && res.ok) { closeModal('suspend-modal'); showToast('User suspended.', 'success'); loadUsers(); }
-    else document.getElementById('suspend-alert').innerHTML = '<div class="alert alert-danger">' + (res.data.message||'Failed.') + '</div>';
-  } catch(e) { document.getElementById('suspend-alert').innerHTML = '<div class="alert alert-danger">Error.</div>'; }
+    if (res && res.ok) { closeModal('suspend-modal'); showToast('အသုံးပြုသူအား ဆိုင်းငံ့လိုက်ပါပြီ။', 'success'); loadUsers(); }
+    else document.getElementById('suspend-alert').innerHTML = '<div class="alert alert-danger">' + (res.data.message||'မအောင်မြင်ပါ။') + '</div>';
+  } catch(e) { document.getElementById('suspend-alert').innerHTML = '<div class="alert alert-danger">အမှား။</div>'; }
   btn.disabled = false;
-  btn.textContent = 'Suspend';
+  btn.textContent = 'ဆိုင်းငံ့မည်';
 }
 
 async function unsuspendUser(id) {
-  if (!confirm('Unsuspend this user?')) return;
+  if (!confirm('ဤအသုံးပြုသူအား ဆိုင်းငံ့ခြင်း ပြန်ဖျက်မှာ သေချာပါသလား။')) return;
   try {
     var res = await Admin.unsuspend(id);
-    if (res && res.ok) { showToast('User unsuspended.', 'success'); loadUsers(); }
-    else showToast(res.data.message||'Failed.', 'error');
-  } catch(e) { showToast('Error.', 'error'); }
+    if (res && res.ok) { showToast('အသုံးပြုသူအား ဆိုင်းငံ့ခြင်း ပြန်ဖျက်လိုက်ပါပြီ။', 'success'); loadUsers(); }
+    else showToast(res.data.message||'မအောင်မြင်ပါ။', 'error');
+  } catch(e) { showToast('အမှား။', 'error'); }
 }
 
 async function makeAdmin(id) {
-  if (!confirm('Grant admin role to this user?')) return;
+  if (!confirm('ဤအသုံးပြုသူအား အက်ဒမင် ရာထူးပေးမှာ သေချာပါသလား။')) return;
   try {
     var res = await Admin.changeRole(id, { role: 'admin' });
-    if (res && res.ok) { showToast('Role updated.', 'success'); loadUsers(); }
-    else showToast(res.data.message||'Failed.', 'error');
-  } catch(e) { showToast('Error.', 'error'); }
+    if (res && res.ok) { showToast('ရာထူး ပြောင်းလဲပြီးပါပြီ။', 'success'); loadUsers(); }
+    else showToast(res.data.message||'မအောင်မြင်ပါ။', 'error');
+  } catch(e) { showToast('အမှား။', 'error'); }
 }
 
 async function removeAdmin(id) {
-  if (!confirm('Remove admin role from this user?')) return;
+  if (!confirm('ဤအသုံးပြုသူထံမှ အက်ဒမင် ရာထူး ဖယ်ရှားမှာ သေချာပါသလား။')) return;
   try {
     var res = await Admin.changeRole(id, { role: 'user' });
-    if (res && res.ok) { showToast('Role updated.', 'success'); loadUsers(); }
-    else showToast(res.data.message||'Failed.', 'error');
-  } catch(e) { showToast('Error.', 'error'); }
+    if (res && res.ok) { showToast('ရာထူး ပြောင်းလဲပြီးပါပြီ။', 'success'); loadUsers(); }
+    else showToast(res.data.message||'မအောင်မြင်ပါ။', 'error');
+  } catch(e) { showToast('အမှား။', 'error'); }
 }
 
 async function deleteUser(id, name) {
-  if (!confirm('Permanently delete user "' + name + '"? This cannot be undone.')) return;
+  if (!confirm('အသုံးပြုသူ "' + name + '" အား အပြီးတိုင် ဖျက်မှာ သေချာပါသလား။ ဤလုပ်ဆောင်ချက်ကို ပြန်၍မရနိုင်ပါ။')) return;
   try {
     var res = await Admin.deleteUser(id);
-    if (res && res.ok) { showToast('User deleted.', 'success'); loadUsers(); }
-    else showToast(res.data.message||'Failed.', 'error');
-  } catch(e) { showToast('Error.', 'error'); }
+    if (res && res.ok) { showToast('အသုံးပြုသူအား ဖျက်လိုက်ပါပြီ။', 'success'); loadUsers(); }
+    else showToast(res.data.message||'မအောင်မြင်ပါ။', 'error');
+  } catch(e) { showToast('အမှား။', 'error'); }
 }
 
-// Pets
 function debouncePets() { clearTimeout(petTimer); petTimer = setTimeout(function(){ petsPage=1; loadAdminPets(); }, 400); }
 
 async function loadAdminPets() {
@@ -578,15 +560,15 @@ async function loadAdminPets() {
 
   try {
     var res = await Admin.pets(q);
-    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
+    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">မအောင်မြင်ပါ။</div>'; return; }
     var pets = res.data.pets || [];
     var total = res.data.total || 0;
-    document.getElementById('pets-total').textContent = total + ' pets';
+    document.getElementById('pets-total').textContent = total + ' အိမ်မွေးတိရစ္ဆာန်များ';
 
-    if (!pets.length) { el.innerHTML = '<div class="empty-state"><h3>No pets found</h3></div>'; return; }
+    if (!pets.length) { el.innerHTML = '<div class="empty-state"><h3>အိမ်မွေးတိရစ္ဆာန် မတွေ့ရှိပါ</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
-      '<th>Pet</th><th>Type</th><th>Owner</th><th>Fee</th><th>Status</th><th>Listed</th><th>Actions</th>' +
+      '<th>အိမ်မွေးတိရစ္ဆာန်</th><th>အမျိုးအစား</th><th>ပိုင်ရှင်</th><th>အခကြေးငွေ</th><th>အခြေအနေ</th><th>စာရင်းတင်ချိန်</th><th>လုပ်ဆောင်ချက်များ</th>' +
     '</tr></thead><tbody>' +
     pets.map(function(p) {
       return '<tr>' +
@@ -599,42 +581,41 @@ async function loadAdminPets() {
           '<div style="font-size:0.84rem">' + (p.owner_name||'\u2014') + '</div>' +
           '<div style="font-size:0.76rem;color:#9baab8">' + (p.owner_email||'') + '</div>' +
         '</td>' +
-        '<td>' + (p.fee_type === 'free' ? '<span class="badge-green">Free</span>' : fmtMoney(p.adoption_fee)) + '</td>' +
+        '<td>' + (p.fee_type === 'free' ? '<span class="badge-green">အခမဲ့</span>' : fmtMoney(p.adoption_fee)) + '</td>' +
         '<td>' + pill(p.status) + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + timeAgo(p.created_at) + '</td>' +
         '<td><div class="actions">' +
           '<select onchange="changePetStatus(' + p.id + ',this.value)" class="form-control" style="padding:4px 8px;font-size:0.78rem;width:120px">' +
             ['available','pending','adopted','withdrawn'].map(function(s){ return '<option value="' + s + '"' + (p.status===s?' selected':'') + '>' + s + '</option>'; }).join('') +
           '</select>' +
-          '<a href="' + petDetailHref(p) + '" class="btn btn-outline btn-sm" target="_blank">View</a>' +
-          '<button onclick="deleteAdminPet(' + p.id + ',\'' + p.name + '\')" class="btn btn-danger btn-sm">Delete</button>' +
+          '<a href="' + petDetailHref(p) + '" class="btn btn-outline btn-sm" target="_blank">ကြည့်ရှုရန်</a>' +
+          '<button onclick="deleteAdminPet(' + p.id + ',\'' + p.name + '\')" class="btn btn-danger btn-sm">ဖျက်ရန်</button>' +
         '</div></td>' +
       '</tr>';
     }).join('') +
     '</tbody></table>';
 
     renderPagination('pets-pagination', total, LIMIT, petsPage, function(p){ petsPage=p; loadAdminPets(); });
-  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Something went wrong.</div>'; }
+  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
 }
 
 async function changePetStatus(id, status) {
   try {
     var res = await Admin.updatePetStatus(id, { status: status });
-    if (res && res.ok) showToast('Status updated.', 'success');
-    else showToast(res.data.message||'Failed.', 'error');
-  } catch(e) { showToast('Error.', 'error'); }
+    if (res && res.ok) showToast('အခြေအနေ ပြောင်းလဲပြီးပါပြီ။', 'success');
+    else showToast(res.data.message||'မအောင်မြင်ပါ။', 'error');
+  } catch(e) { showToast('အမှား။', 'error'); }
 }
 
 async function deleteAdminPet(id, name) {
-  if (!confirm('Delete pet listing "' + name + '"? This cannot be undone.')) return;
+  if (!confirm('အိမ်မွေးတိရစ္ဆာန် စာရင်း "' + name + '" အား ဖျက်မှာ သေချာပါသလား။ ဤလုပ်ဆောင်ချက်ကို ပြန်၍မရနိုင်ပါ။')) return;
   try {
     var res = await Admin.deletePet(id);
-    if (res && res.ok) { showToast('Pet deleted.', 'success'); loadAdminPets(); }
-    else showToast(res.data.message||'Failed.', 'error');
-  } catch(e) { showToast('Error.', 'error'); }
+    if (res && res.ok) { showToast('အိမ်မွေးတိရစ္ဆာန် ဖျက်လိုက်ပါပြီ။', 'success'); loadAdminPets(); }
+    else showToast(res.data.message||'မအောင်မြင်ပါ။', 'error');
+  } catch(e) { showToast('အမှား။', 'error'); }
 }
 
-// Blogs
 function debounceBlogs() { clearTimeout(blogTimer); blogTimer = setTimeout(function(){ blogsPage=1; loadAdminBlogs(); }, 400); }
 
 async function loadAdminBlogs() {
@@ -648,15 +629,15 @@ async function loadAdminBlogs() {
 
   try {
     var res = await Admin.blogs(q);
-    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
+    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">မအောင်မြင်ပါ။</div>'; return; }
     var blogs = res.data.blogs || [];
     var total = res.data.total || 0;
-    document.getElementById('blogs-total').textContent = total + ' blogs';
+    document.getElementById('blogs-total').textContent = total + ' ဘလော့ခ်များ';
 
-    if (!blogs.length) { el.innerHTML = '<div class="empty-state"><h3>No blogs found</h3></div>'; return; }
+    if (!blogs.length) { el.innerHTML = '<div class="empty-state"><h3>ဘလော့ခ် မတွေ့ရှိပါ</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
-      '<th>Title</th><th>Author</th><th>Category</th><th>Status</th><th>Views</th><th>Date</th><th>Actions</th>' +
+      '<th>ခေါင်းစဉ်</th><th>စာရေးသူ</th><th>အမျိုးအစား</th><th>အခြေအနေ</th><th>ကြည့်ရှုမှုများ</th><th>ရက်စွဲ</th><th>လုပ်ဆောင်ချက်များ</th>' +
     '</tr></thead><tbody>' +
     blogs.map(function(b) {
       return '<tr>' +
@@ -670,35 +651,34 @@ async function loadAdminBlogs() {
           '<select onchange="changeBlogStatus(' + b.id + ',this.value)" class="form-control" style="padding:4px 8px;font-size:0.78rem;width:120px">' +
             ['published','draft','archived'].map(function(s){ return '<option value="' + s + '"' + (b.status===s?' selected':'') + '>' + s + '</option>'; }).join('') +
           '</select>' +
-          '<a href="/pages/blog-detail.html?slug=' + b.slug + '" class="btn btn-outline btn-sm" target="_blank">View</a>' +
-          '<button onclick="deleteAdminBlog(' + b.id + ',\'' + b.title.replace(/'/g,"\\'") + '\')" class="btn btn-danger btn-sm">Delete</button>' +
+          '<a href="/pages/blog-detail.html?slug=' + b.slug + '" class="btn btn-outline btn-sm" target="_blank">ကြည့်ရှုရန်</a>' +
+          '<button onclick="deleteAdminBlog(' + b.id + ',\'' + b.title.replace(/'/g,"\\'") + '\')" class="btn btn-danger btn-sm">ဖျက်ရန်</button>' +
         '</div></td>' +
       '</tr>';
     }).join('') +
     '</tbody></table>';
 
     renderPagination('blogs-pagination', total, LIMIT, blogsPage, function(p){ blogsPage=p; loadAdminBlogs(); });
-  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Something went wrong.</div>'; }
+  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
 }
 
 async function changeBlogStatus(id, status) {
   try {
     var res = await Admin.updateBlogStatus(id, { status: status });
-    if (res && res.ok) showToast('Status updated.', 'success');
-    else showToast(res.data.message||'Failed.', 'error');
-  } catch(e) { showToast('Error.', 'error'); }
+    if (res && res.ok) showToast('အခြေအနေ ပြောင်းလဲပြီးပါပြီ။', 'success');
+    else showToast(res.data.message||'မအောင်မြင်ပါ။', 'error');
+  } catch(e) { showToast('အမှား။', 'error'); }
 }
 
 async function deleteAdminBlog(id, title) {
-  if (!confirm('Delete blog "' + title + '"? This cannot be undone.')) return;
+  if (!confirm('ဘလော့ခ် "' + title + '" အား ဖျက်မှာ သေချာပါသလား။ ဤလုပ်ဆောင်ချက်ကို ပြန်၍မရနိုင်ပါ။')) return;
   try {
     var res = await Admin.deleteBlog(id);
-    if (res && res.ok) { showToast('Blog deleted.', 'success'); loadAdminBlogs(); }
-    else showToast(res.data.message||'Failed.', 'error');
-  } catch(e) { showToast('Error.', 'error'); }
+    if (res && res.ok) { showToast('ဘလော့ခ် ဖျက်လိုက်ပါပြီ။', 'success'); loadAdminBlogs(); }
+    else showToast(res.data.message||'မအောင်မြင်ပါ။', 'error');
+  } catch(e) { showToast('အမှား။', 'error'); }
 }
 
-// Adoptions
 async function loadAdminAdoptions() {
   var el = document.getElementById('adoptions-table-wrap');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -708,26 +688,26 @@ async function loadAdminAdoptions() {
 
   try {
     var res = await Admin.adoptions(q);
-    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
+    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">မအောင်မြင်ပါ။</div>'; return; }
     var list = res.data.adoptions || [];
     var total = res.data.total || 0;
-    document.getElementById('adoptions-total').textContent = total + ' requests';
+    document.getElementById('adoptions-total').textContent = total + ' တောင်းဆိုချက်များ';
 
-    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>No requests found</h3></div>'; return; }
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>တောင်းဆိုချက် မတွေ့ရှိပါ</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
-      '<th>Pet</th><th>Owner</th><th>Requester</th><th>Fee</th><th>Status</th><th>Date</th><th>Actions</th>' +
+      '<th>အိမ်မွေးတိရစ္ဆာန်</th><th>ပိုင်ရှင်</th><th>တောင်းဆိုသူ</th><th>အခကြေးငွေ</th><th>အခြေအနေ</th><th>ရက်စွဲ</th><th>လုပ်ဆောင်ချက်များ</th>' +
     '</tr></thead><tbody>' +
     list.map(function(a) {
       return '<tr>' +
         '<td style="font-weight:bold">' + (a.pet_name||'\u2014') + '</td>' +
         '<td style="font-size:0.82rem;color:#6b7a8d">' + (a.owner_name||'\u2014') + '</td>' +
         '<td style="font-size:0.82rem">' + (a.requester_name||'\u2014') + '<div style="color:#9baab8;font-size:0.76rem">' + (a.requester_email||'') + '</div></td>' +
-        '<td>' + (a.fee_type === 'free' ? '<span class="badge-green">Free</span>' : '<span class="badge-yellow">Paid</span>') + '</td>' +
+        '<td>' + (a.fee_type === 'free' ? '<span class="badge-green">အခမဲ့</span>' : '<span class="badge-yellow">ငွေပေးချေရန်</span>') + '</td>' +
         '<td>' + pill(a.status) + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + timeAgo(a.created_at) + '</td>' +
         '<td>' + (a.status === 'approved' || a.status === 'pending'
-          ? '<button onclick="openCloseAdoption(' + a.id + ')" class="btn btn-danger btn-sm">Force Close</button>'
+          ? '<button onclick="openCloseAdoption(' + a.id + ')" class="btn btn-danger btn-sm">အတင်းအကျပ် ပိတ်သိမ်းရန်</button>'
           : '<span style="color:#9baab8;font-size:0.8rem">\u2014</span>') +
         '</td>' +
       '</tr>';
@@ -735,7 +715,7 @@ async function loadAdminAdoptions() {
     '</tbody></table>';
 
     renderPagination('adoptions-pagination', total, LIMIT, adoptPage, function(p){ adoptPage=p; loadAdminAdoptions(); });
-  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Something went wrong.</div>'; }
+  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
 }
 
 function openCloseAdoption(id) {
@@ -749,12 +729,11 @@ async function confirmCloseAdoption() {
   var reason = document.getElementById('close-adoption-reason').value.trim();
   try {
     var res = await Admin.closeAdoption(closeAdoptionId, { reason: reason || undefined });
-    if (res && res.ok) { closeModal('close-adoption-modal'); showToast('Adoption closed.', 'success'); loadAdminAdoptions(); }
-    else showToast(res.data.message||'Failed.', 'error');
-  } catch(e) { showToast('Error.', 'error'); }
+    if (res && res.ok) { closeModal('close-adoption-modal'); showToast('မွေးစားခြင်းအား ပိတ်သိမ်းလိုက်ပါပြီ။', 'success'); loadAdminAdoptions(); }
+    else showToast(res.data.message||'မအောင်မြင်ပါ။', 'error');
+  } catch(e) { showToast('အမှား။', 'error'); }
 }
 
-// Follow-ups
 async function loadFollowups() {
   var el = document.getElementById('followups-table-wrap');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -764,15 +743,15 @@ async function loadFollowups() {
 
   try {
     var res = await Admin.followups(q);
-    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
+    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">မအောင်မြင်ပါ။</div>'; return; }
     var list = res.data.followups || [];
     var total = res.data.total || 0;
-    document.getElementById('followups-total').textContent = total + ' follow-ups';
+    document.getElementById('followups-total').textContent = total + ' နောက်ဆက်တွဲများ';
 
-    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>No follow-ups yet</h3></div>'; return; }
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>နောက်ဆက်တွဲ မရှိသေးပါ</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
-      '<th>Pet</th><th>Owner</th><th>Adopter</th><th>Health</th><th>Weight</th><th>Notes</th><th>Date</th>' +
+      '<th>အိမ်မွေးတိရစ္ဆာန်</th><th>ပိုင်ရှင်</th><th>မွေးစားသူ</th><th>ကျန်းမာရေး</th><th>ကိုယ်အလေးချိန်</th><th>မှတ်စုများ</th><th>ရက်စွဲ</th>' +
     '</tr></thead><tbody>' +
     list.map(function(f) {
       return '<tr>' +
@@ -780,7 +759,7 @@ async function loadFollowups() {
         '<td style="font-size:0.82rem;color:#6b7a8d">' + (f.owner_name||'\u2014') + '</td>' +
         '<td style="font-size:0.82rem">' + (f.adopter_name||'\u2014') + '</td>' +
         '<td>' + pill(f.health_status) + '</td>' +
-        '<td style="color:#6b7a8d">' + (f.weight_kg ? f.weight_kg + ' kg' : '\u2014') + '</td>' +
+        '<td style="color:#6b7a8d">' + (f.weight_kg ? f.weight_kg + ' ကီလိုဂရမ်' : '\u2014') + '</td>' +
         '<td style="max-width:200px;font-size:0.82rem;color:#6b7a8d">' + (f.notes ? f.notes.substring(0,80) + (f.notes.length>80?'\u2026':'') : '\u2014') + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + timeAgo(f.created_at) + '</td>' +
       '</tr>';
@@ -788,10 +767,9 @@ async function loadFollowups() {
     '</tbody></table>';
 
     renderPagination('followups-pagination', total, LIMIT, followPage, function(p){ followPage=p; loadFollowups(); });
-  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Something went wrong.</div>'; }
+  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
 }
 
-// Health Logs
 async function loadHealthLogs() {
   var el = document.getElementById('healthlogs-table-wrap');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -801,15 +779,15 @@ async function loadHealthLogs() {
 
   try {
     var res = await Admin.healthLogs(q);
-    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
+    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">မအောင်မြင်ပါ။</div>'; return; }
     var list = res.data.logs || [];
     var total = res.data.total || 0;
-    document.getElementById('healthlogs-total').textContent = total + ' logs';
+    document.getElementById('healthlogs-total').textContent = total + ' မှတ်တမ်းများ';
 
-    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>No health logs yet</h3></div>'; return; }
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>ကျန်းမာရေး မှတ်တမ်း မရှိသေးပါ</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
-      '<th>Pet</th><th>Type</th><th>Logged By</th><th>Vet</th><th>Weight</th><th>Next Due</th><th>Date</th>' +
+      '<th>အိမ်မွေးတိရစ္ဆာန်</th><th>အမျိုးအစား</th><th>မှတ်တမ်းတင်သူ</th><th>တိရစ္ဆာန်ဆေးကုဆရာဝန်</th><th>ကိုယ်အလေးချိန်</th><th>နောက်တစ်ကြိမ် ပြုလုပ်ရန်</th><th>ရက်စွဲ</th>' +
     '</tr></thead><tbody>' +
     list.map(function(l) {
       return '<tr>' +
@@ -817,7 +795,7 @@ async function loadHealthLogs() {
         '<td><span class="badge-gray" style="text-transform:capitalize">' + (l.type||'').replace(/_/g,' ') + '</span></td>' +
         '<td style="font-size:0.82rem;color:#6b7a8d">' + (l.logged_by_name||'\u2014') + '</td>' +
         '<td style="font-size:0.82rem;color:#6b7a8d">' + (l.vet_name||'\u2014') + '</td>' +
-        '<td style="color:#6b7a8d">' + (l.weight_kg ? l.weight_kg + ' kg' : '\u2014') + '</td>' +
+        '<td style="color:#6b7a8d">' + (l.weight_kg ? l.weight_kg + ' ကီလိုဂရမ်' : '\u2014') + '</td>' +
         '<td style="color:#6b7a8d;font-size:0.82rem">' + (l.next_due ? fmtDate(l.next_due) : '\u2014') + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + timeAgo(l.created_at) + '</td>' +
       '</tr>';
@@ -825,10 +803,9 @@ async function loadHealthLogs() {
     '</tbody></table>';
 
     renderPagination('healthlogs-pagination', total, LIMIT, logsPage, function(p){ logsPage=p; loadHealthLogs(); });
-  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Something went wrong.</div>'; }
+  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
 }
 
-// Reports
 async function loadReports() {
   var el = document.getElementById('reports-table-wrap');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -838,18 +815,18 @@ async function loadReports() {
 
   try {
     var res = await Admin.reports(q);
-    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
+    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">မအောင်မြင်ပါ။</div>'; return; }
     var list = res.data.reports || [];
     var total = res.data.total || 0;
-    document.getElementById('reports-total').textContent = total + ' reports';
+    document.getElementById('reports-total').textContent = total + ' တိုင်ကြားချက်များ';
 
-    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>No reports</h3><p>All clear!</p></div>'; return; }
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>တိုင်ကြားချက်များ မရှိပါ</h3><p>အားလုံး ရှင်းလင်းနေပါသည်။</p></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
-      '<th>Target</th><th>Reporter</th><th>Reason</th><th>Details</th><th>Status</th><th>Date</th><th>Actions</th>' +
+      '<th>ပစ်မှတ်</th><th>တိုင်ကြားသူ</th><th>အကြောင်းပြချက်</th><th>အသေးစိတ်</th><th>အခြေအနေ</th><th>ရက်စွဲ</th><th>လုပ်ဆောင်ချက်များ</th>' +
     '</tr></thead><tbody>' +
     list.map(function(r) {
-      var target = r.pet_name ? 'Pet: ' + r.pet_name : (r.blog_title ? 'Blog: ' + r.blog_title.substring(0,30) : '\u2014');
+      var target = r.pet_name ? 'အိမ်မွေးတိရစ္ဆာန်: ' + r.pet_name : (r.blog_title ? 'ဘလော့ခ်: ' + r.blog_title.substring(0,30) : '\u2014');
       return '<tr>' +
         '<td style="font-weight:bold">' + target + '</td>' +
         '<td style="font-size:0.82rem;color:#6b7a8d">' + (r.reporter_name||'\u2014') + '</td>' +
@@ -858,7 +835,7 @@ async function loadReports() {
         '<td>' + pill(r.status) + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + timeAgo(r.created_at) + '</td>' +
         '<td>' + (r.status === 'pending'
-          ? '<button onclick="openResolveReport(' + r.id + ',\'' + target.replace(/'/g,"\\'") + '\',' + (r.pet_id||'null') + ',' + (r.blog_id||'null') + ')" class="btn btn-primary btn-sm">Resolve</button>'
+          ? '<button onclick="openResolveReport(' + r.id + ',\'' + target.replace(/'/g,"\\'") + '\',' + (r.pet_id||'null') + ',' + (r.blog_id||'null') + ')" class="btn btn-primary btn-sm">ဖြေရှင်းရန်</button>'
           : '<span style="color:#9baab8;font-size:0.8rem">' + (r.reviewed_by_name||'\u2014') + '</span>') +
         '</td>' +
       '</tr>';
@@ -866,16 +843,16 @@ async function loadReports() {
     '</tbody></table>';
 
     renderPagination('reports-pagination', total, LIMIT, reportsPage, function(p){ reportsPage=p; loadReports(); });
-  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Something went wrong.</div>'; }
+  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
 }
 
 function openResolveReport(id, target, petId, blogId) {
   resolveReportId = id;
   resolveReportData = { petId: petId, blogId: blogId };
   document.getElementById('resolve-report-info').innerHTML =
-    '<strong>Reported:</strong> ' + target + '<br>' +
-    (petId ? '<div style="margin-top:4px;color:#9baab8">Pet ID: ' + petId + '</div>' : '') +
-    (blogId ? '<div style="margin-top:4px;color:#9baab8">Blog ID: ' + blogId + '</div>' : '');
+    '<strong>တိုင်ကြားခံရသည့်အရာ:</strong> ' + target + '<br>' +
+    (petId ? '<div style="margin-top:4px;color:#9baab8">အိမ်မွေးတိရစ္ဆာန် ID: ' + petId + '</div>' : '') +
+    (blogId ? '<div style="margin-top:4px;color:#9baab8">ဘလော့ခ် ID: ' + blogId + '</div>' : '');
 
   var sel = document.getElementById('resolve-action');
   Array.from(sel.options).forEach(function(opt) {
@@ -894,14 +871,13 @@ async function confirmResolveReport(status) {
     var res = await Admin.resolveReport(resolveReportId, { status: status, action: action || undefined });
     if (res && res.ok) {
       closeModal('resolve-report-modal');
-      showToast('Report ' + status + '.', 'success');
+      showToast('တိုင်ကြားချက်အား ' + status + ' လိုက်ပါပြီ။', 'success');
       loadReports();
       loadDashboard();
-    } else showToast(res.data.message||'Failed.', 'error');
-  } catch(e) { showToast('Error.', 'error'); }
+    } else showToast(res.data.message||'မအောင်မြင်ပါ။', 'error');
+  } catch(e) { showToast('အမှား။', 'error'); }
 }
 
-// Audit Log
 async function loadAuditLog() {
   var el = document.getElementById('auditlog-list');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -911,22 +887,22 @@ async function loadAuditLog() {
 
   try {
     var res = await Admin.auditLog(q);
-    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Failed.</div>'; return; }
+    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">မအောင်မြင်ပါ။</div>'; return; }
     var list = res.data.logs || [];
     var total = res.data.total || 0;
-    document.getElementById('auditlog-total').textContent = total + ' entries';
+    document.getElementById('auditlog-total').textContent = total + ' မှတ်တမ်းများ';
 
-    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>No audit logs yet</h3></div>'; return; }
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>စစ်ဆေးမှတ်တမ်း မရှိသေးပါ</h3></div>'; return; }
 
     el.innerHTML = list.map(function(l) {
       return '<div class="audit-row" style="padding:12px 16px">' +
         '<div style="width:34px;height:34px;border-radius:50%;background:#f3f3ef;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0;color:#6b7a8d">A</div>' +
         '<div style="flex:1">' +
           '<div class="audit-action">' + l.action.replace(/_/g,' ') +
-            (l.target_type ? ' <span style="font-size:0.76rem;font-weight:normal;color:#9baab8">on ' + l.target_type + (l.target_id ? ' #' + l.target_id : '') + '</span>' : '') +
+            (l.target_type ? ' <span style="font-size:0.76rem;font-weight:normal;color:#9baab8">' + l.target_type + ' တွင်' + (l.target_id ? ' #' + l.target_id : '') + '</span>' : '') +
           '</div>' +
           (l.detail ? '<div class="audit-detail">' + l.detail + '</div>' : '') +
-          '<div class="audit-meta">by <strong>' + (l.admin_name||'Admin') + '</strong>' +
+          '<div class="audit-meta"><strong>' + (l.admin_name||'အက်ဒမင်') + '</strong> မှ' +
             (l.ip_address ? ' \u00b7 ' + l.ip_address : '') +
             ' \u00b7 ' + timeAgo(l.created_at) +
           '</div>' +
@@ -935,7 +911,7 @@ async function loadAuditLog() {
     }).join('');
 
     renderPagination('auditlog-pagination', total, 30, auditPage, function(p){ auditPage=p; loadAuditLog(); });
-  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">Something went wrong.</div>'; }
+  } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
 }
 </script>
 </body>

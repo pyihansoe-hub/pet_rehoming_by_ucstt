@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PawBot — Pet Rehoming</title>
+  <title>PawBot — အိမ်မွေးတိရစ္ဆာန် ပြန်လည်နေရာချထားရေး</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/css/style.css">
   <script>
@@ -98,26 +98,24 @@
     <div class="page-header-row" style="margin-bottom:16px">
       <div>
         <h1>PawBot</h1>
-        <p style="color:var(--text-secondary);margin-top:2px;font-size:0.88rem">Pet လေးတွေအကြောင်းသိချင်တာကို မေးနိုင်ပါတယ်</p>
+        <p style="color:var(--text-secondary);margin-top:2px;font-size:0.88rem">အိမ်မွေးတိရစ္ဆာန်လေးတွေအကြောင်း သိချင်တာကို မေးနိုင်ပါတယ်</p>
       </div>
     </div>
 
     <div class="pawbot-wrap">
 
-      <!-- SIDEBAR -->
       <div class="pawbot-sidebar">
         <div class="pawbot-sidebar-header">
-          <span style="font-size:0.9rem;font-weight:700">Chats</span>
-          <button onclick="newSession()" class="btn btn-primary btn-sm" title="New chat">New Chat</button>
+          <span style="font-size:0.9rem;font-weight:700">ချက်တင်များ</span>
+          <button onclick="newSession()" class="btn btn-primary btn-sm" title="ချက်တင်အသစ်">ချက်တင်အသစ်</button>
         </div>
         <div class="session-list" id="session-list">
           <div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">
-            Loading sessions...
+            စက်ရှင်များ ဖွင့်နေသည်...
           </div>
         </div>
       </div>
 
-      <!-- MAIN -->
       <div class="pawbot-main">
         <div class="pawbot-header">
           <div class="bot-avatar">PB</div>
@@ -125,11 +123,11 @@
             <div style="font-weight:700;font-size:0.92rem">PawBot</div>
             <div style="font-size:0.76rem;color:#52b788;display:flex;align-items:center;gap:4px">
               <span style="width:7px;height:7px;border-radius:50%;background:#52b788;display:inline-block"></span>
-              Online
+              အွန်လိုင်း
             </div>
           </div>
           <div style="margin-left:auto;display:flex;gap:8px">
-            <button id="delete-session-btn" onclick="deleteCurrentSession()" class="btn btn-outline btn-sm" style="display:none" title="Delete this chat">Delete Chat</button>
+            <button id="delete-session-btn" onclick="deleteCurrentSession()" class="btn btn-outline btn-sm" style="display:none" title="ဤချက်တင်ကို ဖျက်ရန်">ချက်တင်ဖျက်ရန်</button>
           </div>
         </div>
 
@@ -138,32 +136,31 @@
             <div class="chat-msg-avatar">PB</div>
             <div>
               <div class="chat-bubble">
-                <p>Hi! I'm <strong>PawBot</strong>.</p>
-                <p>I can help you with:</p>
+                <p>မင်္ဂလာပါ။ ကျွန်ုပ်က <strong>PawBot</strong> ဖြစ်ပါတယ်။</p>
+                <p>အောက်ပါအကြောင်းအရာများအတွက် ကူညီနိုင်ပါတယ်-</p>
                 <ul>
-                  <li>Pet care tips (dogs, cats, and other pets)</li>
-                  <li>Adoption advice and what to expect</li>
-                  <li>Training and nutrition guidance</li>
-                  <li>Questions about this platform</li>
+                  <li>အိမ်မွေးတိရစ္ဆာန် စောင့်ရှောက်နည်းများ (ခွေး၊ ကြောင် နှင့် အခြားတိရစ္ဆာန်များ)</li>
+                  <li>မွေးစားခြင်းဆိုင်ရာ အကြံဉာဏ်များနှင့် မျှော်လင့်သင့်သည့်အရာများ</li>
+                  <li>လေ့ကျင့်သင်ကြားရေးနှင့် အာဟာရဆိုင်ရာ လမ်းညွှန်ချက်များ</li>
+                  <li>ဤပလက်ဖောင်းနှင့် ပတ်သက်သော မေးခွန်းများ</li>
                 </ul>
-                <p>What would you like to know?</p>
+                <p>ဘာကိုသိချင်ပါသလဲ။</p>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- SUGGESTION CHIPS -->
         <div class="suggestion-chips" id="suggestion-chips">
-          <button class="suggestion-chip" onclick="sendSuggestion(this)">How do I adopt a pet?</button>
-          <button class="suggestion-chip" onclick="sendSuggestion(this)">What should I feed a kitten?</button>
-          <button class="suggestion-chip" onclick="sendSuggestion(this)">How to train a puppy?</button>
-          <button class="suggestion-chip" onclick="sendSuggestion(this)">Cat care basics</button>
+          <button class="suggestion-chip" onclick="sendSuggestion(this)">အိမ်မွေးတိရစ္ဆာန်တစ်ကောင်ကို ဘယ်လိုမွေးစားရမလဲ။</button>
+          <button class="suggestion-chip" onclick="sendSuggestion(this)">ကြောင်ကလေးကို ဘာကျွေးသင့်သလဲ။</button>
+          <button class="suggestion-chip" onclick="sendSuggestion(this)">ခွေးကလေးကို ဘယ်လိုလေ့ကျင့်သင်ကြားရမလဲ။</button>
+          <button class="suggestion-chip" onclick="sendSuggestion(this)">ကြောင်စောင့်ရှောက်နည်း အခြေခံများ</button>
         </div>
 
         <div class="pawbot-input-area">
-          <textarea class="pawbot-input" id="pawbot-input" placeholder="Ask me anything about pets..." rows="1"
+          <textarea class="pawbot-input" id="pawbot-input" placeholder="အိမ်မွေးတိရစ္ဆာန်များအကြောင်း ဘာမဆိုမေးနိုင်ပါတယ်..." rows="1"
             onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-          <button class="pawbot-send" id="send-btn" onclick="sendMsg()" title="Send">
+          <button class="pawbot-send" id="send-btn" onclick="sendMsg()" title="ပို့ရန်">
             <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
           </button>
         </div>
@@ -187,30 +184,29 @@ document.addEventListener('DOMContentLoaded', async function() {
   } else {
     document.getElementById('session-list').innerHTML =
       '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">' +
-        '<a href="/pages/login.html" style="color:var(--accent)">Log in</a> to save chat history' +
+        'ချက်တင်မှတ်တမ်းကို သိမ်းဆည်းရန် <a href="/pages/login.html" style="color:var(--accent)">အကောင့်ဝင်ပါ</a>' +
       '</div>';
   }
 });
 
-// ── SESSIONS ──────────────────────────────────────────────────
 async function loadSessions() {
   var el = document.getElementById('session-list');
   try {
     var res = await Chat.listSessions();
-    if (!res || !res.ok) { el.innerHTML = '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">Could not load sessions.</div>'; return; }
+    if (!res || !res.ok) { el.innerHTML = '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">စက်ရှင်များ ဖွင့်၍မရပါ။</div>'; return; }
     var sessions = res.data.sessions || [];
     if (!sessions.length) {
-      el.innerHTML = '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">No chats yet.<br>Start a conversation!</div>';
+      el.innerHTML = '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">ချက်တင် မရှိသေးပါ။<br>စကားစမြည် စတင်ပြောဆိုပါ။</div>';
       return;
     }
     el.innerHTML = sessions.map(function(s) {
       return '<div class="session-item' + (s.id === activeSessionId ? ' active' : '') + '" onclick="openSession(' + s.id + ',this)">' +
-        '<div class="session-title">' + (s.title || 'New Chat') + '</div>' +
+        '<div class="session-title">' + (s.title || 'ချက်တင်အသစ်') + '</div>' +
         '<div class="session-preview">' + (s.last_message || '') + '</div>' +
       '</div>';
     }).join('');
   } catch(e) {
-    el.innerHTML = '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">Could not load.</div>';
+    el.innerHTML = '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">ဖွင့်၍မရပါ။</div>';
   }
 }
 
@@ -224,7 +220,7 @@ async function newSession() {
       loadSessions();
       document.getElementById('delete-session-btn').style.display = 'inline-flex';
     }
-  } catch(e) { showToast('Failed to create session.', 'error'); }
+  } catch(e) { showToast('စက်ရှင် ဖန်တီး၍မရပါ။', 'error'); }
 }
 
 async function openSession(id, el) {
@@ -240,7 +236,7 @@ async function openSession(id, el) {
     if (res && res.ok) {
       var msgs = res.data.messages || [];
       if (!msgs.length) {
-        addBotMessage('How can I help you today?');
+        addBotMessage('ဒီနေ့ ဘာကူညီပေးရမလဲ။');
         return;
       }
       msgs.forEach(function(m) {
@@ -249,25 +245,24 @@ async function openSession(id, el) {
       });
       scrollToBottom();
     }
-  } catch(e) { showToast('Failed to load chat.', 'error'); }
+  } catch(e) { showToast('ချက်တင် ဖွင့်၍မရပါ။', 'error'); }
 }
 
 async function deleteCurrentSession() {
   if (!activeSessionId) return;
-  if (!confirm('Delete this chat session?')) return;
+  if (!confirm('ဤချက်တင်စက်ရှင်ကို ဖျက်မှာ သေချာပါသလား။')) return;
   try {
     var res = await Chat.deleteSession(activeSessionId);
     if (res && res.ok) {
       activeSessionId = null;
       clearMessages();
-      addBotMessage('Chat deleted. Start a new conversation!');
+      addBotMessage('ချက်တင် ဖျက်လိုက်ပါပြီ။ စကားစမြည်အသစ် စတင်ပါ။');
       document.getElementById('delete-session-btn').style.display = 'none';
       loadSessions();
     }
-  } catch(e) { showToast('Failed to delete.', 'error'); }
+  } catch(e) { showToast('ဖျက်၍မရပါ။', 'error'); }
 }
 
-// ── MESSAGING ─────────────────────────────────────────────────
 async function sendMsg() {
   var input = document.getElementById('pawbot-input');
   var msg   = input.value.trim();
@@ -308,38 +303,30 @@ async function sendMsg() {
     });
 
   } catch(e) {
-    botBubble.innerHTML = 'Sorry, something went wrong. Please try again.';
+    botBubble.innerHTML = 'တောင်းပန်ပါတယ်၊ တစ်ခုခု မှားယွင်းသွားပါတယ်။ ထပ်မံကြိုးစားပါ။';
     isWaiting = false;
     document.getElementById('send-btn').disabled = false;
   }
 }
 
-// ── HIDE THINKING TAGS (Streaming Safe) ──────────────────────
 function stripThinking(text) {
   if (!text) return '';
   
-  // 1. Remove complete <think>...</think> blocks
   let result = text.replace(/<think>[\s\S]*?<\/think>/g, '');
   
-  // 2. Remove unclosed <think> blocks (if the stream is still thinking)
   result = result.replace(/<think>[\s\S]*$/g, '');
   
-  // 3. Remove stray complete </think> tags (just in case)
   result = result.replace(/<\/think>/g, '');
   
-  // 4. Buffer partial tags at the end of the stream to avoid flickering
-  // Matches partial tags like: <t, <th, <thi, <thin, <think, <think>, </t, </th, etc.
   const partialRegex = /<\/?(t(h(i(n(k(>)?)?)?)?)?)?$/;
   const match = result.match(partialRegex);
   if (match && match[0] !== '<') {
-    // Truncate the partial tag, it will be completed on the next stream chunk
     result = result.substring(0, match.index);
   }
   
   return result;
 }
 
-// ── Stream handler ───────────────────────────────────────────
 function streamResponse(url, bubbleEl, onDone) {
   var token = getToken();
   var fullUrl = token ? url + '&token=' + token : url;
@@ -355,7 +342,7 @@ function streamResponse(url, bubbleEl, onDone) {
       var data = JSON.parse(e.data);
 
       if (data.error) {
-        bubbleEl.innerHTML = escapeAndFormat('Sorry, an error occurred: ' + data.error);
+        bubbleEl.innerHTML = escapeAndFormat('တောင်းပန်ပါတယ်၊ အမှားတစ်ခု ဖြစ်ပွားခဲ့ပါတယ်- ' + data.error);
         es.close();
         if (onDone) onDone();
         return;
@@ -364,7 +351,6 @@ function streamResponse(url, bubbleEl, onDone) {
       if (data.token) {
         fullText += data.token;
         
-        // Filter out thinking blocks before showing
         var visibleText = stripThinking(fullText);
         
         if (visibleText.trim() && !started) {
@@ -384,7 +370,7 @@ function streamResponse(url, bubbleEl, onDone) {
         if (finalVisible.trim()) {
           bubbleEl.innerHTML = escapeAndFormat(finalVisible);
         } else if (!started) {
-          bubbleEl.innerHTML = '<span style="color:var(--text-muted)">No response received.</span>';
+          bubbleEl.innerHTML = '<span style="color:var(--text-muted)">တုံ့ပြန်မှု မရရှိပါ။</span>';
         }
         scrollToBottom();
         if (onDone) onDone();
@@ -396,13 +382,12 @@ function streamResponse(url, bubbleEl, onDone) {
   es.onerror = function() {
     es.close();
     if (!started) {
-      bubbleEl.innerHTML = 'Connection lost. Please try again.';
+      bubbleEl.innerHTML = 'ချိတ်ဆက်မှု ပြတ်တောက်သွားပါတယ်။ ထပ်မံကြိုးစားပါ။';
     }
     if (onDone) onDone();
   };
 }
 
-// ── Add empty bot bubble ─────────────────────────────────────
 function addBotMessageEmpty() {
   var area = document.getElementById('pawbot-messages');
   var wrap = document.createElement('div');
@@ -436,7 +421,6 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 100) + 'px';
 }
 
-// ── RENDER HELPERS ────────────────────────────────────────────
 function addUserMessage(text) {
   var area = document.getElementById('pawbot-messages');
   var div  = document.createElement('div');
@@ -450,7 +434,6 @@ function addBotMessage(text) {
   var area = document.getElementById('pawbot-messages');
   var div  = document.createElement('div');
   div.className = 'chat-msg bot';
-  // Also strip thinking from saved history when loading old chats
   div.innerHTML =
     '<div class="chat-msg-avatar">PB</div>' +
     '<div><div class="chat-bubble">' + escapeAndFormat(stripThinking(text)) + '</div></div>';
