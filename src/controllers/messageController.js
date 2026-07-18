@@ -136,6 +136,7 @@ const getUnreadCount = async (req, res) => {
     res.json({ unread: +rows[0].unread });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
+
 // DELETE /api/messages/conversations/:id
 const deleteConversation = async (req, res) => {
   try {
@@ -149,4 +150,39 @@ const deleteConversation = async (req, res) => {
     res.status(500).json({ message: 'Server error.', error: err.message });
   }
 };
+// DELETE /api/messages/conversations/:id
+// const deleteConversation = async (req, res) => {
+//   const client = await pool.connect();
+//   try {
+//     const access = await getConversationAccess(req.params.id, req.user.id, req.user.role);
+//     if (access.notFound) return res.status(404).json({ message: 'Conversation not found.' });
+//     if (!access.allowed) return res.status(403).json({ message: 'Not authorized.' });
+
+//     await client.query('BEGIN');
+
+//     // 1. Get the adoption_request_id before deleting the conversation
+//     const { rows } = await client.query('SELECT adoption_request_id FROM conversations WHERE id=$1', [req.params.id]);
+    
+//     if (rows.length > 0) {
+//       const arId = rows[0].adoption_request_id;
+
+//       // 2. Delete the conversation
+//       await client.query('DELETE FROM conversations WHERE id = $1', [req.params.id]);
+
+//       // 3. Reject the linked adoption request
+//       await client.query(
+//         `UPDATE adoption_requests SET status='rejected', reviewed_at=NOW() WHERE id=$1`,
+//         [arId]
+//       );
+//     }
+
+//     await client.query('COMMIT');
+//     res.json({ ok: true, message: 'Conversation deleted and adoption request rejected.' });
+//   } catch (err) {
+//     await client.query('ROLLBACK');
+//     res.status(500).json({ message: 'Server error.', error: err.message });
+//   } finally {
+//     client.release();
+//   }
+// };
 module.exports = { getOrCreateConversation, listConversations, getMessages, sendMessage, getUnreadCount, deleteConversation};
