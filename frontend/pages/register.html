@@ -49,7 +49,7 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label for="phone">Phone</label>
+            <label for="phone">Phone <span style="color:#e76f51">*</span></label>
             <input type="text" id="phone" class="form-control" placeholder="+95 9...">
           </div>
           <div class="form-group">
@@ -107,12 +107,9 @@
         <!-- Wallet fields -->
         <div id="wallet-fields" style="display:none">
           <div class="form-group">
-            <label for="wallet_phone">Registered Phone <span style="color:#e76f51">*</span></label>
-            <input type="text" id="wallet_phone" class="form-control" placeholder="+95 9...">
-          </div>
-          <div class="form-group">
             <label for="wallet_name">Account Holder Name <span style="color:#e76f51">*</span></label>
             <input type="text" id="wallet_name" class="form-control" placeholder="Name registered with wallet">
+            <small style="color:#6b7a8d">We will use your main Phone number above for this wallet.</small>
           </div>
         </div>
 
@@ -224,36 +221,37 @@ async function doRegister(event) {
     payment.card_expiry_year   = 2000 + parseInt(parts[1],10);
     payment.billing_address    = ccBill || null;
   } else {
-    var wPhone = document.getElementById('wallet_phone').value.trim();
     var wName  = document.getElementById('wallet_name').value.trim();
-    if (!wPhone || !wName) {
-      alertArea.innerHTML = '<div class="alert alert-danger">Wallet phone and name are required.</div>';
+    if (!phone) {
+      alertArea.innerHTML = '<div class="alert alert-danger">Phone number is required for wallet payments.</div>';
       return;
     }
-    payment.wallet_phone        = wPhone;
+    if (!wName) {
+      alertArea.innerHTML = '<div class="alert alert-danger">Wallet account holder name is required.</div>';
+      return;
+    }
+    // Map the top-level phone number to the wallet phone
+    payment.wallet_phone        = phone;
     payment.wallet_account_name = wName;
   }
 
   btn.disabled = true;
   btn.textContent = 'Creating account...';
 
-       try {
+  try {
     var body = { name: name, email: email, password: password, payment_method: payment };
     if (phone)   body.phone   = phone;
     if (address) body.address = address;
 
     var res = await Auth.register(body);
 
-    // Check for the token inside res.data
     if (res && res.ok && res.data && res.data.token) {
-      // Success! Save auth and redirect
       saveAuth(res.data.token, res.data.user);
       showToast('Welcome, ' + res.data.user.name + '!', 'success');
       setTimeout(function() { 
         window.location.href = '/index.html'; 
       }, 600);
     } else {
-      // If no token, show the error message from res.data
       var errMsg = (res && res.data && res.data.message) ? res.data.message : 'Registration failed.';
       alertArea.innerHTML = '<div class="alert alert-danger">' + errMsg + '</div>';
     }

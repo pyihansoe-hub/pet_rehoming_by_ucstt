@@ -15,7 +15,6 @@ const register = async (req, res) => {
 
   try {
     const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase().trim()]);
-    console.log('🟡 Database found:', exists.rows);
 
     if (exists.rows.length) {
       console.log('🔴 RETURNING 409! User exists!');
@@ -33,7 +32,13 @@ const register = async (req, res) => {
     const newUser = rows[0];
 
     const pm = payment_method;
+    
     if (pm.method_type === 'credit_card') {
+      // Error check for missing card details
+      if (!pm.card_holder_name || !pm.card_last_four || !pm.card_expiry_month || !pm.card_expiry_year) {
+        return res.status(400).json({ message: 'Incomplete credit card details.' });
+      }
+      
       await pool.query(
         `INSERT INTO user_payment_methods 
           (user_id, method_type, card_holder_name, card_last_four, card_brand, card_expiry_month, card_expiry_year, metadata, is_default)
@@ -41,11 +46,19 @@ const register = async (req, res) => {
         [newUser.id, pm.card_holder_name, pm.card_last_four, pm.card_brand, pm.card_expiry_month, pm.card_expiry_year, JSON.stringify({ billing_address: pm.billing_address || null })]
       );
     } else if (['ayapay', 'wavepay', 'kpay'].includes(pm.method_type)) {
+      // Fallback to main user phone if wallet_phone isn't explicitly passed
+      const walletPhone = pm.wallet_phone || phone;
+      
+      // Error check for missing wallet details
+      if (!walletPhone || !pm.wallet_account_name) {
+        return res.status(400).json({ message: 'Wallet phone number and account name are required.' });
+      }
+
       await pool.query(
         `INSERT INTO user_payment_methods 
           (user_id, method_type, wallet_phone, wallet_account_name, is_default)
          VALUES ($1,$2,$3,$4,TRUE)`,
-        [newUser.id, pm.method_type, pm.wallet_phone, pm.wallet_account_name]
+        [newUser.id, pm.method_type, walletPhone, pm.wallet_account_name]
       );
     }
 
