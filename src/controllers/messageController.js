@@ -133,35 +133,36 @@ const getUnreadCount = async (req, res) => {
     res.json({ unread: +rows[0].unread });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
+// POST /api/messages/conversations/:id/decline-and-refund
+const declineAndRefund = async (req, res) => {
+  const { id: conversationId } = req.params;
+  const { pet_status_choice } = req.body; 
+  const ownerId = req.user.id;
 
-// DELETE /api/messages/conversations/:id (Refund logic + Owner takes the fee hit)
-const deleteConversation = async (req, res) => {
+  if (!['available', 'withdrawn'].includes(pet_status_choice)) {
+    return res.status(400).json({ message: 'You must choose to make the pet available or withdraw it.' });
+  }
+
   const client = await pool.connect();
   try {
-    const access = await getConversationAccess(req.params.id, req.user.id, req.user.role);
+    const access = await getConversationAccess(conversationId, req.user.id, req.user.role);
     if (access.notFound) return res.status(404).json({ message: 'Conversation not found.' });
     if (!access.allowed) return res.status(403).json({ message: 'Not authorized.' });
 
-    // STRICT CHECK: Only the Pet Owner or Admin can issue a refund
     if (req.user.role !== 'admin' && access.participants.owner_id !== req.user.id) {
-      return res.status(403).json({ message: 'ငွေပြန်အမ်းခြင်းကို Owner သာ လုပ်ဆောင်နိုင်ပါသည်။ (Only the pet owner can issue a refund)' });
+      return res.status(403).json({ message: 'Only the pet owner can issue a refund.' });
     }
 
     const adopterId = access.participants.requester_id;
-    const ownerId = access.participants.owner_id;
+    const ownerDbId = access.participants.owner_id;
 
     await client.query('BEGIN');
 
-    // 1. Get the adoption_request_id before deleting the conversation
-    const { rows: convRows } = await client.query('SELECT adoption_request_id FROM conversations WHERE id=$1', [req.params.id]);
+    const { rows: convRows } = await client.query('SELECT adoption_request_id FROM conversations WHERE id=$1', [conversationId]);
     
     if (convRows.length > 0) {
       const arId = convRows[0].adoption_request_id;
 
-      // 2. Delete the conversation
-      await client.query('DELETE FROM conversations WHERE id = $1', [req.params.id]);
-
-      // 3. Get pet_id, owner_name, fee_type, and adoption_fee for calculation & notification
       const { rows: arRows } = await client.query(
         `SELECT ar.pet_id, p.name AS pet_name, p.fee_type, p.adoption_fee, u.name AS owner_name 
          FROM adoption_requests ar 
@@ -186,93 +187,74 @@ const deleteConversation = async (req, res) => {
           const transactionFee = baseFee * 0.015;
           const totalFees = serviceFee + transactionFee;
 
-          // Adopter gets 100% refund, no fees deducted
-          adopterRefundMsg = `သင်၏ ပေးချေငွေ ${baseFee.toLocaleString()} ကျပ် အား အပြည့်အဝ ပြန်လည် ထုတ်ပေးထားပါသည်။ (မည်သည့် အခကြေးငွေများမှ ကျသင့်မှု မရှိပါ)`;
-
-          // Owner is charged the fees for the refund
-          ownerFeeMsg = 
-            `ငွေပြန်အမ်းခြင်း အသေးစိတ်အချက်အလက် - ` +
-            `မွေးစားသူအား ပြန်လည်ပေးချေငွေ: ${baseFee.toLocaleString()} ကျပ် • ` +
-            `သင်ထမ်းဆောင်ရမည့် ဝန်ဆောင်မှုခ (4%): ${serviceFee.toLocaleString()} ကျပ် • ` +
-            `သင်ထမ်းဆောင်ရမည့် ငွေလွှဲခ (1.5%): ${transactionFee.toLocaleString()} ကျပ် • ` +
-            `သင်ထမ်းဆောင်ရမည့် စုစုပေါင်းကြေး: ${totalFees.toLocaleString()} ကျပ်`;
-
-          // TODO: If using a real Payment API, refund adopter `baseFee` and charge owner `totalFees` here.
+          adopterRefundMsg = `သင်၏ ပေးချေငွေ ${baseFee.toLocaleString()} ကျပ် အား အပြည့်အဝ ပြန်လည် ထုတ်ပေးထားပါသည်။`;
+          ownerFeeMsg = `မွေးစားသူအား ပြန်လည်ပေးချေငွေ: ${baseFee.toLocaleString()} ကျပ် • သင်ထမ်းဆောင်ရမည့် စုစုပေါင်းကြေး: ${totalFees.toLocaleString()} ကျပ်`;
         }
 
-        // 4. Update pet status back to 'available'
-        await client.query(`UPDATE pets SET status='available' WHERE id=$1`, [petId]);
+        // 1. Update Payment Status to 'refunded' (safely, if it exists)
+        await client.query(
+          `UPDATE payments SET status = 'refunded', updated_at = NOW() 
+           WHERE adoption_request_id = $1 AND status = 'completed'`, 
+          [arId]
+        );
 
-        // 5. Cancel the linked adoption request
+        // 2. Cancel the linked adoption request
         await client.query(
           `UPDATE adoption_requests SET status='cancelled', reviewed_at=NOW() WHERE id=$1`,
           [arId]
         );
 
-        // 6. Send Notification to Adopter (100% Refund)
-        let adopterNotifBody = `${ownerName} မှ "${petName}" အတွက် မွေးစားရန် တောင်းဆိုချက်ကို ပယ်ဖျက်ပြီး ငွေပြန်အမ်းခဲ့ပါသည်။`;
-        if (adopterRefundMsg) adopterNotifBody += ' ' + adopterRefundMsg;
+        // 3. Update pet status based on owner's choice
+        await client.query(`UPDATE pets SET status=$1 WHERE id=$2`, [pet_status_choice, petId]);
 
-        notify(adopterId, {
-          type: 'adoption_refunded',
-          title: 'မွေးစားရန် တောင်းဆိုချက် ပယ်ဖျက်ခြင်း နှင့် ငွေပြန်အမ်းခြင်း',
-          body: adopterNotifBody,
-          link: `/pages/adoption-requests.html?tab=sent`,
-        });
+        // 4. Delete the conversation entirely
+        await client.query('DELETE FROM conversations WHERE id = $1', [conversationId]);
 
-        // 7. Send Notification to Owner (Fees Charged to them)
-        if (ownerFeeMsg) {
-          let ownerNotifBody = `"${petName}" အတွက် မွေးစားရန် တောင်းဆိုချက်ကို ပယ်ဖျက်ပြီး မွေးစားသူအား ငွေပြန်အမ်းလိုက်ပါသည်။ ငွေပြန်အမ်းခြင်းဆိုင်ရာ အခကြေးငွေများကို သင်ဆောင်ရပါမည်။ ` + ownerFeeMsg;
-          
-          notify(ownerId, {
-            type: 'refund_fee_charged',
-            title: 'ငွေပြန်အမ်းခြင်း အခကြေးငွေ ကျသင့်မှု',
-            body: ownerNotifBody,
-            link: `/pages/adoption-requests.html?tab=received`,
-          });
-        }
-
-        // 8. Send Custom Emails to both
+        // 5. Send Notifications (Wrapped in try-catch so it never crashes the refund)
         try {
-          const { send } = require('../services/email');
-          const { rows: adopterRows } = await pool.query('SELECT name, email FROM users WHERE id=$1', [adopterId]);
-          const { rows: ownerRows } = await pool.query('SELECT name, email FROM users WHERE id=$1', [ownerId]);
-          
-          if (adopterRows.length > 0 && adopterRefundMsg) {
-            const adopterSubject = 'မွေးစားရန် တောင်းဆိုချက် ပယ်ဖျက်ခြင်း နှင့် ငွေပြန်အမ်းခြင်း';
-            let adopterHtml = `
-              <p>မင်္ဂလာပါ ${adopterRows[0].name} သူ/မ၊</p>
-              <p>${ownerName} မှ "${petName}" အတွက် သင်၏ မွေးစားရန် တောင်းဆိုချက်ကို ပယ်ဖျက်ပြီး ငွေပြန်အမ်းခဲ့ပါသည်။</p>
-              <p style="white-space: pre-line; background:#f4f4f4; padding:15px; border-radius:5px;">${adopterRefundMsg}</p>
-              <p>မေးခွန်းတစ်ခုခု ရှိပါက ကျေးဇူးပြု၍ ဝက်ဘ်ဆိုက်တွင် ဆက်သွယ်ပါ။</p>
-            `;
-            await send(adopterRows[0].email, adopterSubject, adopterHtml);
-          }
+          let adopterNotifBody = `${ownerName} မှ "${petName}" အတွက် မွေးစားရန် တောင်းဆိုချက်ကို ပယ်ဖျက်ပြီး ငွေပြန်အမ်းခဲ့ပါသည်။`;
+          if (adopterRefundMsg) adopterNotifBody += ' ' + adopterRefundMsg;
 
-          if (ownerRows.length > 0 && ownerFeeMsg) {
-            const ownerSubject = 'ငွေပြန်အမ်းခြင်း အခကြေးငွေ ကျသင့်မှု';
-            let ownerHtml = `
-              <p>မင်္ဂလာပါ ${ownerRows[0].name} သူ/မ၊</p>
-              <p>"${petName}" အတွက် မွေးစားရန် တောင်းဆိုချက်ကို ပယ်ဖျက်ပြီး မွေးစားသူအား ငွေပြန်အမ်းလိုက်ပါသည်။</p>
-              <p>ငွေပြန်အမ်းခြင်းဆိုင်ရာ အခကြေးငွေများကို သင်ဆောင်ရပါမည်။</p>
-              <p style="white-space: pre-line; background:#f4f4f4; padding:15px; border-radius:5px;">${ownerFeeMsg.replace(/•/g, '<br>')}</p>
-            `;
-            await send(ownerRows[0].email, ownerSubject, ownerHtml);
+          notify(adopterId, {
+            type: 'adoption_refunded',
+            title: 'မွေးစားရန် တောင်းဆိုချက် ပယ်ဖျက်ခြင်း နှင့် ငွေပြန်အမ်းခြင်း',
+            body: adopterNotifBody,
+            link: `/pages/adoption-requests.html?tab=sent`,
+          });
+
+          if (ownerFeeMsg) {
+            notify(ownerDbId, {
+              type: 'refund_fee_charged',
+              title: 'ငွေပြန်အမ်းခြင်း အခကြေးငွေ ကျသင့်မှု',
+              body: `"${petName}" အတွက် ငွေပြန်အမ်းလိုက်ပါသည်။ ` + ownerFeeMsg,
+              link: `/pages/adoption-requests.html?tab=received`,
+            });
           }
-        } catch (emailErr) {
-          console.error('Refund email failed (non-fatal):', emailErr.message);
+        } catch(notifErr) {
+          console.error('Notification failed (non-fatal):', notifErr.message);
         }
       }
     }
 
     await client.query('COMMIT');
-    res.json({ ok: true, message: 'Refund processed and conversation deleted.' });
+    res.json({ 
+      ok: true, 
+      message: `Refund processed successfully. Pet is now ${pet_status_choice}.`,
+      pet_status: pet_status_choice
+    });
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ message: 'Server error.', error: err.message });
+    console.error('❌ REFUND ERROR:', err);
+    res.status(500).json({ message: 'Server error during refund.', error: err.message });
   } finally {
     client.release();
   }
 };
-
-module.exports = { getOrCreateConversation, listConversations, getMessages, sendMessage, getUnreadCount, deleteConversation };
+module.exports = { 
+  getOrCreateConversation, 
+  listConversations, 
+  getMessages, 
+  sendMessage, 
+  getUnreadCount, 
+  declineAndRefund 
+};

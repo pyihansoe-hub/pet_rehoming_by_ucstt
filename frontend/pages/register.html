@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register — Pet Rehoming</title>
+  <title>အကောင့်ဖွင့်ရန် </title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -17,78 +17,76 @@
     <div style="max-width:520px;margin:0 auto">
 
       <div style="text-align:center;margin-bottom:28px">
-        <h1 style="font-size:1.5rem;margin-bottom:6px">Create an account</h1>
-        <p style="color:#6b7a8d;font-size:0.9rem">Join to adopt or rehome pets</p>
+        <h1 style="font-size:1.5rem;margin-bottom:6px">အကောင့်တစ်ခု ဖွင့်ရန်</h1>
+        <p style="color:#6b7a8d;font-size:0.9rem">အိမ်မွေးတိရစ္ဆာန်များ မွေးစားရန်ပါဝင်ပါ</p>
       </div>
 
       <div class="card">
         <div id="alert-area"></div>
 
-        <!-- Account -->
         <div class="form-group">
-          <label for="name">Full Name <span style="color:#e76f51">*</span></label>
-          <input type="text" id="name" class="form-control" placeholder="Your full name">
+          <label for="name">အမည်အပြည့်အစုံ <span style="color:#e76f51">*</span></label>
+          <input type="text" id="name" class="form-control" placeholder="သင်၏အမည်အပြည့်အစုံ">
         </div>
 
         <div class="form-group">
-          <label for="email">Email <span style="color:#e76f51">*</span></label>
+          <label for="email">အီးမေးလ် <span style="color:#e76f51">*</span></label>
           <input type="email" id="email" class="form-control" placeholder="you@example.com">
-          <small style="color:#6b7a8d">We'll send a verification link to this email.</small>
+          <small style="color:#6b7a8d">ဤအီးမေးလ်သို့ အတည်ပြုလင့်ခ် ပေးပို့ပါမည်။</small>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="password">Password <span style="color:#e76f51">*</span></label>
-            <input type="password" id="password" class="form-control" placeholder="Min 6 characters">
+            <label for="password">စကားဝှက် <span style="color:#e76f51">*</span></label>
+            <input type="password" id="password" class="form-control" placeholder="အနည်းဆုံး စာလုံး ၆ လုံး">
           </div>
           <div class="form-group">
-            <label for="confirm">Confirm <span style="color:#e76f51">*</span></label>
-            <input type="password" id="confirm" class="form-control" placeholder="Repeat password">
+            <label for="confirm">အတည်ပြုရန် <span style="color:#e76f51">*</span></label>
+            <input type="password" id="confirm" class="form-control" placeholder="စကားဝှက် ထပ်ထည့်ပါ">
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="phone">Phone <span style="color:#e76f51">*</span></label>
+            <label for="phone">ဖုန်း <span style="color:#e76f51">*</span></label>
             <input type="text" id="phone" class="form-control" placeholder="+95 9...">
           </div>
           <div class="form-group">
-            <label for="address">Address</label>
-            <input type="text" id="address" class="form-control" placeholder="City, Township">
+            <label for="address">လိပ်စာ</label>
+            <input type="text" id="address" class="form-control" placeholder="မြို့၊ မြို့နယ်">
           </div>
         </div>
 
         <hr class="divider">
-        <h3 style="font-size:1.05rem;margin-bottom:10px">Payment Method</h3>
+        <h3 style="font-size:1.05rem;margin-bottom:10px">ငွေပေးချေမှု နည်းလမ်း</h3>
         <p style="color:#6b7a8d;font-size:0.82rem;margin-bottom:12px">
-          Used for adoption fees &amp; refunds. Your card details are stored securely (last 4 digits only).
+          မွေးစားခနှင့် ငွေပြန်အမ်းခြင်းများအတွက် အသုံးပြုပါသည်။ သင်၏ကတ်အချက်အလက်များကို လုံခြုံစွာ သိမ်းဆည်းထားပါသည် (နောက်ဆုံး ဂဏန်း ၄ လုံးသာ)။
         </p>
 
         <div class="form-group">
-          <label for="payment_method">Method <span style="color:#e76f51">*</span></label>
+          <label for="payment_method">နည်းလမ်း <span style="color:#e76f51">*</span></label>
           <select id="payment_method" class="form-control" onchange="togglePaymentFields()">
-            <option value="">— Select —</option>
-            <option value="credit_card">Credit / Debit Card</option>
+            <option value="">— ရွေးချယ်ပါ —</option>
+            <option value="credit_card">Credit card</option>
             <option value="ayapay">AyaPay</option>
             <option value="wavepay">Wave Pay</option>
             <option value="kpay">KBZ Pay</option>
           </select>
         </div>
 
-        <!-- Credit card fields -->
         <div id="cc-fields" style="display:none">
           <div class="form-group">
-            <label for="cc_name">Cardholder Name <span style="color:#e76f51">*</span></label>
-            <input type="text" id="cc_name" class="form-control" placeholder="Name on card">
+            <label for="cc_name">ကတ်ပိုင်ရှင် အမည် <span style="color:#e76f51">*</span></label>
+            <input type="text" id="cc_name" class="form-control" placeholder="ကတ်ပေါ်ရှိ အမည်">
           </div>
           <div class="form-group">
-            <label for="cc_number">Card Number <span style="color:#e76f51">*</span></label>
+            <label for="cc_number">ကတ်နံပါတ် <span style="color:#e76f51">*</span></label>
             <input type="text" id="cc_number" class="form-control" placeholder="0000 0000 0000 0000"
                    maxlength="19" inputmode="numeric" oninput="formatCard(this)">
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="cc_expiry">Expiry (MM/YY) <span style="color:#e76f51">*</span></label>
+              <label for="cc_expiry">သက်တမ်းကုန်ဆုံးရက် (MM/YY) <span style="color:#e76f51">*</span></label>
               <input type="text" id="cc_expiry" class="form-control" placeholder="MM/YY"
                      maxlength="5" oninput="formatExpiry(this)">
             </div>
@@ -99,25 +97,24 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="cc_billing">Billing Address</label>
-            <input type="text" id="cc_billing" class="form-control" placeholder="Street, City">
+            <label for="cc_billing">ငွေတောင်းခံလွှာ လိပ်စာ</label>
+            <input type="text" id="cc_billing" class="form-control" placeholder="လမ်း၊ မြို့">
           </div>
         </div>
 
-        <!-- Wallet fields -->
         <div id="wallet-fields" style="display:none">
           <div class="form-group">
-            <label for="wallet_name">Account Holder Name <span style="color:#e76f51">*</span></label>
-            <input type="text" id="wallet_name" class="form-control" placeholder="Name registered with wallet">
-            <small style="color:#6b7a8d">We will use your main Phone number above for this wallet.</small>
+            <label for="wallet_name">အကောင့်ပိုင်ရှင် အမည် <span style="color:#e76f51">*</span></label>
+            <input type="text" id="wallet_name" class="form-control" placeholder="ပိုက်ဆံအိတ်ဖြင့် မှတ်ပုံတင်ထားသော အမည်">
+            <small style="color:#6b7a8d">ဤပိုက်ဆံအိတ်အတွက် အထက်ပါ ပင်မဖုန်းနံပါတ်ကို အသုံးပြုပါမည်။</small>
           </div>
         </div>
 
-        <button type="button" class="btn btn-primary btn-full" id="register-btn" onclick="doRegister()">Create Account</button>
+        <button type="button" class="btn btn-primary btn-full" id="register-btn" onclick="doRegister()">အကောင့် ဖွင့်ရန်</button>
 
         <hr class="divider">
         <p style="text-align:center;font-size:0.86rem;color:#6b7a8d">
-          Already have an account? <a href="/pages/login.html">Log in</a>
+          အကောင့်ရှိပြီးသားလား။ <a href="/pages/login.html">အကောင့်ဝင်ရန်</a>
         </p>
       </div>
 
@@ -172,19 +169,19 @@ async function doRegister(event) {
   alertArea.innerHTML = '';
 
   if (!name || !email || !password) {
-    alertArea.innerHTML = '<div class="alert alert-danger">Name, email, and password are required.</div>';
+    alertArea.innerHTML = '<div class="alert alert-danger">အမည်၊ အီးမေးလ်နှင့် စကားဝှက် လိုအပ်ပါသည်။</div>';
     return;
   }
   if (password.length < 6) {
-    alertArea.innerHTML = '<div class="alert alert-danger">Password must be at least 6 characters.</div>';
+    alertArea.innerHTML = '<div class="alert alert-danger">စကားဝှက်သည် အနည်းဆုံး စာလုံး ၆ လုံး ရှိရပါမည်။</div>';
     return;
   }
   if (password !== confirm) {
-    alertArea.innerHTML = '<div class="alert alert-danger">Passwords do not match.</div>';
+    alertArea.innerHTML = '<div class="alert alert-danger">စကားဝှက်များ မတူညီပါ။</div>';
     return;
   }
   if (!method) {
-    alertArea.innerHTML = '<div class="alert alert-danger">Please choose a payment method.</div>';
+    alertArea.innerHTML = '<div class="alert alert-danger">ကျေးဇူးပြု၍ ငွေပေးချေမှု နည်းလမ်းတစ်ခု ရွေးချယ်ပါ။</div>';
     return;
   }
 
@@ -198,19 +195,19 @@ async function doRegister(event) {
     var ccBill   = document.getElementById('cc_billing').value.trim();
 
     if (!ccName || !ccNumber || !ccExp || !ccCvc) {
-      alertArea.innerHTML = '<div class="alert alert-danger">Please complete all card fields.</div>';
+      alertArea.innerHTML = '<div class="alert alert-danger">ကျေးဇူးပြု၍ ကတ်အကွက်အားလုံး ဖြည့်ပါ။</div>';
       return;
     }
     if (ccNumber.length < 13 || ccNumber.length > 16) {
-      alertArea.innerHTML = '<div class="alert alert-danger">Invalid card number length.</div>';
+      alertArea.innerHTML = '<div class="alert alert-danger">ကတ်နံပါတ် အရှည် မမှန်ကန်ပါ။</div>';
       return;
     }
     if (!/^\d{2}\/\d{2}$/.test(ccExp)) {
-      alertArea.innerHTML = '<div class="alert alert-danger">Expiry must be MM/YY.</div>';
+      alertArea.innerHTML = '<div class="alert alert-danger">သက်တမ်းကုန်ဆုံးရက်သည် MM/YY ဖြစ်ရပါမည်။</div>';
       return;
     }
     if (ccCvc.length < 3) {
-      alertArea.innerHTML = '<div class="alert alert-danger">Invalid CVC.</div>';
+      alertArea.innerHTML = '<div class="alert alert-danger">CVC မမှန်ကန်ပါ။</div>';
       return;
     }
     var parts = ccExp.split('/');
@@ -223,20 +220,19 @@ async function doRegister(event) {
   } else {
     var wName  = document.getElementById('wallet_name').value.trim();
     if (!phone) {
-      alertArea.innerHTML = '<div class="alert alert-danger">Phone number is required for wallet payments.</div>';
+      alertArea.innerHTML = '<div class="alert alert-danger">ပိုက်ဆံအိတ် ငွေပေးချေမှုများအတွက် ဖုန်းနံပါတ် လိုအပ်ပါသည်။</div>';
       return;
     }
     if (!wName) {
-      alertArea.innerHTML = '<div class="alert alert-danger">Wallet account holder name is required.</div>';
+      alertArea.innerHTML = '<div class="alert alert-danger">ပိုက်ဆံအိတ် အကောင့်ပိုင်ရှင် အမည် လိုအပ်ပါသည်။</div>';
       return;
     }
-    // Map the top-level phone number to the wallet phone
     payment.wallet_phone        = phone;
     payment.wallet_account_name = wName;
   }
 
   btn.disabled = true;
-  btn.textContent = 'Creating account...';
+  btn.textContent = 'အကောင့် ဖွင့်နေသည်...';
 
   try {
     var body = { name: name, email: email, password: password, payment_method: payment };
@@ -247,20 +243,20 @@ async function doRegister(event) {
 
     if (res && res.ok && res.data && res.data.token) {
       saveAuth(res.data.token, res.data.user);
-      showToast('Welcome, ' + res.data.user.name + '!', 'success');
+      showToast('ကြိုဆိုပါသည်၊ ' + res.data.user.name + '။', 'success');
       setTimeout(function() { 
         window.location.href = '/index.html'; 
       }, 600);
     } else {
-      var errMsg = (res && res.data && res.data.message) ? res.data.message : 'Registration failed.';
+      var errMsg = (res && res.data && res.data.message) ? res.data.message : 'အကောင့်ဖွင့်၍မရပါ။';
       alertArea.innerHTML = '<div class="alert alert-danger">' + errMsg + '</div>';
     }
   } catch(e) {
-    alertArea.innerHTML = '<div class="alert alert-danger">Something went wrong. Try again.</div>';
+    alertArea.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။ ထပ်မံကြိုးစားပါ။</div>';
   }
 
   btn.disabled = false;
-  btn.textContent = 'Create Account';
+  btn.textContent = 'အကောင့် ဖွင့်ရန်';
 }
 </script>
 </body>

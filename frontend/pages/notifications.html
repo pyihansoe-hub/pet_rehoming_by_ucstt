@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notifications — Pet Rehoming</title>
+  <title>အကြောင်းကြားချက်များ — အိမ်မွေးတိရစ္ဆာန် ပြန်လည်နေရာချထားရေး</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/css/style.css">
   <script>
@@ -41,24 +41,22 @@
 
       <div class="page-header-row">
         <div>
-          <h1>Notifications</h1>
+          <h1>အကြောင်းကြားချက်များ</h1>
           <p style="color:var(--text-secondary);margin-top:4px" id="unread-label"></p>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-secondary btn-sm" onclick="markAllRead()">Mark All Read</button>
-          <button class="btn btn-outline btn-sm" onclick="clearRead()">Clear Read</button>
+          <button class="btn btn-secondary btn-sm" onclick="markAllRead()">အားလုံး ဖတ်ပြီးဟု မှတ်သားရန်</button>
+          <button class="btn btn-outline btn-sm" onclick="clearRead()">ဖတ်ပြီးများ ရှင်းလင်းရန်</button>
         </div>
       </div>
 
-      <!-- FILTER -->
       <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
-        <button class="chip active" data-filter="all" onclick="setFilter(this,'all')">All</button>
-        <button class="chip" data-filter="unread" onclick="setFilter(this,'unread')">Unread</button>
-        <button class="chip" data-filter="adoption" onclick="setFilter(this,'adoption')">Adoption</button>
+        <button class="chip active" data-filter="all" onclick="setFilter(this,'all')">အားလုံး</button>
+        <button class="chip" data-filter="unread" onclick="setFilter(this,'unread')">မဖတ်ရသေး</button>
+        <button class="chip" data-filter="adoption" onclick="setFilter(this,'adoption')">မွေးစားခြင်း</button>
         
       </div>
 
-      <!-- LIST -->
       <div class="card" style="padding:0;overflow:hidden">
         <div id="notif-list">
           <div class="loading-wrap"><div class="spinner"></div></div>
@@ -78,10 +76,10 @@ var allNotifications = [];
 var currentFilter = 'all';
 
 var NOTIF_ICONS = {
-  new_adoption_request: { label:'ADOPT',  bg:'var(--accent-light-bg)', color:'var(--accent)' },
-  adoption_reviewed:    { label:'REVIEW', bg:'var(--success-bg)', color:'var(--success-text)' },
-  payment_completed:    { label:'PAID',   bg:'var(--warning-bg)', color:'var(--warning-text)' },
-  follow_up_reminder:   { label:'Pet',    bg:'var(--accent-light-bg)', color:'var(--accent)' },
+  new_adoption_request: { label:'မွေးစား',  bg:'var(--accent-light-bg)', color:'var(--accent)' },
+  adoption_reviewed:    { label:'သုံးသပ်', bg:'var(--success-bg)', color:'var(--success-text)' },
+  payment_completed:    { label:'ငွေပေး',   bg:'var(--warning-bg)', color:'var(--warning-text)' },
+  follow_up_reminder:   { label:'အိမ်မွေး',    bg:'var(--accent-light-bg)', color:'var(--accent)' },
 };
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -93,15 +91,15 @@ async function loadNotifications() {
   var el = document.getElementById('notif-list');
   try {
     var res = await Notifications.list();
-    if (!res || !res.ok) { el.innerHTML = '<div style="padding:20px"><div class="alert alert-danger">Failed to load.</div></div>'; return; }
+    if (!res || !res.ok) { el.innerHTML = '<div style="padding:20px"><div class="alert alert-danger">ဖွင့်၍မရပါ။</div></div>'; return; }
     allNotifications = res.data.notifications || [];
     var unread = res.data.unread || 0;
     document.getElementById('unread-label').textContent = unread
-      ? unread + ' unread notification' + (unread !== 1 ? 's' : '')
-      : 'All caught up';
+      ? unread + ' မဖတ်ရသေးသော အကြောင်းကြားချက်' + (unread !== 1 ? 'များ' : '')
+      : 'အားလုံး ဖတ်ပြီးပါပြီ';
     renderList();
   } catch(e) {
-    el.innerHTML = '<div style="padding:20px"><div class="alert alert-danger">Something went wrong.</div></div>';
+    el.innerHTML = '<div style="padding:20px"><div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div></div>';
   }
 }
 
@@ -125,7 +123,7 @@ function renderList() {
   }
 
   if (!list.length) {
-    el.innerHTML = '<div class="empty-state"><h3>No notifications</h3><p>You\'re all caught up.</p></div>';
+    el.innerHTML = '<div class="empty-state"><h3>အကြောင်းကြားချက် မရှိပါ</h3><p>အားလုံး ဖတ်ပြီးပါပြီ။</p></div>';
     return;
   }
 
@@ -142,7 +140,7 @@ function renderList() {
         (n.body ? '<div class="notif-body">' + n.body + '</div>' : '') +
         '<div class="notif-time">' + timeAgo(n.created_at) + '</div>' +
       '</div>' +
-      '<button class="notif-del" onclick="event.stopPropagation();deleteNotif(' + n.id + ')" title="Delete">x</button>' +
+      '<button class="notif-del" onclick="event.stopPropagation();deleteNotif(' + n.id + ')" title="ဖျက်ရန်">x</button>' +
     '</div>';
   }).join('');
 }
@@ -170,13 +168,13 @@ async function markAllRead() {
     var res = await Notifications.readAll();
     if (res && res.ok) {
       allNotifications.forEach(function(n){ n.is_read = true; });
-      document.getElementById('unread-label').textContent = 'All caught up';
+      document.getElementById('unread-label').textContent = 'အားလုံး ဖတ်ပြီးပါပြီ';
       var badge = document.getElementById('notif-badge');
       if (badge) { badge.textContent = '0'; badge.classList.add('hidden'); }
       renderList();
-      showToast('All marked as read.', 'success');
+      showToast('အားလုံး ဖတ်ပြီးဟု မှတ်သားပြီးပါပြီ။', 'success');
     }
-  } catch(e) { showToast('Failed.', 'error'); }
+  } catch(e) { showToast('မအောင်မြင်ပါ။', 'error'); }
 }
 
 async function deleteNotif(id) {
@@ -186,21 +184,21 @@ async function deleteNotif(id) {
       allNotifications = allNotifications.filter(function(n){ return n.id !== id; });
       renderList();
     }
-  } catch(e) { showToast('Failed.', 'error'); }
+  } catch(e) { showToast('မအောင်မြင်ပါ။', 'error'); }
 }
 
 async function clearRead() {
   var readIds = allNotifications.filter(function(n){ return n.is_read; }).map(function(n){ return n.id; });
-  if (!readIds.length) { showToast('No read notifications to clear.', 'info'); return; }
-  if (!confirm('Delete all read notifications?')) return;
+  if (!readIds.length) { showToast('ရှင်းလင်းရန် ဖတ်ပြီးသား အကြောင်းကြားချက် မရှိပါ။', 'info'); return; }
+  if (!confirm('ဖတ်ပြီးသား အကြောင်းကြားချက်အားလုံးကို ဖျက်မှာ သေချာပါသလား။')) return;
   try {
     for (var i = 0; i < readIds.length; i++) {
       await Notifications.delete(readIds[i]);
     }
     allNotifications = allNotifications.filter(function(n){ return !n.is_read; });
     renderList();
-    showToast('Read notifications cleared.', 'success');
-  } catch(e) { showToast('Failed.', 'error'); }
+    showToast('ဖတ်ပြီးသား အကြောင်းကြားချက်များ ရှင်းလင်းပြီးပါပြီ။', 'success');
+  } catch(e) { showToast('မအောင်မြင်ပါ။', 'error'); }
 }
 </script>
 </body>

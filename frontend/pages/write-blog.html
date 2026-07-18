@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Write Blog — Pet Rehoming</title>
+  <title>ဘလော့ခ် ရေးသားရန် — အိမ်မွေးတိရစ္ဆာန် ပြန်လည်နေရာချထားရေး</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/css/style.css">
   <script>
@@ -16,18 +16,8 @@
     })();
   </script>
   <style>
-    .editor-toolbar { display:flex; gap:6px; flex-wrap:wrap; padding:10px 12px; background:var(--bg-chat); border:1.5px solid var(--border); border-bottom:none; border-radius:8px 8px 0 0; }
-    .editor-toolbar button { padding:4px 10px; background:var(--bg-card); border:1.5px solid var(--border); border-radius:5px; font-size:0.8rem; cursor:pointer; color:var(--text-primary); }
-    .editor-toolbar button:hover { background:var(--accent-light-bg); border-color:var(--accent); color:var(--accent); }
-    #content { border-radius:0 0 8px 8px; min-height:340px; font-size:0.93rem; line-height:1.8; }
+    #content { min-height:340px; font-size:0.93rem; line-height:1.8; border-radius:8px; }
     .preview-cover { width:100%; max-height:280px; object-fit:cover; border-radius:8px; margin-top:10px; }
-    .preview-content p  { margin-bottom:14px; color:var(--text-primary); }
-    .preview-content h2 { font-size:1.2rem; margin:20px 0 8px; color:var(--text-primary); }
-    .preview-content h3 { font-size:1.05rem; margin:16px 0 6px; color:var(--text-primary); }
-    .preview-content ul { margin:0 0 14px 22px; }
-    .preview-content li { margin-bottom:4px; color:var(--text-primary); }
-    .preview-content blockquote { border-left:3px solid var(--accent); padding:8px 14px; background:var(--accent-light-bg); border-radius:0 6px 6px 0; margin:14px 0; color:var(--accent-hover); font-style:italic; }
-    .preview-content hr { border:none; border-top:1px solid var(--border); margin:18px 0; }
   </style>
 </head>
 <body>
@@ -41,89 +31,71 @@
     <div style="max-width:800px;margin:0 auto">
 
       <div class="page-header">
-        <a href="/pages/blogs.html" style="font-size:0.86rem;color:var(--text-secondary)">Back to Blogs</a>
-        <h1 style="margin-top:8px" id="page-title">Write a Blog</h1>
+        <a href="/pages/blogs.html" style="font-size:0.86rem;color:var(--text-secondary)">ဘလော့ခ်များသို့ ပြန်သွားရန်</a>
+        <h1 style="margin-top:8px" id="page-title">ဘလော့ခ် ရေးသားရန်</h1>
       </div>
 
       <div id="alert-area"></div>
 
-      <!-- TITLE + META -->
       <div class="card" style="margin-bottom:20px">
         <div class="form-group">
-          <label for="title">Title <span style="color:var(--danger)">*</span></label>
-          <input type="text" id="title" class="form-control" placeholder="Write a helpful, descriptive title...">
+          <label for="title">ခေါင်းစဉ် <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="title" class="form-control" placeholder="အသုံးဝင်ပြီး ဖော်ပြချက်ပြည့်စုံသော ခေါင်းစဉ်တစ်ခု ရေးသားပါ...">
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="category">Category</label>
+            <label for="category">အမျိုးအစား</label>
             <select id="category" class="form-control">
-              <option value="">No category</option>
+              <option value="">အမျိုးအစား မရှိပါ</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Status</label>
+            <label>အခြေအနေ</label>
             <div style="display:flex;gap:20px;padding-top:8px">
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem">
-                <input type="radio" name="status" value="draft" checked> Save as Draft
+                <input type="radio" name="status" value="draft" checked> မူကြမ်းအဖြစ် သိမ်းဆည်းမည်
               </label>
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem">
-                <input type="radio" name="status" value="published"> Publish Now
+                <input type="radio" name="status" value="published"> ယခု တင်မည်
               </label>
             </div>
           </div>
         </div>
         <div class="form-group">
-          <label for="summary">Summary</label>
-          <textarea id="summary" class="form-control" rows="2" placeholder="Short description shown on blog cards (optional)..."></textarea>
+          <label for="summary">အကျဉ်းချုပ်</label>
+          <textarea id="summary" class="form-control" rows="2" placeholder="ဘလော့ခ်ကတ်များတွင် ပြသမည့် အတိုချုပ် ဖော်ပြချက် (မဖြည့်လည်းရပါသည်)..."></textarea>
         </div>
       </div>
 
-      <!-- CONTENT EDITOR -->
       <div class="card" style="margin-bottom:20px">
-        <label style="font-size:0.86rem;font-weight:bold;margin-bottom:8px;display:block">
-          Content <span style="color:var(--danger)">*</span>
-        </label>
-        <div class="editor-toolbar">
-          <button onclick="fmt('**','**')" title="Bold">Bold</button>
-          <button onclick="fmt('*','*')" title="Italic">Italic</button>
-          <button onclick="fmtLine('## ')" title="Heading 2">Heading 2</button>
-          <button onclick="fmtLine('### ')" title="Heading 3">Heading 3</button>
-          <button onclick="fmtLine('- ')" title="List">List</button>
-          <button onclick="fmtLine('> ')" title="Quote">Quote</button>
-          <button onclick="insertDivider()" title="Divider">Divider</button>
-          <span style="flex:1"></span>
-          <button onclick="togglePreview()" id="preview-btn">Preview</button>
-        </div>
-        <textarea id="content" class="form-control" placeholder="Write your blog here..."></textarea>
-
-        <div id="preview-panel" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-          <div style="font-size:0.76rem;font-weight:bold;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px">Preview</div>
-          <div id="preview-content" class="preview-content"></div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label style="font-size:0.86rem;font-weight:bold;margin-bottom:8px;display:block">
+            အကြောင်းအရာ <span style="color:var(--danger)">*</span>
+          </label>
+          <textarea id="content" class="form-control" placeholder="သင်၏ဘလော့ခ်ကို ဤနေရာတွင် ရေးသားပါ..."></textarea>
         </div>
       </div>
 
-      <!-- COVER IMAGE -->
       <div class="card" style="margin-bottom:24px">
         <div class="form-group">
-          <label>Cover Image</label>
+          <label>ကာဗာဓာတ်ပုံ</label>
           <div class="file-upload" onclick="document.getElementById('cover-input').click()">
             <input type="file" id="cover-input" accept="image/*" onchange="previewCover(this)">
             <div style="font-size:1.8rem;margin-bottom:6px">+</div>
             <div style="font-size:0.86rem;color:var(--text-secondary)">
-              <span style="color:var(--accent);font-weight:bold">Click to upload</span> a cover image
+              ကာဗာဓာတ်ပုံတစ်ပုံ <span style="color:var(--accent);font-weight:bold">အပ်လုဒ်လုပ်ရန် နှိပ်ပါ</span>
             </div>
-            <div style="font-size:0.76rem;color:var(--text-muted);margin-top:3px">JPG, PNG, WEBP · max 5MB</div>
+            <div style="font-size:0.76rem;color:var(--text-muted);margin-top:3px">JPG, PNG, WEBP · အများဆုံး 5MB</div>
           </div>
           <div id="cover-preview-area"></div>
           <div id="existing-cover-area"></div>
         </div>
       </div>
 
-      <!-- SAVE ACTIONS -->
       <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
-        <a href="/pages/blogs.html" class="btn btn-secondary">Cancel</a>
-        <button class="btn btn-outline" id="draft-btn" onclick="saveBlog('draft')">Save Draft</button>
-        <button class="btn btn-primary" id="publish-btn" onclick="saveBlog('published')">Publish</button>
+        <a href="/pages/blogs.html" class="btn btn-secondary">မလုပ်တော့ပါ</a>
+        <button class="btn btn-outline" id="draft-btn" onclick="saveBlog('draft')">မူကြမ်း သိမ်းဆည်းရန်</button>
+        <button class="btn btn-primary" id="publish-btn" onclick="saveBlog('published')">တင်ရန်</button>
       </div>
 
     </div>
@@ -136,12 +108,10 @@
 <script src="../js/app.js"></script>
 <script>
 var editId = null;
-var previewVisible = false;
 
 document.addEventListener('DOMContentLoaded', async function() {
   if (!requireAuth()) return;
 
-  // load categories
   try {
     var res = await Blogs.categories();
     if (res && res.ok) {
@@ -154,17 +124,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   } catch(e) {}
 
-  // check if editing
   var params = new URLSearchParams(window.location.search);
   editId = params.get('id');
   if (editId) {
-    document.getElementById('page-title').textContent = 'Edit Blog';
-    document.getElementById('publish-btn').textContent = 'Update';
+    document.getElementById('page-title').textContent = 'ဘလော့ခ် ပြင်ဆင်ရန်';
+    document.getElementById('publish-btn').textContent = 'ပြင်ဆင်သိမ်းဆည်းရန်';
     loadForEdit(editId);
   }
 });
 
-// ── LOAD FOR EDIT ─────────────────────────────────────────────
 async function loadForEdit(id) {
   var blog = null;
   try {
@@ -177,7 +145,7 @@ async function loadForEdit(id) {
     }
   } catch(e) {}
 
-  if (!blog) { showToast('Blog not found.', 'error'); return; }
+  if (!blog) { showToast('ဘလော့ခ် မတွေ့ရှိပါ။', 'error'); return; }
 
   document.getElementById('title').value   = blog.title   || '';
   document.getElementById('summary').value = blog.summary || '';
@@ -188,80 +156,15 @@ async function loadForEdit(id) {
     r.checked = r.value === (blog.status || 'draft');
   });
 
-  // existing cover
   if (blog.cover_image_url) {
     document.getElementById('existing-cover-area').innerHTML =
       '<div style="margin-top:8px">' +
         '<img src="' + imgUrl(blog.cover_image_url) + '" class="preview-cover">' +
-        '<p style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">Upload a new image to replace this cover.</p>' +
+        '<p style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">ဤကာဗာဓာတ်ပုံကို အစားထိုးရန် ဓာတ်ပုံအသစ်တစ်ပုံ အပ်လုဒ်လုပ်ပါ။</p>' +
       '</div>';
   }
 }
 
-// ── EDITOR HELPERS ────────────────────────────────────────────
-function fmt(before, after) {
-  var ta    = document.getElementById('content');
-  var start = ta.selectionStart;
-  var end   = ta.selectionEnd;
-  var sel   = ta.value.substring(start, end);
-  ta.value  = ta.value.substring(0,start) + before + sel + after + ta.value.substring(end);
-  ta.focus();
-  ta.setSelectionRange(start + before.length, end + before.length);
-}
-
-function fmtLine(prefix) {
-  var ta        = document.getElementById('content');
-  var start     = ta.selectionStart;
-  var lineStart = ta.value.lastIndexOf('\n', start - 1) + 1;
-  ta.value      = ta.value.substring(0, lineStart) + prefix + ta.value.substring(lineStart);
-  ta.focus();
-  var pos = start + prefix.length;
-  ta.setSelectionRange(pos, pos);
-}
-
-function insertDivider() {
-  var ta  = document.getElementById('content');
-  var pos = ta.selectionStart;
-  var ins = '\n\n---\n\n';
-  ta.value = ta.value.substring(0, pos) + ins + ta.value.substring(pos);
-  ta.focus();
-  ta.setSelectionRange(pos + ins.length, pos + ins.length);
-}
-
-// ── PREVIEW ───────────────────────────────────────────────────
-function togglePreview() {
-  previewVisible = !previewVisible;
-  document.getElementById('preview-panel').style.display = previewVisible ? 'block' : 'none';
-  document.getElementById('preview-btn').textContent = previewVisible ? 'Edit' : 'Preview';
-  if (previewVisible) renderPreview();
-}
-
-function renderPreview() {
-  var raw  = document.getElementById('content').value;
-  var safe = raw
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-  var html = safe
-    .replace(/^### (.+)$/gm,  '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm,   '<h2>$1</h2>')
-    .replace(/^> (.+)$/gm,    '<blockquote>$1</blockquote>')
-    .replace(/^- (.+)$/gm,    '<li>$1</li>')
-    .replace(/((<li>.*\n?)+)/g,'<ul>$1</ul>')
-    .replace(/^---$/gm,       '<hr>')
-    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g,    '<em>$1</em>');
-
-  var paragraphs = html.split('\n\n').map(function(p) {
-    p = p.trim();
-    if (!p) return '';
-    if (/^<(h[23]|ul|blockquote|hr)/.test(p)) return p;
-    return '<p>' + p.replace(/\n/g,'<br>') + '</p>';
-  }).join('');
-
-  document.getElementById('preview-content').innerHTML = paragraphs;
-}
-
-// ── COVER PREVIEW ─────────────────────────────────────────────
 function previewCover(input) {
   var file = input.files[0];
   if (!file) return;
@@ -269,7 +172,7 @@ function previewCover(input) {
   reader.onload = function(e) {
     document.getElementById('cover-preview-area').innerHTML =
       '<img src="' + e.target.result + '" class="preview-cover">' +
-      '<button type="button" onclick="removeCoverPreview()" class="btn btn-secondary btn-sm" style="margin-top:6px">Remove</button>';
+      '<button type="button" onclick="removeCoverPreview()" class="btn btn-secondary btn-sm" style="margin-top:6px">ဖယ်ရှားရန်</button>';
   };
   reader.readAsDataURL(file);
 }
@@ -289,11 +192,11 @@ async function saveBlog(forceStatus) {
   var content = document.getElementById('content').value.trim();
   var status  = forceStatus || document.querySelector('input[name="status"]:checked').value;
 
-  if (!title)   { alertArea.innerHTML = '<div class="alert alert-danger">Title is required.</div>';   return; }
-  if (!content) { alertArea.innerHTML = '<div class="alert alert-danger">Content is required.</div>'; return; }
+  if (!title)   { alertArea.innerHTML = '<div class="alert alert-danger">ခေါင်းစဉ် လိုအပ်ပါသည်။</div>';   return; }
+  if (!content) { alertArea.innerHTML = '<div class="alert alert-danger">အကြောင်းအရာ လိုအပ်ပါသည်။</div>'; return; }
 
   draftBtn.disabled = publishBtn.disabled = true;
-  publishBtn.textContent = 'Saving...';
+  publishBtn.textContent = 'သိမ်းဆည်းနေသည်...';
 
   var fd = new FormData();
   fd.append('title',   title);
@@ -320,27 +223,27 @@ async function saveBlog(forceStatus) {
         editId = savedBlog.id || savedBlog._id;
         if (editId) {
           window.history.replaceState({}, '', '/pages/write-blog.html?id=' + editId);
-          document.getElementById('page-title').textContent = 'Edit Blog';
-          document.getElementById('publish-btn').textContent = 'Update';
+          document.getElementById('page-title').textContent = 'ဘလော့ခ် ပြင်ဆင်ရန်';
+          document.getElementById('publish-btn').textContent = 'ပြင်ဆင်သိမ်းဆည်းရန်';
         }
       }
 
-      showToast(status === 'published' ? 'Blog published!' : 'Draft saved.', 'success');
+      showToast(status === 'published' ? 'ဘလော့ခ် တင်ပြီးပါပြီ။' : 'မူကြမ်း သိမ်းဆည်းပြီးပါပြီ။', 'success');
 
       if (status === 'published') {
         setTimeout(function(){ window.location.href = '/pages/blogs.html'; }, 500);
       } else {
-        alertArea.innerHTML = '<div class="alert alert-success">Draft saved.</div>';
+        alertArea.innerHTML = '<div class="alert alert-success">မူကြမ်း သိမ်းဆည်းပြီးပါပြီ။</div>';
       }
     } else {
-      alertArea.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'Failed to save.') + '</div>';
+      alertArea.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'သိမ်းဆည်း၍မရပါ။') + '</div>';
     }
   } catch(e) {
-    alertArea.innerHTML = '<div class="alert alert-danger">Something went wrong. Please try again.</div>';
+    alertArea.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။ ထပ်မံကြိုးစားပါ။</div>';
   }
 
   draftBtn.disabled = publishBtn.disabled = false;
-  publishBtn.textContent = editId ? 'Update' : 'Publish';
+  publishBtn.textContent = editId ? 'ပြင်ဆင်သိမ်းဆည်းရန်' : 'တင်ရန်';
 }
 </script>
 </body>
