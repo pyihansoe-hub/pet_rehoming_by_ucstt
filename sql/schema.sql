@@ -458,6 +458,8 @@ CREATE TRIGGER pet_comments_updated_at BEFORE UPDATE ON pet_comments
 CREATE INDEX idx_pet_comments_pet ON pet_comments(pet_id);
 
 ALTER TABLE adoption_requests ADD COLUMN payment_id INT REFERENCES payments(id) ON DELETE SET NULL;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS service_fee NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS owner_amount NUMERIC(12,2) DEFAULT 0;
 -- ============================================================
 -- END OF SCHEMA
 -- ============================================================

@@ -172,7 +172,8 @@ const getPayment = async (req, res) => {
 };
 // POST /api/payments/simulate — Demo payment flow (PAYS AT REQUEST TIME)
 const simulatePayment = async (req, res) => {
-  const { adoption_request_id } = req.body;
+  const { adoption_request_id, amount, service_fee, owner_amount } = req.body;
+  
   if (!adoption_request_id) return res.status(400).json({ message: 'Adoption request ID is required.' });
 
   const client = await pool.connect();
@@ -201,14 +202,21 @@ const simulatePayment = async (req, res) => {
       return res.status(400).json({ message: 'Payment already made for this request.' });
     }
 
-    // 2. Create the payment record as 'completed'
+        // Use values from frontend, fallback to DB values and calculate 4% if not provided
+    const finalAmount = parseFloat(amount) || parseFloat(reqData.adoption_fee);
+    const finalServiceFee = parseFloat(service_fee) || (finalAmount * 0.04);
+    const finalOwnerAmount = parseFloat(owner_amount) || (finalAmount - finalServiceFee);
+
+    // 2. Create the payment record as 'completed' WITH the new fee breakdowns
     const { rows: payRows } = await client.query(
-      `INSERT INTO payments (user_id, adoption_request_id, amount, currency, description, status, metadata)
-       VALUES ($1, $2, $3, 'MMK', $4, 'completed', $5) RETURNING *`,
+      `INSERT INTO payments (user_id, adoption_request_id, amount, service_fee, owner_amount, currency, description, status, metadata)
+       VALUES ($1, $2, $3, $4, $5, 'MMK', $6, 'completed', $7) RETURNING *`,
       [
         reqData.requester_id, 
         adoption_request_id, 
-        reqData.adoption_fee, 
+        finalAmount, 
+        finalServiceFee, 
+        finalOwnerAmount,
         'Adoption fee for ' + reqData.pet_name,
         JSON.stringify({ simulated: true })
       ]
@@ -222,19 +230,18 @@ const simulatePayment = async (req, res) => {
       [payment.id, adoption_request_id]
     );
 
-    // 4. Notify the OWNER that payment is done (fix: use owner_id, not requester_id)
-    // Make sure you have a notify function imported/defined
-    if (typeof notify === 'function') {
-      await notify(reqData.owner_id, {
-        type: 'payment_received',
-        title: 'Payment Received!',
-        body: 'An adopter has paid ' + reqData.adoption_fee + ' MMK for ' + reqData.pet_name + '. Please review and approve.',
-        link: '/pages/adoption-requests.html?tab=received',
-      });
-    }
-
-    // NOTE: We do NOT mark pet as adopted here!
-    // That happens when the OWNER clicks "Approve"
+    // 4. Notify the OWNER that payment is done
+    // try {
+    //   const notify = require('../services/notify'); // Ensure notify is required
+    //   await notify(reqData.owner_id, {
+    //     type: 'payment_received',
+    //     title: 'Payment Received!',
+    //     body: 'An adopter has paid ' + finalAmount + ' MMK for ' + reqData.pet_name + '. Please review and approve.',
+    //     link: '/pages/adoption-requests.html?tab=received',
+    //   });
+    // } catch(notifyErr) {
+    //   console.error('Notify failed:', notifyErr.message);
+    // }
 
     await client.query('COMMIT');
     

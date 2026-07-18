@@ -257,7 +257,7 @@
             <button type="button" class="btn btn-outline btn-sm" style="flex:1" id="kpay-phone-btn" onclick="selectPayMode('phone', 'kpay')">Phone Number</button>
           </div>
           <div id="kpay-qr-view" style="text-align:center;">
-            <img src="../images/qr-kpay.png" alt="KBZ Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+            <img src="images/qr-kpay.jpg" alt="KBZ Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
             <p style="font-size:0.84rem;color:var(--text-secondary);margin-top:12px;">Scan with KBZ Pay</p>
           </div>
           <div id="kpay-phone-view" style="display:none;">
@@ -274,7 +274,7 @@
             <button type="button" class="btn btn-outline btn-sm" style="flex:1" id="wavepay-phone-btn" onclick="selectPayMode('phone', 'wavepay')">Phone Number</button>
           </div>
           <div id="wavepay-qr-view" style="text-align:center;">
-            <img src="../images/qr-wavepay.png" alt="Wave Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+            <img src="images/qr-wave.jpg" alt="Wave Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
             <p style="font-size:0.84rem;color:var(--text-secondary);margin-top:12px;">Scan with Wave Pay</p>
           </div>
           <div id="wavepay-phone-view" style="display:none;">
@@ -291,7 +291,7 @@
             <button type="button" class="btn btn-outline btn-sm" style="flex:1" id="ayapay-phone-btn" onclick="selectPayMode('phone', 'ayapay')">Phone Number</button>
           </div>
           <div id="ayapay-qr-view" style="text-align:center;">
-            <img src="../images/qr-ayapay.png" alt="AYA Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+            <img src="images/qr-ayapay.jpg" alt="AYA Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
             <p style="font-size:0.84rem;color:var(--text-secondary);margin-top:12px;">Scan with AYA Pay</p>
           </div>
           <div id="ayapay-phone-view" style="display:none;">
@@ -371,6 +371,14 @@ var currentUser = getUser();
 var LOG_ICONS = { vaccination:'VAC', vet_visit:'VET', deworming:'DEW', weight:'WT', other:'LOG' };
 var selectedPayMethod = 'card';
 var localPayMode = 'qr'; // 'qr' or 'phone'
+
+// Helper to silently calculate the 4% service fee for the admin board
+function getServiceFeeBreakdown(baseFee) {
+  var fee = parseFloat(baseFee) || 0;
+  var serviceFee = Math.round(fee * 0.04 * 100) / 100; // 4% Service Fee
+  var ownerAmount = fee - serviceFee; // Owner receives 96%
+  return { baseFee: fee, serviceFee: serviceFee, ownerAmount: ownerAmount };
+}
 
 document.addEventListener('DOMContentLoaded', async function() {
   var params = new URLSearchParams(window.location.search);
@@ -623,10 +631,11 @@ function openAdoptModal() {
   var feeAmountEl = document.getElementById('adopt-fee-amount');
   var submitBtn = document.getElementById('adopt-submit-btn');
   
+  // Frontend only shows the base fee. No service fee breakdown is shown to the user.
   if (petData.fee_type === 'paid' && petData.adoption_fee > 0) {
     if (feeArea) feeArea.style.display = 'block';
     if (payArea) payArea.style.display = 'block';
-    if (feeAmountEl) feeAmountEl.textContent = fmtMoney(petData.adoption_fee);
+    if (feeAmountEl) feeAmountEl.innerHTML = fmtMoney(petData.adoption_fee);
     if (submitBtn) submitBtn.innerHTML = 'Pay ' + fmtMoney(petData.adoption_fee) + ' & Request';
   } else {
     if (feeArea) feeArea.style.display = 'none';
@@ -684,47 +693,6 @@ async function submitAdoption() {
   processPayment(msg, feeType, feeAmount, btn);
 }
 
-// async function confirmCodePayment() {
-//   var code = document.getElementById('verify-code-input').value.trim();
-//   var alertEl = document.getElementById('verify-alert');
-  
-//   if (code !== '1234') {
-//     alertEl.innerHTML = '<div class="alert alert-danger">Invalid code.</div>';
-//     return;
-//   }
-
-//   closeModal('verify-modal');
-//   showToast('Processing payment...', 'info');
-  
-//   var msg = document.getElementById('adopt-message').value.trim();
-//   var feeType = petData.fee_type;
-//   var feeAmount = petData.adoption_fee;
-
-//   try {
-//     var res = await Adoption.request(petData.id, { message: msg || undefined });
-//     if (!res || !res.ok) {
-//       showToast((res && res.data && res.data.message) || 'Failed to submit request.', 'error');
-//       return;
-//     }
-//     var requestId = res.data.request ? res.data.request.id : null;
-
-//     if (feeType === 'paid' && feeAmount > 0 && requestId) {
-//       var payRes = await Payments.simulate({ adoption_request_id: requestId, amount: feeAmount, method: selectedPayMethod, description: 'Adoption fee for ' + petData.name });
-//       await new Promise(function(resolve) { setTimeout(resolve, 1500); });
-      
-//       if (!payRes || !payRes.ok) {
-//         showToast('Payment failed.', 'error');
-//         return;
-//       }
-//     }
-
-//     showToast('Payment successful! Request submitted.', 'success');
-//     setTimeout(function(){ window.location.href = p('adoption-requests.html?tab=mine'); }, 1500);
-//   } catch(e) { 
-//     showToast('Something went wrong.', 'error');
-//   }
-// }
-
 async function confirmCodePayment() {
   var code = document.getElementById('verify-code-input').value.trim();
   var alertEl = document.getElementById('verify-alert');
@@ -752,7 +720,15 @@ async function confirmCodePayment() {
     if (feeType === 'paid' && feeAmount > 0 && requestId) {
       // Wrapped in try/catch for demo purposes so it doesn't block the flow on duplicate payment records
       try {
-        await Payments.simulate({ adoption_request_id: requestId, amount: feeAmount, method: selectedPayMethod, description: 'Adoption fee for ' + petData.name });
+        var breakdown = getServiceFeeBreakdown(feeAmount);
+        await Payments.simulate({
+          adoption_request_id: requestId,
+          amount: breakdown.baseFee,           // User pays the base fee
+          owner_amount: breakdown.ownerAmount, // Owner receives 96%
+          service_fee: breakdown.serviceFee,   // 4% sent to admin board as profit
+          method: selectedPayMethod,
+          description: 'Adoption fee for ' + petData.name
+        });
       } catch(pErr) { 
         console.error('Payment simulation skipped (demo mode):', pErr); 
       }
@@ -766,41 +742,6 @@ async function confirmCodePayment() {
   }
 }
 
-// async function processPayment(msg, feeType, feeAmount, btn) {
-//   btn.disabled = true; 
-//   btn.innerHTML = 'Processing...';
-//   document.getElementById('adopt-alert').innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:0.88rem;">Submitting request...</div>';
-
-//   try {
-//     var res = await Adoption.request(petData.id, { message: msg || undefined });
-//     if (!res || !res.ok) {
-//       document.getElementById('adopt-alert').innerHTML = '<div class="alert alert-danger">' + ((res && res.data && res.data.message) || 'Failed to submit request.') + '</div>';
-//       btn.disabled = false; btn.innerHTML = feeType === 'paid' ? 'Pay ' + fmtMoney(feeAmount) + ' & Request' : 'Submit Request';
-//       return;
-//     }
-    
-//     var requestId = res.data.request ? res.data.request.id : null;
-
-//     if (feeType === 'paid' && feeAmount > 0 && requestId) {
-//       document.getElementById('adopt-alert').innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:0.88rem;">Processing payment securely...</div>';
-//       var payRes = await Payments.simulate({ adoption_request_id: requestId, amount: feeAmount, method: selectedPayMethod, description: 'Adoption fee for ' + petData.name });
-//       await new Promise(function(resolve) { setTimeout(resolve, 2500); });
-      
-//       if (!payRes || !payRes.ok) {
-//         document.getElementById('adopt-alert').innerHTML = '<div class="alert alert-danger">Payment failed. Request submitted but payment pending.</div>';
-//         btn.disabled = false; btn.innerHTML = 'Pay ' + fmtMoney(feeAmount);
-//         return;
-//       }
-//     }
-
-//     closeModal('adopt-modal');
-//     showToast(feeType === 'paid' ? 'Payment successful! Request submitted. Waiting for owner approval.' : 'Adoption request submitted! Waiting for owner approval.', 'success');
-//     setTimeout(function(){ window.location.href = p('adoption-requests.html?tab=mine'); }, 1500);
-//   } catch(e) { 
-//     document.getElementById('adopt-alert').innerHTML = '<div class="alert alert-danger">Something went wrong.</div>'; 
-//     btn.disabled = false; btn.innerHTML = feeType === 'paid' ? 'Pay ' + fmtMoney(feeAmount) : 'Submit Request';
-//   }
-// }
 async function processPayment(msg, feeType, feeAmount, btn) {
   btn.disabled = true; 
   btn.innerHTML = 'Processing...';
@@ -810,7 +751,8 @@ async function processPayment(msg, feeType, feeAmount, btn) {
     var res = await Adoption.request(petData.id, { message: msg || undefined });
     if (!res || !res.ok) {
       document.getElementById('adopt-alert').innerHTML = '<div class="alert alert-danger">' + ((res && res.data && res.data.message) || 'Failed to submit request.') + '</div>';
-      btn.disabled = false; btn.innerHTML = feeType === 'paid' ? 'Pay ' + fmtMoney(feeAmount) + ' & Request' : 'Submit Request';
+      btn.disabled = false;
+      btn.innerHTML = feeType === 'paid' ? 'Pay ' + fmtMoney(feeAmount) + ' & Request' : 'Submit Request';
       return;
     }
     
@@ -818,14 +760,23 @@ async function processPayment(msg, feeType, feeAmount, btn) {
 
     if (feeType === 'paid' && feeAmount > 0 && requestId) {
       document.getElementById('adopt-alert').innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:0.88rem;">Processing payment securely...</div>';
-      
-      
+
       try {
-        await Payments.simulate({ adoption_request_id: requestId, amount: feeAmount, method: selectedPayMethod, description: 'Adoption fee for ' + petData.name });
+        // Calculate 4% service fee silently for the admin board
+        var breakdown = getServiceFeeBreakdown(feeAmount);
+        
+        await Payments.simulate({
+          adoption_request_id: requestId,
+          amount: breakdown.baseFee,           // Total the user actually pays
+          owner_amount: breakdown.ownerAmount, // What the owner receives (96%)
+          service_fee: breakdown.serviceFee,   // 4% kept by the platform as profit
+          method: selectedPayMethod,
+          description: 'Adoption fee for ' + petData.name
+        });
       } catch(pErr) { 
         console.error('Payment simulation skipped (demo mode):', pErr); 
       }
-      
+
       await new Promise(function(resolve) { setTimeout(resolve, 2500); });
     }
 
@@ -834,9 +785,11 @@ async function processPayment(msg, feeType, feeAmount, btn) {
     setTimeout(function(){ window.location.href = p('adoption-requests.html?tab=mine'); }, 1500);
   } catch(e) { 
     document.getElementById('adopt-alert').innerHTML = '<div class="alert alert-danger">Something went wrong.</div>'; 
-    btn.disabled = false; btn.innerHTML = feeType === 'paid' ? 'Pay ' + fmtMoney(feeAmount) : 'Submit Request';
+    btn.disabled = false;
+    btn.innerHTML = feeType === 'paid' ? 'Pay ' + fmtMoney(feeAmount) + ' & Request' : 'Submit Request';
   }
 }
+
 function openReportModal() {
   if (!getToken()) { window.location.href = p('login.html'); return; }
   openModal('report-modal');

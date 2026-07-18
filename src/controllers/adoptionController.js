@@ -5,7 +5,23 @@ const { createAgreement } = require('./agreementController');
 const { scheduleFollowupReminders } = require('../services/reminderScheduler');
 const { logStatusChange } = require('../services/petStatusHistory');
 
-// POST /api/pets/:id/adopt  — submit adoption request
+// Helper function to calculate fees and format numbers
+const calculateOwnerPayout = (baseFee) => {
+  const fee = parseFloat(baseFee) || 0;
+  const serviceFee = fee * 0.04;       // 4% Service Fee
+  const transactionFee = fee * 0.015;  // 1.5% Transaction Fee
+  const totalDeduction = serviceFee + transactionFee; // 5.5% Total
+  const netPayout = fee - totalDeduction;
+
+  return {
+    baseFee: fee.toLocaleString(),
+    serviceFee: serviceFee.toLocaleString(),
+    transactionFee: transactionFee.toLocaleString(),
+    totalDeduction: totalDeduction.toLocaleString(),
+    netPayout: netPayout.toLocaleString()
+  };
+};
+
 // POST /api/pets/:id/adopt  — submit adoption request
 const requestAdoption = async (req, res) => {
   const petId = req.params.id;
@@ -49,15 +65,25 @@ const requestAdoption = async (req, res) => {
       adoptionFee: pet.fee_type === 'paid' ? pet.adoption_fee : 0,
     });
 
-    // ✅ UPDATED NOTIFICATION LOGIC
+    // ✅ DETAILED NOTIFICATION LOGIC
+    let notifTitle = `New adoption request for ${pet.name}`;
     let notifBody = `${req.user.name} wants to adopt your pet.`;
-    if (pet.fee_type === 'paid') {
-      notifBody = `Fee of ${pet.adoption_fee} MMK has been added to your payment account by ${req.user.name}.`;
+    
+    if (pet.fee_type === 'paid' && pet.adoption_fee > 0) {
+      const calc = calculateOwnerPayout(pet.adoption_fee);
+      
+      notifBody = 
+        `${req.user.name} has paid ${calc.baseFee} MMK for the adoption. ` +
+        `Platform fees have been deducted from your payout: ` +
+        `Service Fee (4%) = ${calc.serviceFee} MMK, ` +
+        `Transaction Fee (1.5%) = ${calc.transactionFee} MMK. ` +
+        `Total Deduction = ${calc.totalDeduction} MMK. ` +
+        `Your final net payout is ${calc.netPayout} MMK.`;
     }
 
     notify(pet.owner_id, {
       type: 'new_adoption_request',
-      title: `New adoption request for ${pet.name}`,
+      title: notifTitle,
       body: notifBody,
       link: `/pages/adoption-requests.html?tab=received`,
     });
@@ -76,6 +102,7 @@ const requestAdoption = async (req, res) => {
     res.status(500).json({ message: 'Server error.', error: err.message });
   }
 };
+
 // GET /api/adoption-requests/mine
 const myRequests = async (req, res) => {
   try {

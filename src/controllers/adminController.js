@@ -20,7 +20,12 @@ const getDashboardStats = async (req, res) => {
 
       pool.query(`SELECT status, COUNT(*) FROM adoption_requests GROUP BY status`),
 
-      pool.query(`SELECT status, COALESCE(SUM(amount),0) AS total, COUNT(*) AS count
+      // ✅ UPDATED: Added SUM(service_fee) as profit and SUM(owner_amount) as owner_payout
+      pool.query(`SELECT status, 
+                         COALESCE(SUM(amount),0) AS total, 
+                         COALESCE(SUM(service_fee),0) AS profit, 
+                         COALESCE(SUM(owner_amount),0) AS owner_payout,
+                         COUNT(*) AS count
                   FROM payments GROUP BY status`),
 
       pool.query(`SELECT status, COUNT(*) FROM reports GROUP BY status`),
@@ -39,7 +44,17 @@ const getDashboardStats = async (req, res) => {
 
     pets.rows.forEach(r      => { petsByStatus[r.status]      = +r.count; });
     adoptions.rows.forEach(r => { adoptionsByStatus[r.status] = +r.count; });
-    payments.rows.forEach(r  => { paymentStats[r.status]      = { count: +r.count, total: +r.total }; });
+    
+    // ✅ UPDATED: Mapping the new profit and owner_payout fields
+    payments.rows.forEach(r  => {
+      paymentStats[r.status] = { 
+        count: +r.count, 
+        total: +r.total,
+        profit: +r.profit,
+        ownerPayout: +r.owner_payout
+      };
+    });
+
     reports.rows.forEach(r   => { reportsByStatus[r.status]   = +r.count; });
 
     res.json({

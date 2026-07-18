@@ -394,7 +394,7 @@ async function loadDashboard() {
       statCard('', s.users.total, 'စုစုပေါင်း အသုံးပြုသူများ',  s.users.newThisWeek + ' ယခုအပတ် အသစ်များ \u00b7 ' + s.users.suspended + ' ဆိုင်းငံ့ထားသည်') +
       statCard('', Object.values(s.pets).reduce(function(a,b){ return a+b; }, 0), 'စုစုပေါင်း အိမ်မွေးတိရစ္ဆာန်များ', (s.pets.available||0) + ' ရရှိနိုင်သည်') +
       statCard('', Object.values(s.adoptions).reduce(function(a,b){ return a+b; }, 0), 'စုစုပေါင်း မွေးစားခြင်းများ', (s.adoptions.approved||0) + ' အတည်ပြုပြီး') +
-      statCard('', (s.payments.completed ? fmtMoney(s.payments.completed.total) : '0 MMK'), 'ဝင်ငွေ', (s.payments.completed ? s.payments.completed.count : 0) + ' ငွေပေးချေမှု ပြီးစီးသည်') +
+      statCard('', (s.payments.completed ? fmtMoney(s.payments.completed.profit) : '0 MMK'), 'ဝင်ငွေ (Platform Profit)', (s.payments.completed ? s.payments.completed.count : 0) + ' ငွေပေးချေမှု ပြီးစီးသည်') +
       statCard('', (s.blogs.published||0), 'ထုတ်ဝေထားသော ဘလော့ခ်များ', (s.blogs.draft||0) + ' မူကြမ်းများ') +
       statCard('', s.followups||0, 'နောက်ဆက်တွဲများ တင်သွင်းပြီး', 'မွေးစားပြီးနောက် စောင့်ကြည့်ခြင်း') +
       statCard('', s.reports.pending||0, 'ဆိုင်းငံ့ဆဲ တိုင်ကြားချက်များ', 'ပြန်လည်သုံးသပ်ရန် လိုအပ်သည်', s.reports.pending > 0 ? '#fdf0ec' : null) +
