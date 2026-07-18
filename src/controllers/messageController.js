@@ -163,11 +163,13 @@ const declineAndRefund = async (req, res) => {
     if (convRows.length > 0) {
       const arId = convRows[0].adoption_request_id;
 
+      // Fetch adopter's name too so we can use it in the message
       const { rows: arRows } = await client.query(
-        `SELECT ar.pet_id, p.name AS pet_name, p.fee_type, p.adoption_fee, u.name AS owner_name 
+        `SELECT ar.pet_id, p.name AS pet_name, p.fee_type, p.adoption_fee, u.name AS owner_name, adopter.name AS adopter_name
          FROM adoption_requests ar 
          JOIN pets p ON p.id = ar.pet_id 
          JOIN users u ON u.id = p.owner_id 
+         JOIN users adopter ON adopter.id = ar.requester_id
          WHERE ar.id=$1`, 
         [arId]
       );
@@ -176,19 +178,26 @@ const declineAndRefund = async (req, res) => {
         const petId = arRows[0].pet_id;
         const petName = arRows[0].pet_name;
         const ownerName = arRows[0].owner_name;
+        const adopterName = arRows[0].adopter_name;
         const feeType = arRows[0].fee_type;
         const baseFee = parseFloat(arRows[0].adoption_fee) || 0;
 
-        let adopterRefundMsg = '';
+        let adopterNotifBody = '';
         let ownerFeeMsg = '';
+        let isFreePet = false;
 
         if (feeType === 'paid' && baseFee > 0) {
           const serviceFee = baseFee * 0.04;
           const transactionFee = baseFee * 0.015;
           const totalFees = serviceFee + transactionFee;
-
-          adopterRefundMsg = `သင်၏ ပေးချေငွေ ${baseFee.toLocaleString()} ကျပ် အား အပြည့်အဝ ပြန်လည် ထုတ်ပေးထားပါသည်။`;
+          const adopterRefundMsg = `သင်၏ ပေးချေငွေ ${baseFee.toLocaleString()} ကျပ် အား အပြည့်အဝ ပြန်လည် ထုတ်ပေးထားပါသည်။`;
+          
+          adopterNotifBody = `${ownerName} မှ "${petName}" အတွက် မွေးစားရန် တောင်းဆိုချက်ကို ပယ်ဖျက်ပြီး ငွေပြန်အမ်းခဲ့ပါသည်။ ${adopterRefundMsg}`;
           ownerFeeMsg = `မွေးစားသူအား ပြန်လည်ပေးချေငွေ: ${baseFee.toLocaleString()} ကျပ် • သင်ထမ်းဆောင်ရမည့် စုစုပေါင်းကြေး: ${totalFees.toLocaleString()} ကျပ်`;
+        } else {
+          // FREE PET LOGIC
+          isFreePet = true;
+          adopterNotifBody = `မင်္ဂလာပါ ${adopterName}၊ အနှုးအညွတ်တောင်းပန်ပါတယ်ဗျာ၊ "${petName}" ကို အခြားသူတစ်ဦးမှ မွေးစားရွေးချယ်ခံထားရပါသည်။ ထို့ကြောင့် သင်၏ တောင်းဆိုချက်ကို ငြင်းပယ်လိုက်ပါသည်။`;
         }
 
         // 1. Update Payment Status to 'refunded' (safely, if it exists)
@@ -210,14 +219,11 @@ const declineAndRefund = async (req, res) => {
         // 4. Delete the conversation entirely
         await client.query('DELETE FROM conversations WHERE id = $1', [conversationId]);
 
-        // 5. Send Notifications (Wrapped in try-catch so it never crashes the refund)
+        // 5. Send Notifications
         try {
-          let adopterNotifBody = `${ownerName} မှ "${petName}" အတွက် မွေးစားရန် တောင်းဆိုချက်ကို ပယ်ဖျက်ပြီး ငွေပြန်အမ်းခဲ့ပါသည်။`;
-          if (adopterRefundMsg) adopterNotifBody += ' ' + adopterRefundMsg;
-
           notify(adopterId, {
-            type: 'adoption_refunded',
-            title: 'မွေးစားရန် တောင်းဆိုချက် ပယ်ဖျက်ခြင်း နှင့် ငွေပြန်အမ်းခြင်း',
+            type: isFreePet ? 'adoption_declined' : 'adoption_refunded',
+            title: isFreePet ? 'မွေးစားရန် တောင်းဆိုချက် ငြင်းပယ်ခြင်း' : 'မွေးစားရန် တောင်းဆိုချက် ပယ်ဖျက်ခြင်း နှင့် ငွေပြန်အမ်းခြင်း',
             body: adopterNotifBody,
             link: `/pages/adoption-requests.html?tab=sent`,
           });
@@ -233,13 +239,54 @@ const declineAndRefund = async (req, res) => {
         } catch(notifErr) {
           console.error('Notification failed (non-fatal):', notifErr.message);
         }
+
+        // 6. Send Custom Emails
+        try {
+          const { send } = require('../services/email');
+          const { rows: adopterRows } = await pool.query('SELECT name, email FROM users WHERE id=$1', [adopterId]);
+          const { rows: ownerRows } = await pool.query('SELECT name, email FROM users WHERE id=$1', [ownerDbId]);
+          
+          if (adopterRows.length > 0) {
+            if (isFreePet) {
+              // Free Pet Email
+              const subject = 'မွေးစားရန် တောင်းဆိုချက် ငြင်းပယ်ခြင်း';
+              const html = `
+                <p>မင်္ဂလာပါ ${adopterRows[0].name}၊</p>
+                <p>အနှုးအညွတ်တောင်းပန်ပါတယ်ဗျာ၊ "${petName}" ကို အခြားသူတစ်ဦးမှ မွေးစားရွေးချယ်ခံထားရပါသည်။ ထို့ကြောင့် သင်၏ တောင်းဆိုချက်ကို ငြင်းပယ်လိုက်ပါသည်။</p>
+              `;
+              await send(adopterRows[0].email, subject, html);
+            } else {
+              // Paid Pet Email
+              const subject = 'မွေးစားရန် တောင်းဆိုချက် ပယ်ဖျက်ခြင်း နှင့် ငွေပြန်အမ်းခြင်း';
+              const html = `
+                <p>မင်္ဂလာပါ ${adopterRows[0].name} သူ/မ၊</p>
+                <p>${ownerName} မှ "${petName}" အတွက် သင်၏ မွေးစားရန် တောင်းဆိုချက်ကို ပယ်ဖျက်ပြီး ငွေပြန်အမ်းခဲ့ပါသည်။</p>
+                <p style="white-space: pre-line; background:#f4f4f4; padding:15px; border-radius:5px;">${adopterNotifBody}</p>
+              `;
+              await send(adopterRows[0].email, subject, html);
+            }
+          }
+
+          if (ownerRows.length > 0 && ownerFeeMsg) {
+            const ownerSubject = 'ငွေပြန်အမ်းခြင်း အခကြေးငွေ ကျသင့်မှု';
+            let ownerHtml = `
+              <p>မင်္ဂလာပါ ${ownerRows[0].name} သူ/မ၊</p>
+              <p>"${petName}" အတွက် မွေးစားရန် တောင်းဆိုချက်ကို ပယ်ဖျက်ပြီး မွေးစားသူအား ငွေပြန်အမ်းလိုက်ပါသည်။</p>
+              <p>ငွေပြန်အမ်းခြင်းဆိုင်ရာ အခကြေးငွေများကို သင်ဆောင်ရပါမည်။</p>
+              <p style="white-space: pre-line; background:#f4f4f4; padding:15px; border-radius:5px;">${ownerFeeMsg.replace(/•/g, '<br>')}</p>
+            `;
+            await send(ownerRows[0].email, ownerSubject, ownerHtml);
+          }
+        } catch (emailErr) {
+          console.error('Refund email failed (non-fatal):', emailErr.message);
+        }
       }
     }
 
     await client.query('COMMIT');
     res.json({ 
       ok: true, 
-      message: `Refund processed successfully. Pet is now ${pet_status_choice}.`,
+      message: `Processed successfully. Pet is now ${pet_status_choice}.`,
       pet_status: pet_status_choice
     });
   } catch (err) {
