@@ -21,7 +21,7 @@ const { logStatusChange } = require('../services/petStatusHistory');
 // JOIN users     u  ON u.id  = p.owner_id
 // LEFT JOIN pet_images pi ON pi.pet_id = p.id
 // `;
-
+// Heavy query used for the DETAIL page (gets all images)
 const PET_SELECT = `
 SELECT
   p.*,
@@ -38,6 +38,22 @@ JOIN pet_types pt ON pt.id = p.pet_type_id
 JOIN users     u  ON u.id  = p.owner_id
 LEFT JOIN pet_images pi ON pi.pet_id = p.id
 `;
+
+// Lightweight query used for the LISTING GRID (gets only 1 primary image)
+const PET_LIST_SELECT = `
+SELECT
+  p.id, p.name, p.breed, p.gender, p.color, p.city, p.location,
+  p.fee_type, p.adoption_fee, p.status, p.created_at,
+  pt.name AS pet_type_name,
+  u.name  AS owner_name,
+  u.phone AS owner_phone,
+  (SELECT COUNT(*) FROM pet_likes pl WHERE pl.pet_id = p.id) AS like_count,
+  (SELECT url FROM pet_images WHERE pet_id = p.id ORDER BY is_primary DESC, id ASC LIMIT 1) AS primary_image
+FROM pets p
+JOIN pet_types pt ON pt.id = p.pet_type_id
+JOIN users     u  ON u.id  = p.owner_id
+`;
+
 // GET /api/pets
 const listPets = async (req, res) => {
   const {
@@ -46,7 +62,7 @@ const listPets = async (req, res) => {
     fee_type,
     gender,
     page = 1,
-    limit = 20,
+    limit = 12, // Changed default limit to 12
     search,
   } = req.query;
 
@@ -69,9 +85,9 @@ const listPets = async (req, res) => {
   const offset = (Math.max(1, page) - 1) * limit;
 
   try {
+    // Use the lightweight select here, and notice we removed GROUP BY because there are no aggregations
     const { rows } = await pool.query(
-      `${PET_SELECT} ${WHERE}
-       GROUP BY p.id, pt.name, u.name, u.phone
+      `${PET_LIST_SELECT} ${WHERE}
        ORDER BY p.created_at DESC
        LIMIT $${i++} OFFSET $${i}`,
       [...values, limit, offset]
