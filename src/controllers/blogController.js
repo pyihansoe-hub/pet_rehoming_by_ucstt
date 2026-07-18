@@ -31,8 +31,9 @@ const createCategory = async (req, res) => {
     res.status(500).json({ message: 'Server error.', error: err.message });
   }
 };
-
 // ── Blogs ──────────────────────────────────────────────────────────────────
+
+// Heavy query used for the DETAIL page (gets all tags)
 const BLOG_SELECT = `
 SELECT
   b.*,
@@ -51,9 +52,22 @@ LEFT JOIN blog_categories bc ON bc.id=b.category_id
 LEFT JOIN blog_tags bt ON bt.blog_id=b.id
 LEFT JOIN tags t ON t.id=bt.tag_id
 `;
+
+// Lightweight query used for the LISTING GRID (skips tags to remove expensive GROUP BY)
+const BLOG_LIST_SELECT = `
+SELECT
+  b.id, b.title, b.slug, b.summary, b.cover_image_url, b.status, b.published_at, b.created_at, b.views,
+  u.name AS author_name, u.avatar_url AS author_avatar,
+  bc.name AS category_name, bc.slug AS category_slug,
+  (SELECT COUNT(*) FROM blog_likes bl WHERE bl.blog_id = b.id) AS like_count
+FROM blogs b
+JOIN users u ON u.id=b.author_id
+LEFT JOIN blog_categories bc ON bc.id=b.category_id
+`;
+
 // GET /api/blogs
 const listBlogs = async (req, res) => {
-  const { category, pet_type, status = 'published', search, page = 1, limit = 20, tag } = req.query;
+  const { category, pet_type, status = 'published', search, page = 1, limit = 12, tag } = req.query;
   const conditions = ['b.status = $1'];
   const values     = [status];
   let   i          = 2;
@@ -67,18 +81,20 @@ const listBlogs = async (req, res) => {
   const offset = (Math.max(1, page) - 1) * limit;
 
   try {
+    // Use lightweight select here (no GROUP BY needed)
     const { rows } = await pool.query(
-      `${BLOG_SELECT} ${WHERE} GROUP BY b.id, u.name, u.avatar_url, bc.name, bc.slug
+      `${BLOG_LIST_SELECT} ${WHERE}
        ORDER BY b.published_at DESC NULLS LAST, b.created_at DESC
        LIMIT $${i++} OFFSET $${i}`,
       [...values, limit, offset]
     );
+    
+    // Count query also optimized (no joins on blog_tags needed because we use EXISTS in WHERE)
     const count = await pool.query(
       `SELECT COUNT(DISTINCT b.id) FROM blogs b
-       LEFT JOIN blog_categories bc ON bc.id=b.category_id
-       LEFT JOIN blog_tags bt ON bt.blog_id=b.id
-       LEFT JOIN tags t ON t.id=bt.tag_id ${WHERE}`, values
+       LEFT JOIN blog_categories bc ON bc.id=b.category_id ${WHERE}`, values
     );
+    
     res.json({ blogs: rows, total: parseInt(count.rows[0].count), page: +page, limit: +limit });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
