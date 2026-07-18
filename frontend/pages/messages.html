@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Messages — Pet Rehoming</title>
+  <title>မက်ဆေ့ခ်ျများ </title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
     .conv-item-row { display:flex; align-items:flex-start; gap:6px; }
@@ -12,7 +12,6 @@
 .conv-item:hover .conv-del-btn { opacity:1; }
 .conv-del-btn:hover { color:#e76f51; background:rgba(231,111,81,0.1); }
 
-/* Delete confirmation modal */
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; display:flex; align-items:center; justify-content:center; animation:fadeIn 0.15s ease; }
 .modal-box { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:28px; max-width:380px; width:90%; text-align:center; animation:scaleIn 0.15s ease; }
 .modal-box h3 { margin:0 0 8px; font-size:1.05rem; color:var(--text-primary); }
@@ -73,14 +72,14 @@
 <div class="page-wrap" style="padding-bottom:0">
   <div class="container">
     <div class="page-header-row" style="margin-bottom:16px">
-      <h1>Messages</h1>
+      <h1>မက်ဆေ့ခ်ျများ</h1>
       <span id="unread-msg-count" style="font-size:0.86rem;color:#6b7a8d"></span>
     </div>
 
     <div class="msg-wrap">
       <div class="msg-sidebar">
         <div class="msg-sidebar-header">
-          <span style="font-size:0.92rem;font-weight:bold">Conversations</span>
+          <span style="font-size:0.92rem;font-weight:bold">စကားပြောဆိုမှုများ</span>
         </div>
         <div class="conv-list" id="conv-list">
           <div class="loading-wrap"><div class="spinner"></div></div>
@@ -99,15 +98,15 @@
         <div id="msg-messages-area" class="msg-messages">
           <div class="msg-empty">
             <div style="font-size:2.5rem;margin-bottom:12px">💬</div>
-            <div style="font-weight:bold;margin-bottom:6px">No conversation selected</div>
-            <div style="font-size:0.86rem">Select a conversation from the left to start messaging.</div>
+            <div style="font-weight:bold;margin-bottom:6px">စကားပြောဆိုမှု မရွေးချယ်ရသေးပါ</div>
+            <div style="font-size:0.86rem">စာတိုပေးပို့ရန် ဘယ်ဘက်မှ စကားပြောဆိုမှုတစ်ခုကို ရွေးချယ်ပါ။</div>
           </div>
         </div>
 
         <div class="msg-input-area" id="msg-input-area" style="display:none">
-          <textarea class="msg-input" id="msg-input" placeholder="Type a message..." rows="1"
+          <textarea class="msg-input" id="msg-input" placeholder="စာတိုရိုက်ထည့်ပါ..." rows="1"
             onkeydown="handleMsgKey(event)" oninput="autoResize(this)"></textarea>
-          <button class="msg-send" onclick="sendMessage()" title="Send">➤</button>
+          <button class="msg-send" onclick="sendMessage()" title="ပို့ရန်">➤</button>
         </div>
       </div>
     </div>
@@ -136,19 +135,19 @@ async function loadConversations() {
   try {
     var res = await Messages.conversations();
     if (!res || !res.ok) {
-      el.innerHTML = '<div style="padding:16px;font-size:0.84rem;color:#e76f51">Failed to load conversations.</div>';
+      el.innerHTML = '<div style="padding:16px;font-size:0.84rem;color:#e76f51">စကားပြောဆိုမှုများ ဖွင့်၍မရပါ။</div>';
       return;
     }
     var convs = res.data.conversations || [];
 
     var totalUnread = convs.reduce(function(sum, c){ return sum + (+c.unread_count || 0); }, 0);
     var unreadEl = document.getElementById('unread-msg-count');
-    if (unreadEl) unreadEl.textContent = totalUnread ? totalUnread + ' unread' : '';
+    if (unreadEl) unreadEl.textContent = totalUnread ? totalUnread + ' မဖတ်ရသေးပါ' : '';
 
     if (!convs.length) {
       el.innerHTML = '<div style="padding:24px 16px;text-align:center;font-size:0.84rem;color:#9baab8">' +
         '<div style="font-size:2rem;margin-bottom:8px">💬</div>' +
-        'No conversations yet.<br>Conversations appear after an adoption request is approved.' +
+        'စကားပြောဆိုမှု မရှိသေးပါ။<br>မွေးစားရန် တောင်းဆိုချက် အတည်ပြုပြီးနောက် စကားပြောဆိုမှုများ ပေါ်လာပါမည်။' +
       '</div>';
       return;
     }
@@ -162,21 +161,21 @@ async function loadConversations() {
         '<div class="conv-item-row">' +
           '<div class="conv-item-content">' +
             '<div class="conv-meta">' +
-              '<div class="conv-name">' + (otherName || 'User') + '</div>' +
+              '<div class="conv-name">' + (otherName || 'အသုံးပြုသူ') + '</div>' +
               '<div style="display:flex;align-items:center;gap:6px">' +
                 '<span class="conv-time">' + (c.last_message_at ? timeAgo(c.last_message_at) : '') + '</span>' +
                 (hasUnread ? '<div class="unread-dot"></div>' : '') +
               '</div>' +
             '</div>' +
             '<div class="conv-pet"> ' + (c.pet_name || '') + '</div>' +
-            '<div class="conv-preview">' + (c.last_message || 'No messages yet') + '</div>' +
+            '<div class="conv-preview">' + (c.last_message || 'မက်ဆေ့ခ်ျ မရှိသေးပါ') + '</div>' +
           '</div>' +
-          '<button class="conv-del-btn" onclick="event.stopPropagation();showDeleteModal(' + c.id + ',\'' + (c.pet_name || '').replace(/'/g, "\\'") + '\')" title="Delete conversation">✕</button>' +
+          '<button class="conv-del-btn" onclick="event.stopPropagation();showDeleteModal(' + c.id + ',\'' + (c.pet_name || '').replace(/'/g, "\\'") + '\')" title="စကားပြောဆိုမှုကို ဖျက်ရန်">✕</button>' +
         '</div>' +
       '</div>';
     }).join('');
   } catch(e) {
-    el.innerHTML = '<div style="padding:16px;font-size:0.84rem;color:#e76f51">Something went wrong.</div>';
+    el.innerHTML = '<div style="padding:16px;font-size:0.84rem;color:#e76f51">တစ်ခုခု မှားယွင်းသွားသည်။</div>';
   }
 }
 
@@ -204,7 +203,7 @@ async function loadMessages(convId) {
   try {
     var res = await Messages.getMessages(convId);
     if (!res || !res.ok) {
-      area.innerHTML = '<div style="padding:16px;color:#e76f51">Failed to load messages.</div>';
+      area.innerHTML = '<div style="padding:16px;color:#e76f51">မက်ဆေ့ခ်ျများ ဖွင့်၍မရပါ။</div>';
       return;
     }
     var msgs = res.data.messages || [];
@@ -215,14 +214,14 @@ async function loadMessages(convId) {
       if (conv) {
         var u = getUser();
         var otherName = (u && conv.adopter_name !== u.name) ? conv.adopter_name : conv.owner_name;
-        document.getElementById('msg-header-name').textContent = otherName || 'User';
+        document.getElementById('msg-header-name').textContent = otherName || 'အသုံးပြုသူ';
         document.getElementById('msg-header-pet').textContent  = ' ' + (conv.pet_name || '');
       }
       loadConversations(); 
     }
     renderMessages(msgs);
   } catch(e) {
-    area.innerHTML = '<div style="padding:16px;color:#e76f51">Something went wrong.</div>';
+    area.innerHTML = '<div style="padding:16px;color:#e76f51">တစ်ခုခု မှားယွင်းသွားသည်။</div>';
   }
 }
 
@@ -241,7 +240,7 @@ async function silentRefresh(convId) {
 function renderMessages(msgs) {
   var area = document.getElementById('msg-messages-area');
   if (!msgs.length) {
-    area.innerHTML = '<div style="text-align:center;padding:32px;color:#9baab8;font-size:0.86rem">No messages yet. Say hello! 👋</div>';
+    area.innerHTML = '<div style="text-align:center;padding:32px;color:#9baab8;font-size:0.86rem">မက်ဆေ့ခ်ျ မရှိသေးပါ။ စကားစပြောပါ။ 👋</div>';
     return;
   }
 
@@ -259,7 +258,6 @@ function renderMessages(msgs) {
     
     var avatarHtml = '';
     if (!isMe) {
-      // Bulletproof avatar: initials are placed BEHIND the image
       avatarHtml = '<div class="msg-avatar" style="overflow:hidden;padding:0;position:relative;background:var(--accent-light-bg);color:var(--accent);">' +
         '<span style="position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">' + initials(m.sender_name || 'U') + '</span>' +
         '<img src="' + imgUrl(m.sender_avatar) + '" style="position:relative;width:100%;height:100%;object-fit:cover;display:block;" alt="avatar" onerror="this.style.display=\'none\';">' +
@@ -292,11 +290,11 @@ async function sendMessage() {
     if (res && res.ok) {
       loadMessages(activeConvId);
     } else {
-      showToast(res.data.message || 'Failed to send.', 'error');
+      showToast(res.data.message || 'ပို့၍မရပါ။', 'error');
       input.value = content; 
     }
   } catch(e) {
-    showToast('Something went wrong.', 'error');
+    showToast('တစ်ခုခု မှားယွင်းသွားသည်။', 'error');
     input.value = content;
   }
 }
@@ -313,17 +311,16 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 100) + 'px';
 }
 
-/* ── Delete conversation ─────────────────────────── */
 function showDeleteModal(convId, petName) {
   var modal = document.getElementById('delete-modal');
   modal.innerHTML =
     '<div class="modal-overlay" onclick="closeDeleteModal(event)">' +
       '<div class="modal-box" onclick="event.stopPropagation()">' +
-        '<h3>Delete Conversation</h3>' +
-        '<p>Are you sure you want to delete the conversation about <strong>' + escapeHtml(petName || 'this pet') + '</strong>? This action cannot be undone.</p>' +
+        '<h3>စကားပြောဆိုမှုကို ဖျက်ရန်</h3>' +
+        '<p><strong>' + escapeHtml(petName || 'ဤအိမ်မွေးတိရစ္ဆာန်') + '</strong> အကြောင်း စကားပြောဆိုမှုကို ဖျက်မှာ သေချာပါသလား။ ဤလုပ်ဆောင်ချက်ကို ပြန်၍မရနိုင်ပါ။</p>' +
         '<div class="modal-actions">' +
-          '<button class="btn-modal-cancel" onclick="closeDeleteModal()">Cancel</button>' +
-          '<button class="btn-modal-danger" id="confirm-delete-btn" onclick="confirmDelete(' + convId + ')">Delete</button>' +
+          '<button class="btn-modal-cancel" onclick="closeDeleteModal()">မလုပ်တော့ပါ</button>' +
+          '<button class="btn-modal-danger" id="confirm-delete-btn" onclick="confirmDelete(' + convId + ')">ဖျက်ရန်</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -336,7 +333,7 @@ function closeDeleteModal(e) {
 async function confirmDelete(convId) {
   var btn = document.getElementById('confirm-delete-btn');
   btn.disabled = true;
-  btn.textContent = 'Deleting…';
+  btn.textContent = 'ဖျက်နေသည်...';
 
   try {
     var res = await Messages.deleteConversation(convId);
@@ -350,22 +347,22 @@ async function confirmDelete(convId) {
         document.getElementById('msg-messages-area').innerHTML =
           '<div class="msg-empty">' +
             '<div style="font-size:2.5rem;margin-bottom:12px">💬</div>' +
-            '<div style="font-weight:bold;margin-bottom:6px">No conversation selected</div>' +
-            '<div style="font-size:0.86rem">Select a conversation from the left to start messaging.</div>' +
+            '<div style="font-weight:bold;margin-bottom:6px">စကားပြောဆိုမှု မရွေးချယ်ရသေးပါ</div>' +
+            '<div style="font-size:0.86rem">စာတိုပေးပို့ရန် ဘယ်ဘက်မှ စကားပြောဆိုမှုတစ်ခုကို ရွေးချယ်ပါ။</div>' +
           '</div>';
       }
       loadConversations();
-      showToast('Conversation deleted.', 'success');
+      showToast('စကားပြောဆိုမှုကို ဖျက်လိုက်ပါပြီ။', 'success');
     } else {
-      showToast(res.data.message || 'Failed to delete.', 'error');
+      showToast(res.data.message || 'ဖျက်၍မရပါ။', 'error');
       btn.disabled = false;
-      btn.textContent = 'Delete';
+      btn.textContent = 'ဖျက်ရန်';
     }
   } catch (e) {
     console.error('DELETE error:', e);
-    showToast('Error: ' + e.message, 'error');
+    showToast('အမှား: ' + e.message, 'error');
     btn.disabled = false;
-    btn.textContent = 'Delete';
+    btn.textContent = 'ဖျက်ရန်';
   }
 }
 </script>

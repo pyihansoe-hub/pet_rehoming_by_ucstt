@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>အက်ဒမင် ဒက်ရှ်ဘုတ် — အိမ်မွေးတိရစ္ဆာန် ပြန်လည်နေရာချထားရေး</title>
+  <title>အက်ဒမင် စီမံခန့်ခွဲခြင်း</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
     .admin-wrap { display:grid; grid-template-columns:210px 1fr; gap:0; min-height:calc(100vh - 60px); }
@@ -97,7 +97,7 @@
       <select id="resolve-action" class="form-control">
         <option value="">လုပ်ဆောင်ချက်မရှိ -- ပြန်လည်သုံးသပ်ပြီးဟုသာ မှတ်သားမည်</option>
         <option value="remove_pet">အိမ်မွေးတိရစ္ဆာန် စာရင်းကို ဖယ်ရှားမည်</option>
-        <option value="remove_blog">ဘလော့ခ်ပို့စ်ကို သိမ်းဆည်းမည်</option>
+        <option value="remove_blog">ဆောင်းပါးပို့စ်ကို သိမ်းဆည်းမည်</option>
         <option value="suspend_reporter">တိုင်ကြားသူအား ဆိုင်းငံ့မည်</option>
       </select>
     </div>
@@ -114,11 +114,11 @@
 
     <div class="admin-sidebar">
       <div class="admin-sidebar-logo">
-        <div style="color:#fff;font-weight:bold;font-size:1rem">အိမ်မွေးတိရစ္ဆာန် ပြန်လည်နေရာချထားရေး</div>
-        <div>အက်ဒမ�င် ပန်နယ်</div>
+        <div style="color:#fff;font-weight:bold;font-size:1rem"></div>
+        <div></div>
       </div>
 
-      <div class="admin-nav-section">ခြုံငုံသုံးသပ်ချက်</div>
+      <div class="admin-nav-section"></div>
       <button class="admin-nav-item active" onclick="showPanel('dashboard',this)">
         <span class="icon"><!-- chart icon --></span> ဒက်ရှ်ဘုတ်
       </button>
@@ -131,7 +131,7 @@
         <span class="icon"><!-- pet icon --></span> အိမ်မွေးတိရစ္ဆာန်များ
       </button>
       <button class="admin-nav-item" onclick="showPanel('blogs',this)">
-        <span class="icon"><!-- blog icon --></span> ဘလော့ခ်များ
+        <span class="icon"><!-- blog icon --></span> ဆောင်းပါးများ
       </button>
       <button class="admin-nav-item" onclick="showPanel('adoptions',this)">
         <span class="icon"><!-- handshake icon --></span> မွေးစားခြင်းများ
@@ -225,7 +225,7 @@
 
       <div class="admin-panel" id="panel-blogs">
         <div class="page-header-row">
-          <h2>ဘလော့ခ် ပို့စ်များ</h2>
+          <h2>ဆောင်းပါးများ</h2>
           <span id="blogs-total" style="font-size:0.86rem;color:#6b7a8d"></span>
         </div>
         <div class="search-filter-row">
@@ -331,7 +331,7 @@
             <option value="">အမျိုးအစားအားလုံး</option>
             <option value="user">အသုံးပြုသူ လုပ်ဆောင်ချက်များ</option>
             <option value="pet">အိမ်မွေးတိရစ္ဆာန် လုပ်ဆောင်ချက်များ</option>
-            <option value="blog">ဘလော့ခ် လုပ်ဆောင်ချက်များ</option>
+            <option value="blog">ဆောင်းပါး လုပ်ဆောင်ချက်များ</option>
             <option value="adoption">မွေးစားခြင်း လုပ်ဆောင်ချက်များ</option>
             <option value="report">တိုင်ကြားချက် လုပ်ဆောင်ချက်များ</option>
           </select>
@@ -395,7 +395,7 @@ async function loadDashboard() {
       statCard('', Object.values(s.pets).reduce(function(a,b){ return a+b; }, 0), 'စုစုပေါင်း အိမ်မွေးတိရစ္ဆာန်များ', (s.pets.available||0) + ' ရရှိနိုင်သည်') +
       statCard('', Object.values(s.adoptions).reduce(function(a,b){ return a+b; }, 0), 'စုစုပေါင်း မွေးစားခြင်းများ', (s.adoptions.approved||0) + ' အတည်ပြုပြီး') +
       statCard('', (s.payments.completed ? fmtMoney(s.payments.completed.profit) : '0 MMK'), 'ဝင်ငွေ (Platform Profit)', (s.payments.completed ? s.payments.completed.count : 0) + ' ငွေပေးချေမှု ပြီးစီးသည်') +
-      statCard('', (s.blogs.published||0), 'ထုတ်ဝေထားသော ဘလော့ခ်များ', (s.blogs.draft||0) + ' မူကြမ်းများ') +
+      statCard('', (s.blogs.published||0), 'ထုတ်ဝေထားသော ဆောင်းပါးများ', (s.blogs.draft||0) + ' မူကြမ်းများ') +
       statCard('', s.followups||0, 'နောက်ဆက်တွဲများ တင်သွင်းပြီး', 'မွေးစားပြီးနောက် စောင့်ကြည့်ခြင်း') +
       statCard('', s.reports.pending||0, 'ဆိုင်းငံ့ဆဲ တိုင်ကြားချက်များ', 'ပြန်လည်သုံးသပ်ရန် လိုအပ်သည်', s.reports.pending > 0 ? '#fdf0ec' : null) +
       statCard('', s.users.admins||0, 'အက်ဒမင်များ', 'ပလက်ဖောင်း စီမံခန့်ခွဲသူများ');
@@ -632,9 +632,9 @@ async function loadAdminBlogs() {
     if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">မအောင်မြင်ပါ။</div>'; return; }
     var blogs = res.data.blogs || [];
     var total = res.data.total || 0;
-    document.getElementById('blogs-total').textContent = total + ' ဘလော့ခ်များ';
+    document.getElementById('blogs-total').textContent = total + ' ဆောင်းပါးများ';
 
-    if (!blogs.length) { el.innerHTML = '<div class="empty-state"><h3>ဘလော့ခ် မတွေ့ရှိပါ</h3></div>'; return; }
+    if (!blogs.length) { el.innerHTML = '<div class="empty-state"><h3>ဆောင်းပါး မတွေ့ရှိပါ</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
       '<th>ခေါင်းစဉ်</th><th>စာရေးသူ</th><th>အမျိုးအစား</th><th>အခြေအနေ</th><th>ကြည့်ရှုမှုများ</th><th>ရက်စွဲ</th><th>လုပ်ဆောင်ချက်များ</th>' +
@@ -671,10 +671,10 @@ async function changeBlogStatus(id, status) {
 }
 
 async function deleteAdminBlog(id, title) {
-  if (!confirm('ဘလော့ခ် "' + title + '" အား ဖျက်မှာ သေချာပါသလား။ ဤလုပ်ဆောင်ချက်ကို ပြန်၍မရနိုင်ပါ။')) return;
+  if (!confirm('ဆောင်းပါး "' + title + '" အား ဖျက်မှာ သေချာပါသလား။ ဤလုပ်ဆောင်ချက်ကို ပြန်၍မရနိုင်ပါ။')) return;
   try {
     var res = await Admin.deleteBlog(id);
-    if (res && res.ok) { showToast('ဘလော့ခ် ဖျက်လိုက်ပါပြီ။', 'success'); loadAdminBlogs(); }
+    if (res && res.ok) { showToast('ဆောင်းပါး ဖျက်လိုက်ပါပြီ။', 'success'); loadAdminBlogs(); }
     else showToast(res.data.message||'မအောင်မြင်ပါ။', 'error');
   } catch(e) { showToast('အမှား။', 'error'); }
 }
@@ -826,7 +826,7 @@ async function loadReports() {
       '<th>ပစ်မှတ်</th><th>တိုင်ကြားသူ</th><th>အကြောင်းပြချက်</th><th>အသေးစိတ်</th><th>အခြေအနေ</th><th>ရက်စွဲ</th><th>လုပ်ဆောင်ချက်များ</th>' +
     '</tr></thead><tbody>' +
     list.map(function(r) {
-      var target = r.pet_name ? 'အိမ်မွေးတိရစ္ဆာန်: ' + r.pet_name : (r.blog_title ? 'ဘလော့ခ်: ' + r.blog_title.substring(0,30) : '\u2014');
+      var target = r.pet_name ? 'အိမ်မွေးတိရစ္ဆာန်: ' + r.pet_name : (r.blog_title ? 'ဆောင်းပါး: ' + r.blog_title.substring(0,30) : '\u2014');
       return '<tr>' +
         '<td style="font-weight:bold">' + target + '</td>' +
         '<td style="font-size:0.82rem;color:#6b7a8d">' + (r.reporter_name||'\u2014') + '</td>' +
@@ -852,7 +852,7 @@ function openResolveReport(id, target, petId, blogId) {
   document.getElementById('resolve-report-info').innerHTML =
     '<strong>တိုင်ကြားခံရသည့်အရာ:</strong> ' + target + '<br>' +
     (petId ? '<div style="margin-top:4px;color:#9baab8">အိမ်မွေးတိရစ္ဆာန် ID: ' + petId + '</div>' : '') +
-    (blogId ? '<div style="margin-top:4px;color:#9baab8">ဘလော့ခ် ID: ' + blogId + '</div>' : '');
+    (blogId ? '<div style="margin-top:4px;color:#9baab8">ဆောင်းပါး ID: ' + blogId + '</div>' : '');
 
   var sel = document.getElementById('resolve-action');
   Array.from(sel.options).forEach(function(opt) {

@@ -26,6 +26,12 @@ function p(pageName) {
   return inPages ? pageName : 'pages/' + pageName;
 }
 
+// Use this for loading images/assets from the pages/images folder
+function imgAsset(filename) {
+  var inPages = window.location.pathname.indexOf('/pages/') !== -1;
+  return (inPages ? '' : 'pages/') + 'images/' + filename;
+}
+
 function getToken() { return localStorage.getItem('token'); }
 function getUser()  {
   try { return JSON.parse(localStorage.getItem('user')); } catch(e) { return null; }
@@ -216,7 +222,6 @@ function initModals() {
     });
   });
 }
-
 function renderNavbar() {
   var user = getUser();
   var token = getToken();
@@ -225,43 +230,52 @@ function renderNavbar() {
   var nav = document.getElementById('navbar');
   if (!nav) return;
 
-  var bellSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
+  // Determine correct relative path for images
+  var imgBase = window.location.pathname.indexOf('/pages/') !== -1 ? '../' : '';
 
+  var bellSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
   var sunSvg = '<svg class="theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
   var moonSvg = '<svg class="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 
   var avatarHtml = '';
   if (user.avatar_url) {
-    avatarHtml = '<img src="' + imgUrl(user.avatar_url) + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover" onerror="this.outerHTML=\'' + escapeHtml(initials(user.name)) + '\'">';
+    avatarHtml = '<img src="' + imgUrl(user.avatar_url) + '" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=\'' + escapeHtml(initials(user.name)) + '\'">';
   } else {
     avatarHtml = initials(user.name);
   }
 
-  nav.innerHTML =
+    nav.innerHTML =
     '<div class="container">' +
-      '<a href="' + p() + '" class="nav-logo">Pet Rehoming</a>' +
-      '<nav class="nav-links">' +
-        '<a href="' + p() + '">Home</a>' +
-        '<a href="' + p('pets.html') + '">Pets</a>' +
-        '<a href="' + p('blogs.html') + '">Blogs</a>' +
-        '<a href="' + p('chat.html') + '">PawBot</a>' +
-        '<a href="' + p('messages.html') + '">Messages</a>' +
-        '<a href="' + p('my-pets.html') + '">My Pets</a>' +
-        (isAdmin ? '<a href="' + p('admin.html') + '">Admin</a>' : '') +
-      '</nav>' +
-      '<div class="nav-actions">' +
-        '<button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">' + sunSvg + moonSvg + '</button>' +
-        (isLoggedIn
-          ? '<button class="nav-notif-btn" onclick="window.location.href=\'' + p('notifications.html') + '\'" id="nav-notif-btn">' + bellSvg + '<span class="notif-badge hidden" id="notif-badge">0</span></button>' +
-            '<button class="nav-avatar" onclick="window.location.href=\'' + p('profile.html') + '\'" title="' + escapeHtml(user.name) + '">' + avatarHtml + '</button>' +
-            '<button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>'
-          : '<a href="' + p('login.html') + '" class="btn btn-outline btn-sm">Login</a>' +
-            '<a href="' + p('register.html') + '" class="btn btn-primary btn-sm">Register</a>'
-        ) +
+      '<div class="nav-left">' +
+        '<a href="' + p() + '" class="nav-logo">' +
+          '<img src="' + imgAsset('logo1.jpg') + '" class="nav-logo-img" alt="Site Logo">' +
+          '' +
+        '</a>' +
+        '<nav class="nav-links">' +
+          '<a href="' + p() + '">ပင်မစာမျက်နှာ</a>' +
+          '<a href="' + p('pets.html') + '">အိမ်မွေးတိရစ္ဆာန်များ</a>' +
+          '<a href="' + p('blogs.html') + '">ဆောင်းပါးများ</a>' +
+          '<a href="' + p('chat.html') + '">PawBot</a>' +
+          '<a href="' + p('messages.html') + '">မက်ဆေ့ခ်ျများ</a>' +
+          '<a href="' + p('my-pets.html') + '">ကျွန်ုပ်၏ အိမ်မွေးတိရစ္ဆာန်များ</a>' +
+          (isAdmin ? '<a href="' + p('admin.html') + '">အက်ဒမင်</a>' : '') +
+        '</nav>' +
       '</div>' +
-      '<button class="nav-menu-btn" onclick="toggleMobileMenu()">&#9776;</button>' +
+      '<div class="nav-right">' +
+        '<div class="nav-actions">' +
+          '<button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">' + sunSvg + moonSvg + '</button>' +
+          (isLoggedIn
+            ? '<button class="nav-notif-btn" onclick="window.location.href=\'' + p('notifications.html') + '\'" id="nav-notif-btn" aria-label="Notifications">' + bellSvg + '<span class="notif-badge hidden" id="notif-badge">0</span></button>' +
+              '<button class="nav-avatar" onclick="window.location.href=\'' + p('profile.html') + '\'" title="' + escapeHtml(user.name) + '">' + avatarHtml + '</button>' +
+              '<button class="btn btn-secondary btn-sm btn-text" onclick="logout()">အကောင့်ထွက်ရန်</button>'
+            : '<a href="' + p('login.html') + '" class="btn btn-outline btn-sm btn-text">အကောင့်ဝင်ရန်</a>' +
+              '<a href="' + p('register.html') + '" class="btn btn-primary btn-sm btn-text">အကောင့်ဖွင့်ရန်</a>'
+          ) +
+          '<img src="' + imgAsset('logo2.jpeg') + '" class="nav-corner-logo" alt="Brand Logo">' +
+        '</div>' +
+        '<button class="nav-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">&#9776;</button>' +
+      '</div>' +
     '</div>';
-
   var mm = document.getElementById('mobile-menu');
   if (!mm) {
     mm = document.createElement('div');
@@ -269,6 +283,12 @@ function renderNavbar() {
     mm.className = 'mobile-menu';
     document.body.insertBefore(mm, document.body.firstChild);
   }
+  var nav = document.getElementById('navbar');
+if (nav && nav.parentNode) {
+  nav.parentNode.insertBefore(mm, nav.nextSibling);
+} else {
+  document.body.appendChild(mm);
+}
   mm.innerHTML =
     '<a href="' + p() + '">Home</a>' +
     '<a href="' + p('pets.html') + '">Browse Pets</a>' +

@@ -5,12 +5,11 @@ const { createAgreement } = require('./agreementController');
 const { scheduleFollowupReminders } = require('../services/reminderScheduler');
 const { logStatusChange } = require('../services/petStatusHistory');
 
-// Helper function to calculate fees and format numbers
 const calculateOwnerPayout = (baseFee) => {
   const fee = parseFloat(baseFee) || 0;
-  const serviceFee = fee * 0.04;       // 4% Service Fee
-  const transactionFee = fee * 0.015;  // 1.5% Transaction Fee
-  const totalDeduction = serviceFee + transactionFee; // 5.5% Total
+  const serviceFee = fee * 0.04;
+  const transactionFee = fee * 0.015;
+  const totalDeduction = serviceFee + transactionFee;
   const netPayout = fee - totalDeduction;
 
   return {
@@ -22,7 +21,6 @@ const calculateOwnerPayout = (baseFee) => {
   };
 };
 
-// POST /api/pets/:id/adopt  — submit adoption request
 const requestAdoption = async (req, res) => {
   const petId = req.params.id;
   const { message } = req.body;
@@ -33,13 +31,12 @@ const requestAdoption = async (req, res) => {
       [petId]
     );
     
-    if (!pets.length) return res.status(404).json({ message: 'Pet not found.' });
+    if (!pets.length) return res.status(404).json({ message: 'အိမ်မွေးတိရစ္ဆာန် မတွေ့ရှိပါ။' });
     const pet = pets[0];
     
-    if (pet.status !== 'available') return res.status(400).json({ message: 'Pet is not available for adoption.' });
-    if (pet.owner_id === req.user.id) return res.status(400).json({ message: 'You cannot adopt your own pet.' });
+    if (pet.status !== 'available') return res.status(400).json({ message: 'ဤအိမ်မွေးတိရစ္ဆာန်သည် မွေးစားရန် မရရှိနိုင်ပါ။' });
+    if (pet.owner_id === req.user.id) return res.status(400).json({ message: 'ကိုယ်ပိုင်အိမ်မွေးတိရစ္ဆာန်ကို မွေးစား၍မရပါ။' });
 
-    // 1. Only check if they have an ACTIVE request right now
     const { rows: activeReqs } = await pool.query(
       `SELECT id FROM adoption_requests 
        WHERE pet_id=$1 AND requester_id=$2 AND status IN ('pending', 'approved')`,
@@ -47,10 +44,9 @@ const requestAdoption = async (req, res) => {
     );
 
     if (activeReqs.length > 0) {
-      return res.status(409).json({ message: 'You already have an active request for this pet. Please cancel it first to submit a new one.' });
+      return res.status(409).json({ message: 'ဤအိမ်မွေးတိရစ္ဆာန်အတွက် တက်ကြွသော တောင်းဆိုချက်တစ်ခု ရှိနေပါသည်။ အသစ်တစ်ခု တင်သွင်းရန် ယခင်တောင်းဆိုချက်ကို အရင် ဖျက်သိမ်းပါ။' });
     }
 
-    // 2. Insert a BRAND NEW request every time (preserves history of old cancelled ones)
     const ins = await pool.query(
       `INSERT INTO adoption_requests (pet_id, requester_id, message)
        VALUES ($1,$2,$3) RETURNING *`,
@@ -59,26 +55,25 @@ const requestAdoption = async (req, res) => {
     const requestRow = ins.rows[0];
 
     res.status(201).json({
-      message: 'Adoption request submitted.',
+      message: 'မွေးစားရန် တောင်းဆိုချက် တင်သွင်းပြီးပါပြီ။',
       request: requestRow,
       paymentRequired: pet.fee_type === 'paid',
       adoptionFee: pet.fee_type === 'paid' ? pet.adoption_fee : 0,
     });
 
-    // ✅ DETAILED NOTIFICATION LOGIC
-    let notifTitle = `New adoption request for ${pet.name}`;
-    let notifBody = `${req.user.name} wants to adopt your pet.`;
+    let notifTitle = `${pet.name} အတွက် မွေးစားရန် တောင်းဆိုချက်အသစ်`;
+    let notifBody = `${req.user.name} မှ သင်၏အိမ်မွေးတိရစ္ဆာန်ကို မွေးစားလိုပါသည်။`;
     
     if (pet.fee_type === 'paid' && pet.adoption_fee > 0) {
       const calc = calculateOwnerPayout(pet.adoption_fee);
       
       notifBody = 
-        `${req.user.name} has paid ${calc.baseFee} MMK for the adoption. ` +
-        `Platform fees have been deducted from your payout: ` +
-        `Service Fee (4%) = ${calc.serviceFee} MMK, ` +
-        `Transaction Fee (1.5%) = ${calc.transactionFee} MMK. ` +
-        `Total Deduction = ${calc.totalDeduction} MMK. ` +
-        `Your final net payout is ${calc.netPayout} MMK.`;
+        `${req.user.name} မှ မွေးစားခ ${calc.baseFee} ကျပ် ပေးချေထားပါသည်။ ` +
+        `သင်၏ရရှိငွေမှ ပလက်ဖောင်းအခကြေးငွေများ နုတ်ယူထားပါသည်- ` +
+        `ဝန်ဆောင်မှုခ (4%) = ${calc.serviceFee} ကျပ်၊ ` +
+        `ငွေလွှဲခ (1.5%) = ${calc.transactionFee} ကျပ်။ ` +
+        `စုစုပေါင်း နုတ်ယူငွေ = ${calc.totalDeduction} ကျပ်။ ` +
+        `သင်၏ နောက်ဆုံးရရှိငွေမှာ ${calc.netPayout} ကျပ် ဖြစ်ပါသည်။`;
     }
 
     notify(pet.owner_id, {
@@ -99,11 +94,10 @@ const requestAdoption = async (req, res) => {
       .catch(err => console.error('Email failed:', err.message));
 
   } catch (err) {
-    res.status(500).json({ message: 'Server error.', error: err.message });
+    res.status(500).json({ message: 'ဆာဗာ အမှား။', error: err.message });
   }
 };
 
-// GET /api/adoption-requests/mine
 const myRequests = async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -117,11 +111,10 @@ const myRequests = async (req, res) => {
     );
     res.json({ requests: rows });
   } catch (err) {
-    res.status(500).json({ message: 'Server error.', error: err.message });
+    res.status(500).json({ message: 'ဆာဗာ အမှား။', error: err.message });
   }
 };
 
-// GET /api/adoption-requests/received
 const receivedRequests = async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -135,15 +128,14 @@ const receivedRequests = async (req, res) => {
     );
     res.json({ requests: rows });
   } catch (err) {
-    res.status(500).json({ message: 'Server error.', error: err.message });
+    res.status(500).json({ message: 'ဆာဗာ အမှား။', error: err.message });
   }
 };
 
-// PATCH approve/reject
 const reviewRequest = async (req, res) => {
   const { status } = req.body;
   if (!['approved', 'rejected'].includes(status))
-    return res.status(400).json({ message: 'Status must be approved or rejected.' });
+    return res.status(400).json({ message: 'အခြေအနေသည် အတည်ပြုပြီး သို့မဟုတ် ငြင်းပယ်ထားသည် ဖြစ်ရပါမည်။' });
 
   const client = await pool.connect();
   try {
@@ -155,11 +147,11 @@ const reviewRequest = async (req, res) => {
       [req.params.id]
     );
 
-    if (!rows.length) return res.status(404).json({ message: 'Request not found.' });
+    if (!rows.length) return res.status(404).json({ message: 'တောင်းဆိုချက် မတွေ့ရှိပါ။' });
     const req_ = rows[0];
 
     if (req_.owner_id !== req.user.id && req.user.role !== 'admin')
-      return res.status(403).json({ message: 'Not authorized.' });
+      return res.status(403).json({ message: 'အခွင့်အာဏာ မရှိပါ။' });
 
     await client.query(
       `UPDATE adoption_requests SET status=$1, reviewed_at=NOW() WHERE id=$2`,
@@ -195,11 +187,11 @@ const reviewRequest = async (req, res) => {
     notify(req_.requester_id, {
       type: 'adoption_reviewed',
       title: status === 'approved'
-        ? `Your adoption request was approved!`
-        : `Adoption request update`,
+        ? 'သင်၏မွေးစားရန် တောင်းဆိုချက် အတည်ပြုပြီးပါပြီ။'
+        : 'မွေးစားရန် တောင်းဆိုချက် အပ်ဒိတ်',
       body: status === 'approved'
-        ? `Your request has been approved. ${req_.fee_type === 'paid' ? 'Please complete the payment to finalize adoption.' : 'Please connect in Messages to chat with the owner and arrange pickup!'}`
-        : `Your adoption request was not approved this time.`,
+        ? `သင်၏တောင်းဆိုချက် အတည်ပြုပြီးပါပြီ။ ${req_.fee_type === 'paid' ? 'မွေးစားခြင်း အပြီးသတ်ရန် ငွေပေးချေမှု ပြုလုပ်ပါ။' : 'မက်ဆေ့ခ်ျများတွင် ပိုင်ရှင်နှင့် ဆက်သွယ်၍ အိမ်မွေးတိရစ္ဆာန်ကို သွားရောက်ကြိုယူရန် စီစဉ်ပါ။'}`
+        : 'ဤတစ်ကြိမ်တွင် သင်၏မွေးစားရန် တောင်းဆိုချက် အတည်ပြုမခံရပါ။',
       link: `/pages/messages.html?conv=recent`,
     });
 
@@ -239,19 +231,18 @@ const reviewRequest = async (req, res) => {
     }
 
     res.json({
-      message: `Request ${status}.`,
+      message: `တောင်းဆိုချက် ${status}။`,
       requiresPayment: status === 'approved' && req_.fee_type === 'paid'
     });
 
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ message: 'Server error.', error: err.message });
+    res.status(500).json({ message: 'ဆာဗာ အမှား။', error: err.message });
   } finally {
     client.release();
   }
 };
 
-// PATCH cancel
 const cancelRequest = async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -259,24 +250,23 @@ const cancelRequest = async (req, res) => {
       [req.params.id]
     );
 
-    if (!rows.length) return res.status(404).json({ message: 'Request not found.' });
+    if (!rows.length) return res.status(404).json({ message: 'တောင်းဆိုချက် မတွေ့ရှိပါ။' });
     if (rows[0].requester_id !== req.user.id)
-      return res.status(403).json({ message: 'Not authorized.' });
+      return res.status(403).json({ message: 'အခွင့်အာဏာ မရှိပါ။' });
     if (rows[0].status !== 'pending')
-      return res.status(400).json({ message: 'Only pending requests can be cancelled.' });
+      return res.status(400).json({ message: 'ဆိုင်းငံ့ဆဲ တောင်းဆိုချက်များကိုသာ ဖျက်သိမ်းနိုင်ပါသည်။' });
 
     await pool.query(
       `UPDATE adoption_requests SET status='cancelled' WHERE id=$1`,
       [req.params.id]
     );
 
-    res.json({ message: 'Request cancelled.' });
+    res.json({ message: 'တောင်းဆိုချက် ဖျက်သိမ်းပြီးပါပြီ။' });
   } catch (err) {
-    res.status(500).json({ message: 'Server error.', error: err.message });
+    res.status(500).json({ message: 'ဆာဗာ အမှား။', error: err.message });
   }
 };
 
-// Link payment to an adoption request
 const linkPayment = async (req, res) => {
   try {
     const { payment_id } = req.body;
@@ -284,7 +274,7 @@ const linkPayment = async (req, res) => {
     const userId = req.user.id;
 
     if (!payment_id) {
-      return res.status(400).json({ ok: false, message: 'Payment ID is required' });
+      return res.status(400).json({ ok: false, message: 'ငွေပေးချေမှု ID လိုအပ်ပါသည်' });
     }
 
     const check = await pool.query(
@@ -293,7 +283,7 @@ const linkPayment = async (req, res) => {
     );
 
     if (check.rows.length === 0) {
-      return res.status(404).json({ ok: false, message: 'Request not found' });
+      return res.status(404).json({ ok: false, message: 'တောင်းဆိုချက် မတွေ့ရှိပါ' });
     }
 
     const result = await pool.query(
@@ -308,7 +298,7 @@ const linkPayment = async (req, res) => {
 
   } catch (err) {
     console.error('linkPayment error:', err);
-    res.status(500).json({ ok: false, message: 'Failed to link payment' });
+    res.status(500).json({ ok: false, message: 'ငွေပေးချေမှု ချိတ်ဆက်၍မရပါ' });
   }
 };
 
