@@ -33,7 +33,12 @@
 .pay-alert { background:var(--warning-bg); border:1px solid var(--warning-border); border-radius:8px; padding:14px; margin-bottom:14px; display:flex; align-items:center; gap:12px; }
 .pay-alert-icon { font-size:1.5rem; }
 .pay-alert-text h4 { margin:0 0 4px; color:var(--warning-text); font-size:0.9rem; }
-.pay-alert-text p { margin:0; color:var(--text-secondary); font-size:0.84rem; }</style>
+.pay-alert-text p { margin:0; color:var(--text-secondary); font-size:0.84rem; }
+
+/* Followup list styles */
+.followup-item { border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:12px; background:var(--bg-card); }
+.followup-img { max-width: 250px; width: 100%; border-radius:8px; margin-top:10px; border:1px solid var(--border); display:block; }
+</style>
 </head>
 <body>
 
@@ -112,6 +117,22 @@
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
       <button class="btn btn-secondary" onclick="closeModal('followup-modal')">မလုပ်တော့ပါ</button>
       <button class="btn btn-primary" id="fu-submit-btn" onclick="submitFollowup()">တင်သွင်းရန်</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW MODAL: View Followups -->
+<div class="modal-overlay" id="view-followups-modal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <h3>နောက်ဆက်တွဲ မှတ်တမ်းများ</h3>
+      <button class="modal-close" onclick="closeModal('view-followups-modal')">x</button>
+    </div>
+    <div id="view-followups-content" style="max-height:60vh; overflow-y:auto;">
+      <div class="loading-wrap"><div class="spinner"></div></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('view-followups-modal')">ပိတ်ရန်</button>
     </div>
   </div>
 </div>
@@ -209,7 +230,8 @@ async function loadReceived() {
       } else if (r.status === 'approved') {
         statusNote = '<div style="margin-bottom:14px;padding:10px;background:var(--success-bg);border-radius:8px;font-size:0.86rem;color:var(--success-text);border:1px solid var(--success-border);">အတည်ပြုပြီးပါပြီ။ မွေးစားသူနှင့် ယခု စာတိုပေးပို့နိုင်ပါပြီ။</div>';
         actionsHtml = '<a href="/pages/messages.html" class="btn btn-primary btn-sm">မွေးစားသူထံ စာတိုပေးပို့ရန်</a>' +
-                      '<button onclick="openAgreementModal(' + r.id + ')" class="btn btn-outline btn-sm">သဘောတူညီချက် ကြည့်ရှုရန်</button>';
+                      '<button onclick="openAgreementModal(' + r.id + ')" class="btn btn-outline btn-sm">သဘောတူညီချက် ကြည့်ရှုရန်</button>' +
+                      '<button onclick="viewFollowups(' + r.id + ')" class="btn btn-outline btn-sm">နောက်ဆက်တွဲများ ကြည့်ရှုရန်</button>';
       } else if (r.status === 'rejected') {
         statusNote = '<div style="margin-bottom:14px;padding:10px;background:var(--danger-bg);border-radius:8px;font-size:0.86rem;color:var(--danger-text);border:1px solid var(--danger-border);">ငြင်းပယ်ထားသည်။</div>';
       }
@@ -239,6 +261,42 @@ async function loadReceived() {
       '</div>';
     }).join('');
   } catch(e) { el.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
+}
+
+async function viewFollowups(requestId) {
+  var content = document.getElementById('view-followups-content');
+  content.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  openModal('view-followups-modal');
+  
+  try {
+    var res = await Monitoring.getFollowups(requestId);
+    if (!res || !res.ok) {
+      content.innerHTML = '<div class="alert alert-danger">ဖွင့်၍မရပါ။</div>';
+      return;
+    }
+    
+    var followups = res.data.followups || [];
+    if (!followups.length) {
+      content.innerHTML = '<div class="empty-state"><h3>နောက်ဆက်တွဲ မရှိသေးပါ</h3><p>မွေးစားသူမှ တင်သွင်းထားသော နောက်ဆက်တွဲ မရှိသေးပါ။</p></div>';
+      return;
+    }
+    
+    content.innerHTML = followups.map(function(f) {
+      var healthColor = f.health_status === 'poor' ? 'var(--danger-text)' : (f.health_status === 'fair' ? 'var(--warning-text)' : 'var(--success-text)');
+      return '<div class="followup-item">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+          '<strong style="color:' + healthColor + ';">ကျန်းမာရေး: ' + (f.health_status || '-') + '</strong>' +
+          '<span style="font-size:0.78rem;color:var(--text-muted)">' + fmtDate(f.created_at) + '</span>' +
+        '</div>' +
+        (f.weight_kg ? '<div style="font-size:0.84rem;color:var(--text-secondary);margin-bottom:6px;">ကိုယ်အလေးချိန်: ' + f.weight_kg + ' ကီလိုဂရမ်</div>' : '') +
+        (f.notes ? '<div style="font-size:0.86rem;color:var(--text-primary);background:var(--bg-chat);padding:8px;border-radius:6px;margin-bottom:8px;">' + escapeHtml(f.notes) + '</div>' : '') +
+        (f.image_url ? '<img src="' + imgUrl(f.image_url) + '" class="followup-img" alt="Followup Image">' : '') +
+      '</div>';
+    }).join('');
+    
+  } catch(e) {
+    content.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div>';
+  }
 }
 
 async function cancelRequest(id) {
@@ -352,8 +410,6 @@ async function signAgreement() {
   } catch(e) { showToast('တစ်ခုခု မှားယွင်းသွားသည်။', 'error'); }
   btn.disabled = false; btn.textContent = 'သဘောတူပါသည်';
 }
-
-
 </script>
 </body>
 </html>

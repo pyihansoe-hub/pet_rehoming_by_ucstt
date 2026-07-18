@@ -551,7 +551,7 @@ function renderActions(pet) {
   var isOwner = currentUser && pet.owner_id === currentUser.id;
 
   if (isOwner) {
-    area.innerHTML = '<a href="add-pet.html?id=' + pet.id + '" class="btn btn-secondary btn-full" style="margin-bottom:8px">စာရင်း ပြင်ဆင်ရန်</a><a href="my-pets.html" class="btn btn-outline btn-full">ကျွန်ုပ်၏ အိမ်မွေးတိရစ္ဆာန်များ</a>';
+    area.innerHTML = '<a href="add-pet.html?id=' + pet.id + '" class="btn btn-secondary btn-full" style="margin-bottom:8px">စာရင်း ပြင်ဆင်ရန်</a><a href="my-pets.html" class="btn btn-outline btn-full">ပို့စ်များ</a>';
     return;
   }
   if (pet.status !== 'available') {

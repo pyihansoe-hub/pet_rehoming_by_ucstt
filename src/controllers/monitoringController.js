@@ -1,6 +1,6 @@
-
 const pool    = require('../db/pool');
 const welfare = require('../services/welfare');
+const notify  = require('../services/notify'); // Make sure to import notify at the top
 
 // ── ADOPTER: My adopted pets with monitoring status ───────────
 // GET /api/monitoring/my-adoptions
@@ -92,7 +92,7 @@ const myRehomed = async (req, res) => {
          (SELECT COUNT(*) FROM welfare_flags
           WHERE adoption_request_id = ar.id AND resolved = FALSE) AS open_flags
        FROM adoption_requests ar
-       JOIN pets p  ON p.id = ar.pet_id
+       JOIN pets p ON p.id = ar.pet_id
        JOIN pet_types pt ON pt.id = p.pet_type_id
        JOIN users adopter ON adopter.id = ar.requester_id
        WHERE p.owner_id = $1
@@ -191,7 +191,7 @@ const getTimeline = async (req, res) => {
 // POST /api/monitoring/followups/:adoptionRequestId
 const submitFollowup = async (req, res) => {
   const { health_status = 'good', weight_kg, notes, checkin_type } = req.body;
-  const image_url = req.file ? `/uploads/followups/${req.file.filename}` : null;
+  const image_url = req.file ? `/uploads/pets/${req.file.filename}` : null;
 
   if (!['good', 'fair', 'poor'].includes(health_status))
     return res.status(400).json({ message: 'health_status must be good, fair, or poor.' });
@@ -199,9 +199,9 @@ const submitFollowup = async (req, res) => {
   const arId = req.params.adoptionRequestId;
 
   try {
-    // verify access
+    // verify access (Added p.name AS pet_name to the query)
     const { rows: ar } = await pool.query(
-      `SELECT ar.requester_id, p.owner_id, ar.monitoring_status, ar.pet_id
+      `SELECT ar.requester_id, p.owner_id, ar.monitoring_status, ar.pet_id, p.name AS pet_name
        FROM adoption_requests ar JOIN pets p ON p.id=ar.pet_id
        WHERE ar.id=$1 AND ar.status='approved'`,
       [arId]
@@ -263,6 +263,43 @@ const submitFollowup = async (req, res) => {
 
     // check if monitoring is now complete
     const completed = await welfare.checkMonitoringComplete(arId);
+
+    // ───────────────────────────────────────────────────────────
+    // SEND NOTIFICATION & EMAIL TO OWNER
+    // ───────────────────────────────────────────────────────────
+    try {
+      const ownerId = adoption.owner_id;
+      const petName = adoption.pet_name;
+
+      // 1. In-App Notification
+      notify(ownerId, {
+        type: 'followup_submitted',
+        title: 'မွေးစားပြီးနောက် နောက်ဆက်တွဲ တင်သွင်းထားသည်',
+        body: `${petName} အတွက် မွေးစားသူမှ နောက်ဆက်တွဲ တင်သွင်းထားပါသည်။ ကျန်းမာရေးအခြေအနေ: ${health_status || 'မှတ်ပါထားခြင်းမရှိပါ'}`,
+        link: `/pages/adoption-requests.html?tab=received`,
+      });
+
+      // 2. Email Notification
+      const { send } = require('../services/email');
+      const { rows: ownerRows } = await pool.query('SELECT name, email FROM users WHERE id=$1', [ownerId]);
+      
+      if (ownerRows.length > 0) {
+        const subject = `${petName} အတွက် နောက်ဆက်တွဲ တင်သွင်းထားပါသည်`;
+        const html = `
+          <p>မင်္ဂလာပါ ${ownerRows[0].name}၊</p>
+          <p>${petName} ကို မွေးစားထားသူမှ နောက်ဆက်တွဲ အသစ် တင်သွင်းထားပါသည်။</p>
+          <p><strong>ကျန်းမာရေးအခြေအနေ:</strong> ${health_status || '-'}</p>
+          <p><strong>ကိုယ်အလေးချိန်:</strong> ${weight_kg || '-'} kg</p>
+          <p><strong>မှတ်စုများ:</strong> ${notes || '-'}</p>
+          ${image_url ? `<p><img src="${req.protocol}://${req.get('host')}${image_url}" style="max-width:300px;border-radius:8px;"></p>` : ''}
+          <p>အသေးစိတ်ကြည့်ရန် ဝက်ဘ်ဆိုက်တွင် ဝင်ရောက်ကြည့်ရှုပါ။</p>
+        `;
+        await send(ownerRows[0].email, subject, html);
+      }
+    } catch (notifErr) {
+      console.error('Owner notification failed (non-fatal):', notifErr.message);
+    }
+    // ───────────────────────────────────────────────────────────
 
     res.status(201).json({
       message: 'Follow-up submitted.',
