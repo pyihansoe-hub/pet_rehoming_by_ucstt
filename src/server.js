@@ -84,7 +84,7 @@ app.use('/api/favorites',         require('./routes/favorite'));
 app.use('/api/chat', chatLimiter, require('./routes/chat'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/admin',             require('./routes/admin'));
-
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ message: err.message || 'Unexpected error.' });

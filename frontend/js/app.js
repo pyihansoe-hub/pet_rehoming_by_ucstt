@@ -244,7 +244,7 @@ function renderNavbar() {
     avatarHtml = initials(user.name);
   }
 
-    nav.innerHTML =
+  nav.innerHTML =
     '<div class="container">' +
       '<div class="nav-left">' +
         '<a href="' + p() + '" class="nav-logo">' +
@@ -257,7 +257,9 @@ function renderNavbar() {
           '<a href="' + p('blogs.html') + '">ဆောင်းပါးများ</a>' +
           '<a href="' + p('chat.html') + '">PawBot</a>' +
           '<a href="' + p('messages.html') + '">မက်ဆေ့ခ်ျများ</a>' +
-          '<a href="' + p('my-pets.html') + '">ကျွန်ုပ်၏ အိမ်မွေးတိရစ္ဆာန်များ</a>' +
+          '<a href="' + p('my-pets.html') + '">ပို့စ်များ</a>' +
+          // NEW LINK ADDED HERE:
+          (isLoggedIn ? '<a href="' + p('adoption-requests.html') + '">တောင်းဆိုချက်များ</a>' : '') +
           (isAdmin ? '<a href="' + p('admin.html') + '">အက်ဒမင်</a>' : '') +
         '</nav>' +
       '</div>' +
@@ -276,6 +278,7 @@ function renderNavbar() {
         '<button class="nav-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">&#9776;</button>' +
       '</div>' +
     '</div>';
+    
   var mm = document.getElementById('mobile-menu');
   if (!mm) {
     mm = document.createElement('div');
@@ -283,24 +286,24 @@ function renderNavbar() {
     mm.className = 'mobile-menu';
     document.body.insertBefore(mm, document.body.firstChild);
   }
-  var nav = document.getElementById('navbar');
-if (nav && nav.parentNode) {
-  nav.parentNode.insertBefore(mm, nav.nextSibling);
-} else {
-  document.body.appendChild(mm);
-}
+  if (nav && nav.parentNode) {
+    nav.parentNode.insertBefore(mm, nav.nextSibling);
+  } else {
+    document.body.appendChild(mm);
+  }
+  
+  // Also updated the mobile menu text to match Myanmar language
   mm.innerHTML =
-    '<a href="' + p() + '">Home</a>' +
-    '<a href="' + p('pets.html') + '">Browse Pets</a>' +
-    '<a href="' + p('blogs.html') + '">Blogs</a>' +
+    '<a href="' + p() + '">ပင်မစာမျက်နှာ</a>' +
+    '<a href="' + p('pets.html') + '">အိမ်မွေးတိရစ္ဆာန်များ</a>' +
+    '<a href="' + p('blogs.html') + '">ဆောင်းပါးများ</a>' +
     '<a href="' + p('chat.html') + '">PawBot</a>' +
-    '<a href="' + p('messages.html') + '">Messages</a>' +
-    '<a href="' + p('my-pets.html') + '">My Pets</a>' +
-    (isLoggedIn ? '<a href="' + p('profile.html') + '">Profile</a>' : '') +
-    (isLoggedIn ? '<a href="' + p('adoption-requests.html') + '">Adoptions</a>' : '') +
-    (isLoggedIn ? '<a href="' + p('messages.html') + '">Messages</a>' : '') +
-    (isAdmin    ? '<a href="' + p('admin.html') + '">Admin</a>' : '') +
-    (isLoggedIn ? '<a href="#" onclick="logout()">Logout</a>' : '<a href="' + p('login.html') + '">Login</a>');
+    '<a href="' + p('messages.html') + '">မက်ဆေ့ခ်ျများ</a>' +
+    '<a href="' + p('my-pets.html') + '">ပို့စ်များ</a>' +
+    (isLoggedIn ? '<a href="' + p('adoption-requests.html') + '">တောင်းဆိုချက်များ</a>' : '') +
+    (isLoggedIn ? '<a href="' + p('profile.html') + '">ပရိုဖိုင်</a>' : '') +
+    (isAdmin    ? '<a href="' + p('admin.html') + '">အက်ဒမင်</a>' : '') +
+    (isLoggedIn ? '<a href="#" onclick="logout()">အကောင့်ထွက်ရန်</a>' : '<a href="' + p('login.html') + '">အကောင့်ဝင်ရန်</a>');
 
   var path = window.location.pathname;
   nav.querySelectorAll('.nav-links a').forEach(function(a) {
@@ -310,7 +313,6 @@ if (nav && nav.parentNode) {
 
   if (isLoggedIn) pollNotifications();
 }
-
 function toggleMobileMenu() {
   var mm = document.getElementById('mobile-menu');
   if (mm) mm.classList.toggle('open');
