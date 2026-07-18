@@ -6,7 +6,7 @@ const {
   getMessages,
   sendMessage,
   getUnreadCount,
-  deleteConversation
+  declineAndRefund
 } = require('../controllers/messageController');
 
 router.use(protect);
@@ -16,5 +16,8 @@ router.get('/conversations',      listConversations);
 router.post('/conversations',     getOrCreateConversation);
 router.get('/conversations/:id',  getMessages);
 router.post('/conversations/:id', sendMessage);
-router.delete('/conversations/:id', deleteConversation);
+
+// Refund & Pet Status update route
+router.post('/conversations/:id/decline-and-refund', declineAndRefund);
+
 module.exports = router;

@@ -54,18 +54,19 @@
 
     <div id="tabs-wrap">
       <div class="tabs">
-        <button class="tab-btn active" data-tab="tab-mine">Sent by Me</button>
-        <button class="tab-btn" data-tab="tab-received">Received</button>
-      </div>
-
-      <!-- SENT -->
-      <div class="tab-panel active" id="tab-mine">
-        <div id="mine-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+        <!-- SWAPPED ORDER: Received is now first -->
+        <button class="tab-btn active" data-tab="tab-received">Received</button>
+        <button class="tab-btn" data-tab="tab-mine">Sent by Me</button>
       </div>
 
       <!-- RECEIVED -->
-      <div class="tab-panel" id="tab-received">
+      <div class="tab-panel active" id="tab-received">
         <div id="received-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      </div>
+
+      <!-- SENT -->
+      <div class="tab-panel" id="tab-mine">
+        <div id="mine-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
       </div>
     </div>
 
@@ -135,12 +136,13 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!requireAuth()) return;
   initTabs('tabs-wrap');
 
+  // SWAPPED LOGIC: Default is now Received. If ?tab=mine is passed, switch to Mine.
   var params = new URLSearchParams(window.location.search);
-  if (params.get('tab') === 'received') {
+  if (params.get('tab') === 'mine') {
     document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
     document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
-    document.querySelector('[data-tab="tab-received"]').classList.add('active');
-    document.getElementById('tab-received').classList.add('active');
+    document.querySelector('[data-tab="tab-mine"]').classList.add('active');
+    document.getElementById('tab-mine').classList.add('active');
   }
 
   loadMine();
@@ -330,7 +332,7 @@ async function openAgreementModal(requestId) {
 
     content.innerHTML =
       '<div style="background:var(--bg-chat);padding:16px;border-radius:8px;margin-bottom:20px;font-size:0.9rem;color:var(--text-secondary);line-height:1.7;border:1px solid var(--border);">' +
-        (a.terms || 'By signing this agreement, both parties agree to the adoption terms. The adopter agrees to provide a safe and loving home, adequate food, water, and veterinary care. The owner agrees to accurately represent the pet\'s health and temperament.') +
+        (a.terms || 'ဤသဘောတူညီချက်ကို လက်မှတ်ရေးထိုးခြင်းဖြင့် နှစ်ဖက်စလုံးသည် မွေးစားခြင်းဆိုင်ရာ စည်းကမ်းချက်များကို သဘောတူပါသည်။ မွေးစားသူသည် ဘေးကင်းလုံခြုံပြီး ချစ်ခင်ယုယမှုရှိသော အိမ်တစ်ခု၊ လုံလောက်သော အစားအစာ၊ ရေနှင့် တိရစ္ဆာန်ဆေးကုသရေး စောင့်ရှောက်မှုတို့ကို ပေးအပ်ရန် သဘောတူပါသည်။ ပိုင်ရှင်သည် အိမ်မွေးတိရစ္ဆာန်၏ ကျန်းမာရေးနှင့် စရိုက်သဘာဝကို တိကျမှန်ကန်စွာ ဖော်ပြရန် သဘောတူပါသည်။') +
       '</div>' +
       '<div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;">' +
         '<div style="display:flex;align-items:center;gap:8px;font-size:0.9rem;padding:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;flex:1;">' +
@@ -364,6 +366,8 @@ async function signAgreement() {
   } catch(e) { showToast('Something went wrong.', 'error'); }
   btn.disabled = false; btn.textContent = 'I Agree';
 }
+
+
 </script>
 </body>
 </html>

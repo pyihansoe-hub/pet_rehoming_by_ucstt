@@ -13,7 +13,7 @@
     .conv-del-btn:hover { color:#e76f51; background:rgba(231,111,81,0.1); }
 
     .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; display:flex; align-items:center; justify-content:center; animation:fadeIn 0.15s ease; }
-    .modal-box { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:28px; max-width:380px; width:90%; text-align:center; animation:scaleIn 0.15s ease; }
+    .modal-box { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:28px; max-width:420px; width:90%; text-align:center; animation:scaleIn 0.15s ease; }
     .modal-box h3 { margin:0 0 8px; font-size:1.05rem; color:var(--text-primary); }
     .modal-box p { margin:0 0 22px; font-size:0.86rem; color:var(--text-muted); line-height:1.5; }
     .modal-actions { display:flex; gap:10px; justify-content:center; }
@@ -155,7 +155,6 @@ async function loadConversations() {
 
     var u = getUser();
     el.innerHTML = convs.map(function(c) {
-      // FIXED: Correctly identify if the logged-in user is the owner
       var isOwner   = u && u.name === c.owner_name;
       var otherName = isOwner ? c.adopter_name : c.owner_name;
       var hasUnread = +c.unread_count > 0;
@@ -173,7 +172,6 @@ async function loadConversations() {
             '<div class="conv-pet"> ' + (c.pet_name || '') + '</div>' +
             '<div class="conv-preview">' + (c.last_message || 'မက်ဆေ့ခ်ျ မရှိသေးပါ') + '</div>' +
           '</div>' +
-          // ONLY render Refund button if logged-in user is the Owner
           (isOwner ? '<button class="conv-del-btn" onclick="event.stopPropagation();showRefundModal(' + c.id + ',\'' + (c.pet_name || '').replace(/'/g, "\\'") + '\')" title="ငွေပြန်အမ်းရန်">❌</button>' : '') +
         '</div>' +
       '</div>';
@@ -321,10 +319,27 @@ function showRefundModal(convId, petName) {
   var modal = document.getElementById('delete-modal');
   modal.innerHTML =
     '<div class="modal-overlay" onclick="closeRefundModal(event)">' +
-      '<div class="modal-box" onclick="event.stopPropagation()">' +
-        '<h3>ငွေပြန်အမ်းခြင်း (Refund)</h3>' +
-        '<p><strong>' + escapeHtml(petName || 'ဤအိမ်မွေးတိရစ္ဆာန်') + '</strong> အတွက် ငွေပြန်အမ်း၍ ဆက်သွယ်မှုကို ဖျက်ရန် သေချာပါသလား။ ဤလုပ်ဆောင်ချက်ကြောင့် မွေးစားခြင်း တောင်းဆိုချက်ကို ဖျက်သိမ်းပြီး အိမ်မွေးတိရစ္ဆာန်ကို ပြန်လည် ရရှိနိုင်ရန် ပြောင်းလဲပါမည်။</p>' +
-        '<div class="modal-actions">' +
+      '<div class="modal-box" style="max-width: 420px; text-align: left;" onclick="event.stopPropagation()">' +
+        '<h3 style="text-align:center; margin-bottom: 12px;">ငွေပြန်အမ်းခြင်း (Refund)</h3>' +
+        '<p style="text-align:center;"><strong>' + escapeHtml(petName || 'ဤအိမ်မွေးတိရစ္ဆာန်') + '</strong> အတွက် ငွေပြန်အမ်းပြီး မွေးစားခြင်းကို ငြင်းပယ်ရန် သေချာပါသလား။</p>' +
+        '<div style="margin: 15px 0;">' +
+          '<div style="margin-bottom: 8px; font-weight: bold; font-size: 0.88rem; color: var(--text-primary);">အိမ်မွေးတိရစ္ဆာန်ကို မည်သို့ လုပ်ဆောင်မည်နည်း။</div>' +
+          '<label style="display:flex; align-items:center; gap:10px; padding:12px; border:1.5px solid var(--border); border-radius:8px; cursor:pointer; margin-bottom:8px;">' +
+            '<input type="radio" name="refund_choice" value="available" checked style="transform: scale(1.1);"> ' +
+            '<div>' +
+              '<div style="font-size:0.88rem; font-weight:500;">ပြန်လည် ရရှိနိုင်စေရန် (Available)</div>' +
+              '<small style="font-size:0.76rem; color:var(--text-muted);">အခြားသူများ မွေးစားနိုင်ရန် ပြန်လည် ဖော်ပြပါမည်။</small>' +
+            '</div>' +
+          '</label>' +
+          '<label style="display:flex; align-items:center; gap:10px; padding:12px; border:1.5px solid var(--border); border-radius:8px; cursor:pointer;">' +
+            '<input type="radio" name="refund_choice" value="withdrawn" style="transform: scale(1.1);"> ' +
+            '<div>' +
+              '<div style="font-size:0.88rem; font-weight:500;">စာရင်းမှ ဖျက်သိမ်းမည် (Withdrawn)</div>' +
+              '<small style="font-size:0.76rem; color:var(--text-muted);">စာရင်းမှ ထားတော့မည် မဟုတ်ပါ။</small>' +
+            '</div>' +
+          '</label>' +
+        '</div>' +
+        '<div class="modal-actions" style="margin-top: 20px;">' +
           '<button class="btn-modal-cancel" onclick="closeRefundModal()">မလုပ်တော့ပါ</button>' +
           '<button class="btn-modal-danger" id="confirm-refund-btn" onclick="confirmRefund(' + convId + ')">ငွေပြန်အမ်းရန်</button>' +
         '</div>' +
@@ -339,24 +354,20 @@ function closeRefundModal(e) {
 
 async function confirmRefund(convId) {
   var btn = document.getElementById('confirm-refund-btn');
+  var choice = document.querySelector('input[name="refund_choice"]:checked').value;
+  
   btn.disabled = true;
   btn.textContent = 'ငွေပြန်အမ်းနေသည်...';
 
   try {
-    var res = await Messages.deleteConversation(convId);
+    // Call the new API endpoint
+    var res = await Messages.declineAndRefund(convId, { pet_status_choice: choice });
+
     if (res && res.ok) {
       closeRefundModal();
+      // Reload messages to show the system message about the refund
       if (activeConvId === convId) {
-        activeConvId = null;
-        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-        document.getElementById('msg-header-area').style.display = 'none';
-        document.getElementById('msg-input-area').style.display  = 'none';
-        document.getElementById('msg-messages-area').innerHTML =
-          '<div class="msg-empty">' +
-            '<div style="font-size:2.5rem;margin-bottom:12px">💬</div>' +
-            '<div style="font-weight:bold;margin-bottom:6px">စကားပြောဆိုမှု မရွေးချယ်ရသေးပါ</div>' +
-            '<div style="font-size:0.86rem">စာတိုပေးပို့ရန် ဘယ်ဘက်မှ စကားပြောဆိုမှုတစ်ခုကို ရွေးချယ်ပါ။</div>' +
-          '</div>';
+        loadMessages(convId); 
       }
       loadConversations();
       showToast('ငွေပြန်အမ်းခြင်း ပြီးမြောက်ပါသည်။', 'success');

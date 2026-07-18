@@ -232,7 +232,7 @@
           <input type="text" id="blog-search" class="form-control" placeholder="ခေါင်းစဉ်ဖြင့် ရှာဖွေရန်..." oninput="debounceBlogs()">
           <select id="blog-status-filter" class="form-control" style="width:160px" onchange="loadAdminBlogs()">
             <option value="">အခြေအနေအားလုံး</option>
-            <option value="published">ထုတ်ဝေပြီး</option>
+            <option value="published">တင်ပြီး</option>
             <option value="draft">မူကြမ်း</option>
             <option value="archived">သိမ်းဆည်းထားသည်</option>
           </select>
@@ -395,7 +395,7 @@ async function loadDashboard() {
       statCard('', Object.values(s.pets).reduce(function(a,b){ return a+b; }, 0), 'စုစုပေါင်း အိမ်မွေးတိရစ္ဆာန်များ', (s.pets.available||0) + ' ရရှိနိုင်သည်') +
       statCard('', Object.values(s.adoptions).reduce(function(a,b){ return a+b; }, 0), 'စုစုပေါင်း မွေးစားခြင်းများ', (s.adoptions.approved||0) + ' အတည်ပြုပြီး') +
       statCard('', (s.payments.completed ? fmtMoney(s.payments.completed.profit) : '0 MMK'), 'ဝင်ငွေ (Platform Profit)', (s.payments.completed ? s.payments.completed.count : 0) + ' ငွေပေးချေမှု ပြီးစီးသည်') +
-      statCard('', (s.blogs.published||0), 'ထုတ်ဝေထားသော ဆောင်းပါးများ', (s.blogs.draft||0) + ' မူကြမ်းများ') +
+      statCard('', (s.blogs.published||0), 'တင်ထားသော ဆောင်းပါးများ', (s.blogs.draft||0) + ' မူကြမ်းများ') +
       statCard('', s.followups||0, 'နောက်ဆက်တွဲများ တင်သွင်းပြီး', 'မွေးစားပြီးနောက် စောင့်ကြည့်ခြင်း') +
       statCard('', s.reports.pending||0, 'ဆိုင်းငံ့ဆဲ တိုင်ကြားချက်များ', 'ပြန်လည်သုံးသပ်ရန် လိုအပ်သည်', s.reports.pending > 0 ? '#fdf0ec' : null) +
       statCard('', s.users.admins||0, 'အက်ဒမင်များ', 'ပလက်ဖောင်း စီမံခန့်ခွဲသူများ');
