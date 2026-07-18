@@ -106,8 +106,8 @@
 
       <div class="pawbot-sidebar">
         <div class="pawbot-sidebar-header">
-          <span style="font-size:0.9rem;font-weight:700">ချက်တင်များ</span>
-          <button onclick="newSession()" class="btn btn-primary btn-sm" title="ချက်တင်အသစ်">ချက်တင်အသစ်</button>
+          <span style="font-size:0.9rem;font-weight:700">စာများ</span>
+          <button onclick="newSession()" class="btn btn-primary btn-sm" title="စာအသစ်">စာအသစ်</button>
         </div>
         <div class="session-list" id="session-list">
           <div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">
@@ -127,7 +127,7 @@
             </div>
           </div>
           <div style="margin-left:auto;display:flex;gap:8px">
-            <button id="delete-session-btn" onclick="deleteCurrentSession()" class="btn btn-outline btn-sm" style="display:none" title="ဤချက်တင်ကို ဖျက်ရန်">ချက်တင်ဖျက်ရန်</button>
+            <button id="delete-session-btn" onclick="deleteCurrentSession()" class="btn btn-outline btn-sm" style="display:none" title="ဤစာကို ဖျက်ရန်">စာဖျက်ရန်</button>
           </div>
         </div>
 
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   } else {
     document.getElementById('session-list').innerHTML =
       '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">' +
-        'ချက်တင်မှတ်တမ်းကို သိမ်းဆည်းရန် <a href="/pages/login.html" style="color:var(--accent)">အကောင့်ဝင်ပါ</a>' +
+        'စာမှတ်တမ်းကို သိမ်းဆည်းရန် <a href="/pages/login.html" style="color:var(--accent)">အကောင့်ဝင်ပါ</a>' +
       '</div>';
   }
 });
@@ -196,12 +196,12 @@ async function loadSessions() {
     if (!res || !res.ok) { el.innerHTML = '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">စက်ရှင်များ ဖွင့်၍မရပါ။</div>'; return; }
     var sessions = res.data.sessions || [];
     if (!sessions.length) {
-      el.innerHTML = '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">ချက်တင် မရှိသေးပါ။<br>စကားစမြည် စတင်ပြောဆိုပါ။</div>';
+      el.innerHTML = '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">စာ မရှိသေးပါ။<br>စကားစမြည် စတင်ပြောဆိုပါ။</div>';
       return;
     }
     el.innerHTML = sessions.map(function(s) {
       return '<div class="session-item' + (s.id === activeSessionId ? ' active' : '') + '" onclick="openSession(' + s.id + ',this)">' +
-        '<div class="session-title">' + (s.title || 'ချက်တင်အသစ်') + '</div>' +
+        '<div class="session-title">' + (s.title || 'စာအသစ်') + '</div>' +
         '<div class="session-preview">' + (s.last_message || '') + '</div>' +
       '</div>';
     }).join('');
@@ -245,18 +245,18 @@ async function openSession(id, el) {
       });
       scrollToBottom();
     }
-  } catch(e) { showToast('ချက်တင် ဖွင့်၍မရပါ။', 'error'); }
+  } catch(e) { showToast('စာ ဖွင့်၍မရပါ။', 'error'); }
 }
 
 async function deleteCurrentSession() {
   if (!activeSessionId) return;
-  if (!confirm('ဤချက်တင်စက်ရှင်ကို ဖျက်မှာ သေချာပါသလား။')) return;
+  if (!confirm('ဤစာစက်ရှင်ကို ဖျက်မှာ သေချာပါသလား။')) return;
   try {
     var res = await Chat.deleteSession(activeSessionId);
     if (res && res.ok) {
       activeSessionId = null;
       clearMessages();
-      addBotMessage('ချက်တင် ဖျက်လိုက်ပါပြီ။ စကားစမြည်အသစ် စတင်ပါ။');
+      addBotMessage('စာ ဖျက်လိုက်ပါပြီ။ စကားစမြည်အသစ် စတင်ပါ။');
       document.getElementById('delete-session-btn').style.display = 'none';
       loadSessions();
     }

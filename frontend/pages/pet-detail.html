@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>အိမ်မွေးတိရစ္ဆာန် အသေးစိတ် — အိမ်မွေးတိရစ္ဆာန် ပြန်လည်နေရာချထားရေး</title>
+  <title>အိမ်မွေးတိရစ္ဆာန် အသေးစိတ် — </title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="../css/style.css">
   <script>
@@ -143,7 +143,7 @@
                 <div id="comment-alert"></div>
                 <textarea id="comment-input" class="form-control" rows="3" placeholder="ဤအိမ်မွေးတိရစ္ဆာန်နှင့် ပတ်သက်၍ မေးခွန်းမေးပါ..."></textarea>
                 <div style="display:flex; justify-content:flex-end; margin-top:8px;">
-                  <button class="btn btn-primary btn-sm" onclick="submitPetComment()">မှတ်ချက်တင်ရန်</button>
+                  <button class="btn btn-primary btn-sm" onclick="submitPetComment()">မှတ်စာရန်</button>
                 </div>
               </div>
             </div>
@@ -465,7 +465,7 @@ function showErr() {
 }
 
 function renderPet(pet) {
-  document.title = pet.name + ' — အိမ်မွေးတိရစ္ဆာန် ပြန်လည်နေရာချထားရေး';
+  document.title = pet.name + ' — ';
   var images = pet.images || [];
   var mainEl = document.getElementById('gallery-main');
   var thumbsEl = document.getElementById('gallery-thumbs');

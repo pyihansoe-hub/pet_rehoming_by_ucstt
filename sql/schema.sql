@@ -460,6 +460,13 @@ CREATE INDEX idx_pet_comments_pet ON pet_comments(pet_id);
 ALTER TABLE adoption_requests ADD COLUMN payment_id INT REFERENCES payments(id) ON DELETE SET NULL;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS service_fee NUMERIC(12,2) DEFAULT 0;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS owner_amount NUMERIC(12,2) DEFAULT 0;
+
+
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS method payment_method_type;
+ALTER TABLE pet_status_history 
+  ALTER COLUMN old_status TYPE adoption_status USING old_status::adoption_status,
+  ALTER COLUMN new_status TYPE adoption_status USING new_status::adoption_status;
+
 -- ============================================================
 -- END OF SCHEMA
 -- ============================================================
