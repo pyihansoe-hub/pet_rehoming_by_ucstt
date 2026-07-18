@@ -349,7 +349,6 @@ async function pollNotifications() {
   } catch(e) {}
   setTimeout(pollNotifications, 30000);
 }
-
 function renderFooter() {
   var footer = document.getElementById('footer');
   if (!footer) return;
@@ -357,21 +356,21 @@ function renderFooter() {
     '<div class="container">' +
       '<div class="footer-inner">' +
         '<div>' +
-          '<div class="footer-brand">Pet Rehoming</div>' +
-          '<p class="footer-desc">Connecting pets with loving homes and monitoring their welfare after adoption.</p>' +
+          '<div class="footer-brand"></div>' +
+          '<p class="footer-desc">PetNet By UCSTT</p>' +
         '</div>' +
-        '<div class="footer-col"><h4>Explore</h4>' +
-          '<a href="' + p('pets.html') + '">Browse Pets</a>' +
-          '<a href="' + p('blogs.html') + '">Blogs</a>' +
+        '<div class="footer-col"><h4>ရှာဖွေရန်</h4>' +
+          '<a href="' + p('pets.html') + '">အိမ်မွေးတိရစ္ဆာန်များ ရှာဖွေရန်</a>' +
+          '<a href="' + p('blogs.html') + '">ဆောင်းပါးများ</a>' +
           '<a href="' + p('chat.html') + '">PawBot</a>' +
         '</div>' +
-        '<div class="footer-col"><h4>Account</h4>' +
-          '<a href="' + p('register.html') + '">Register</a>' +
-          '<a href="' + p('login.html') + '">Login</a>' +
-          '<a href="' + p('profile.html') + '">Profile</a>' +
+        '<div class="footer-col"><h4>အကောင့်</h4>' +
+          '<a href="' + p('register.html') + '">အကောင့်ဖွင့်ရန်</a>' +
+          '<a href="' + p('login.html') + '">အကောင့်ဝင်ရန်</a>' +
+          '<a href="' + p('profile.html') + '">ပရိုဖိုင်</a>' +
         '</div>' +
       '</div>' +
-      '<div class="footer-bottom">&copy; ' + new Date().getFullYear() + ' Pet Rehoming &amp; Monitoring System</div>' +
+      '<div class="footer-bottom">&copy; ' + new Date().getFullYear() + ' နှင့် စောင့်ကြည့်ရေး စနစ်</div>' +
     '</div>';
 }
 

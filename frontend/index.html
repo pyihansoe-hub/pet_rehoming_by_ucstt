@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pet Rehoming & Monitoring System</title>
+  <title></title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="../css/style.css">
   <script>
@@ -22,24 +22,22 @@
 <div id="mobile-menu" class="mobile-menu"></div>
 <div id="toast-container" class="toast-container"></div>
 
-<!-- HERO -->
 <div class="hero">
   <div class="container">
     <h1>Pet လှလှလေးတွေမွေးဖို့ <span>Pet Net </span>ကိုသတိရပါ</h1>
-    <p>PetNests နှင့်အတူ သင့်ရဲ့အချစ်ဆုံး <br/>သူငယ်ချင်းအသစ်လေးကို ရှာဖွေမွေးစားလိုက်ပါ။</p>
+    <p>PetNests နှင့်အတူ သင့်ရဲ့အချစ်ဆုံး <br/>သူငယ်ချင်းအသစ်လေးကို ရှာဖွေမွေးစားလိုက်ပါ။</p>
         <div class="hero-actions">
           <a href="pages/pets.html" class="btn btn-amber btn-lg">မွေးစားဖို့ရှာမယ်</a>
-          <a href="pages/login.html" id="hero-login-btn" class="btn btn-amber btn-lg" style="display:none;">အကောင့်ဝင်ရန်</a>
+          <a href="pages/login.html" id="hero-login-btn" class="btn btn-amber btn-lg" style="display:none;">အကောင့်ဝင်ရန်</a>
         </div>
 <script>if(!localStorage.getItem('token')){document.getElementById('hero-login-btn').style.display='';}</script></div>
   </div>
 
-<!-- TRENDING PETS -->
 <div style="padding:48px 0">
   <div class="container">
     <div class="section-header">
-      <h2>နောက်ဆုံးရ အိမ်မွေးတိရစ္ဆာန်လေးများ</h2>
-      <a href="/pages/pets.html" class="btn btn-outline btn-sm">အားလုံးကိုကြည့်ရန်</a>
+      <h2>အိမ်မွေးတိရစ္ဆာန်လေးများ</h2>
+      <a href="/pages/pets.html" class="btn btn-outline btn-sm">အားလုံးကိုကြည့်ရန်</a>
     </div>
     <div id="trending-grid" class="grid-4">
       <div class="loading-wrap"><div class="spinner"></div></div>
@@ -47,36 +45,34 @@
   </div>
 </div>
 
-<!-- HOW IT WORKS -->
 <div style="background:var(--bg-section);padding:48px 0">
   <div class="container">
     <h2 style="text-align:center;margin-bottom:32px;font-size:1.5rem;font-weight:800">အသုံးပြုလမ်းညွန်</h2>
     <div class="grid-3">
       <div class="card" style="text-align:center">
         <div class="icon-box">1</div>
-        <h3 style="margin-bottom:8px">List Pet</h3>
-        <p style="color:var(--text-secondary);font-size:0.88rem">သင့်ရဲ့ Pet ကို free (သို့မဟုတ်) အခကြေးငွေဖြင့်ရောင်းနိုင်ပါတယ်</p>
+        <h3 style="margin-bottom:8px">အိမ်မွေးတိရစ္ဆာန် စာရင်းတင်ရန်</h3>
+        <p style="color:var(--text-secondary);font-size:0.88rem">သင့်ရဲ့ Pet ကို free (သို့မဟုတ်) အခကြေးငွေဖြင့်ရောင်းနိုင်ပါတယ်</p>
       </div>
       <div class="card" style="text-align:center">
         <div class="icon-box amber">2</div>
-        <h3 style="margin-bottom:8px">Adoption</h3>
+        <h3 style="margin-bottom:8px">မွေးစားခြင်း</h3>
         <p style="color:var(--text-secondary);font-size:0.88rem">သဘောကျသော Pet ကိုရှာပြီး Owner နဲ့ညှိ့နှိုင်းနိုင်ပါတယ်</p>
       </div>
       <div class="card" style="text-align:center">
         <div class="icon-box coral">3</div>
-        <h3 style="margin-bottom:8px">Monitoring</h3>
+        <h3 style="margin-bottom:8px">စောင့်ကြည့်ခြင်း</h3>
         <p style="color:var(--text-secondary);font-size:0.88rem">Pet ရဲ့ကျန်းမာရေးကိုလည်း follow up တင်ပြီး ကျန်မာနေကြောင်း Owner များကိုအသိပေးနိုင်ပါတယ်</p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- LATEST BLOGS -->
 <div style="padding:48px 0">
   <div class="container">
     <div class="section-header">
       <h2>နောက်ဆုံးရဆောင်းပါးများ</h2>
-      <a href="/pages/blogs.html" class="btn btn-outline btn-sm">All Blogs</a>
+      <a href="/pages/blogs.html" class="btn btn-outline btn-sm">ဆောင်းပါးအားလုံး</a>
     </div>
     <div id="blogs-grid" class="grid-3">
       <div class="loading-wrap"><div class="spinner"></div></div>
@@ -86,7 +82,6 @@
 
 <footer class="footer" id="footer"></footer>
 
-<!-- Floating Support Button + Chat Widget -->
 <div id="chat-widget-container"></div>
 
 <script src="../js/api.js"></script>
@@ -94,48 +89,43 @@
 <script>
 document.addEventListener('DOMContentLoaded', async function() {
 
-  // load stats
   try {
     var res = await Pets.list({ status: 'available', limit: 1 });
     if (res && res.ok) document.getElementById('stat-pets').textContent = res.data.total || 0;
   } catch(e) {}
 
-  // load trending pets
   try {
     var trendRes = await Pets.trending(8);
     var grid = document.getElementById('trending-grid');
     if (trendRes && trendRes.ok && trendRes.data.pets.length) {
       grid.innerHTML = trendRes.data.pets.map(petCardHtml).join('');
     } else {
-      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">No pets yet</div><p>No pets listed yet.</p></div>';
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">အိမ်မွေးတိရစ္ဆာန် မရှိသေးပါ</div><p>အိမ်မွေးတိရစ္ဆာန် စာရင်းမတင်ရသေးပါ။</p></div>';
     }
   } catch(e) {
-    document.getElementById('trending-grid').innerHTML = '<p style="color:var(--danger);grid-column:1/-1">Could not load pets.</p>';
+    document.getElementById('trending-grid').innerHTML = '<p style="color:var(--danger);grid-column:1/-1">အိမ်မွေးတိရစ္ဆာန်များ ဖွင့်၍မရပါ။</p>';
   }
 
-  // load latest blogs
   try {
     var blogRes = await Blogs.list({ status: 'published', limit: 3 });
     var blogGrid = document.getElementById('blogs-grid');
     if (blogRes && blogRes.ok && blogRes.data.blogs.length) {
       blogGrid.innerHTML = blogRes.data.blogs.map(blogCardHtml).join('');
     } else {
-      blogGrid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">No articles</div><p>No blogs yet.</p></div>';
+      blogGrid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">ဆောင်းပါး မရှိပါ</div><p>ဆောင်းပါး မရှိသေးပါ။</p></div>';
     }
   } catch(e) {
-    document.getElementById('blogs-grid').innerHTML = '<p style="color:var(--danger);grid-column:1/-1">Could not load blogs.</p>';
+    document.getElementById('blogs-grid').innerHTML = '<p style="color:var(--danger);grid-column:1/-1">ဆောင်းပါးများ ဖွင့်၍မရပါ။</p>';
   }
 
-  // Load floating chat widget
   loadChatWidget();
 });
 
-// ===== FLOATING CHAT WIDGET =====
 function loadChatWidget() {
   var container = document.getElementById('chat-widget-container');
 
   container.innerHTML =
-    '<button class="support-fab" id="support-fab" onclick="toggleChatWidget()" title="Ask PawBot">' +
+    '<button class="support-fab" id="support-fab" onclick="toggleChatWidget()" title="PawBot ကိုမေးပါ">' +
       '<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/><path d="M7 9h10v1.5H7zm0-3h10v1.5H7zm0 6h7v1.5H7z"/></svg>' +
       '<span class="support-fab-badge"></span>' +
     '</button>' +
@@ -144,23 +134,23 @@ function loadChatWidget() {
         '<div class="bot-avatar-sm">PB</div>' +
         '<div class="bot-info">' +
           '<div class="bot-name">PawBot</div>' +
-          '<div class="bot-status">Online — Typically replies instantly</div>' +
+          '<div class="bot-status">အွန်လိုင်း — ပုံမှန်အားဖြင့် ချက်ချင်းပြန်ကြားပါသည်</div>' +
         '</div>' +
         '<button class="close-btn" onclick="toggleChatWidget()">&times;</button>' +
       '</div>' +
       '<div class="chat-widget-messages" id="widget-messages">' +
         '<div class="chat-msg bot">' +
-          '<div class="chat-bubble"><p>Hi! I\'m <strong>PawBot</strong>.</p><p>I can help you with pet care tips, adoption advice, and platform questions.</p><p>What would you like to know?</p></div>' +
+          '<div class="chat-bubble"><p>မင်္ဂလာပါ။ ကျွန်ုပ်က <strong>PawBot</strong> ဖြစ်ပါတယ်။</p><p>အိမ်မွေးတိရစ္ဆာန် စောင့်ရှောက်နည်းများ၊ မွေးစားခြင်းဆိုင်ရာ အကြံဉာဏ်များနှင့် ပလက်ဖောင်းဆိုင်ရာ မေးခွန်းများအတွက် ကူညီနိုင်ပါတယ်။</p><p>ဘာကိုသိချင်ပါသလဲ။</p></div>' +
         '</div>' +
       '</div>' +
       '<div class="chat-widget-suggestions" id="widget-suggestions">' +
-        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">How do I adopt a pet?</button>' +
-        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">Dog care tips</button>' +
-        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">Cat nutrition</button>' +
+        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">အိမ်မွေးတိရစ္ဆာန်တစ်ကောင်ကို ဘယ်လိုမွေးစားရမလဲ။</button>' +
+        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">ခွေးစောင့်ရှောက်နည်း အကြံပြုချက်များ</button>' +
+        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">ကြောင် အာဟာရ</button>' +
       '</div>' +
       '<div class="chat-widget-input">' +
-        '<textarea id="widget-input" placeholder="Type your message..." rows="1" onkeydown="widgetHandleKey(event)" oninput="widgetAutoResize(this)"></textarea>' +
-        '<button class="send-btn" onclick="widgetSendMsg()" title="Send">' +
+        '<textarea id="widget-input" placeholder="စာတိုရိုက်ထည့်ပါ..." rows="1" onkeydown="widgetHandleKey(event)" oninput="widgetAutoResize(this)"></textarea>' +
+        '<button class="send-btn" onclick="widgetSendMsg()" title="ပို့ရန်">' +
           '<svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>' +
         '</button>' +
       '</div>' +
@@ -242,7 +232,7 @@ async function widgetSendMsg() {
       try {
         var data = JSON.parse(e.data);
         if (data.error) {
-          botBubble.innerHTML = 'Sorry, an error occurred.';
+          botBubble.innerHTML = 'တောင်းပန်ပါတယ်၊ အမှားတစ်ခု ဖြစ်ပွားခဲ့ပါတယ်။';
           es.close();
           widgetWaiting = false;
           return;
@@ -264,12 +254,12 @@ async function widgetSendMsg() {
 
     es.onerror = function() {
       es.close();
-      if (!started) botBubble.innerHTML = 'Connection lost. Please try again.';
+      if (!started) botBubble.innerHTML = 'ချိတ်ဆက်မှု ပြတ်တောက်သွားပါတယ်။ ထပ်မံကြိုးစားပါ။';
       widgetWaiting = false;
     };
 
   } catch(e) {
-    botBubble.innerHTML = 'Sorry, something went wrong.';
+    botBubble.innerHTML = 'တောင်းပန်ပါတယ်၊ တစ်ခုခု မှားယွင်းသွားပါတယ်။';
     widgetWaiting = false;
   }
 }

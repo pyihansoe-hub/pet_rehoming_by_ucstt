@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ဘလော့ခ် ရေးသားရန် — အိမ်မွေးတိရစ္ဆာန် ပြန်လည်နေရာချထားရေး</title>
+  <title>ဆောင်းပါး ရေးသားရန် — </title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/css/style.css">
   <script>
@@ -31,8 +31,8 @@
     <div style="max-width:800px;margin:0 auto">
 
       <div class="page-header">
-        <a href="/pages/blogs.html" style="font-size:0.86rem;color:var(--text-secondary)">ဘလော့ခ်များသို့ ပြန်သွားရန်</a>
-        <h1 style="margin-top:8px" id="page-title">ဘလော့ခ် ရေးသားရန်</h1>
+        <a href="/pages/blogs.html" style="font-size:0.86rem;color:var(--text-secondary)">ဆောင်းပါးများသို့ ပြန်သွားရန်</a>
+        <h1 style="margin-top:8px" id="page-title">ဆောင်းပါး ရေးသားရန်</h1>
       </div>
 
       <div id="alert-area"></div>
@@ -63,7 +63,7 @@
         </div>
         <div class="form-group">
           <label for="summary">အကျဉ်းချုပ်</label>
-          <textarea id="summary" class="form-control" rows="2" placeholder="ဘလော့ခ်ကတ်များတွင် ပြသမည့် အတိုချုပ် ဖော်ပြချက် (မဖြည့်လည်းရပါသည်)..."></textarea>
+          <textarea id="summary" class="form-control" rows="2" placeholder="ဆောင်းပါးကတ်များတွင် ပြသမည့် အတိုချုပ် ဖော်ပြချက် (မဖြည့်လည်းရပါသည်)..."></textarea>
         </div>
       </div>
 
@@ -72,7 +72,7 @@
           <label style="font-size:0.86rem;font-weight:bold;margin-bottom:8px;display:block">
             အကြောင်းအရာ <span style="color:var(--danger)">*</span>
           </label>
-          <textarea id="content" class="form-control" placeholder="သင်၏ဘလော့ခ်ကို ဤနေရာတွင် ရေးသားပါ..."></textarea>
+          <textarea id="content" class="form-control" placeholder="သင်၏ဆောင်းပါးကို ဤနေရာတွင် ရေးသားပါ..."></textarea>
         </div>
       </div>
 
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   var params = new URLSearchParams(window.location.search);
   editId = params.get('id');
   if (editId) {
-    document.getElementById('page-title').textContent = 'ဘလော့ခ် ပြင်ဆင်ရန်';
+    document.getElementById('page-title').textContent = 'ဆောင်းပါး ပြင်ဆင်ရန်';
     document.getElementById('publish-btn').textContent = 'ပြင်ဆင်သိမ်းဆည်းရန်';
     loadForEdit(editId);
   }
@@ -145,7 +145,7 @@ async function loadForEdit(id) {
     }
   } catch(e) {}
 
-  if (!blog) { showToast('ဘလော့ခ် မတွေ့ရှိပါ။', 'error'); return; }
+  if (!blog) { showToast('ဆောင်းပါး မတွေ့ရှိပါ။', 'error'); return; }
 
   document.getElementById('title').value   = blog.title   || '';
   document.getElementById('summary').value = blog.summary || '';
@@ -223,12 +223,12 @@ async function saveBlog(forceStatus) {
         editId = savedBlog.id || savedBlog._id;
         if (editId) {
           window.history.replaceState({}, '', '/pages/write-blog.html?id=' + editId);
-          document.getElementById('page-title').textContent = 'ဘလော့ခ် ပြင်ဆင်ရန်';
+          document.getElementById('page-title').textContent = 'ဆောင်းပါး ပြင်ဆင်ရန်';
           document.getElementById('publish-btn').textContent = 'ပြင်ဆင်သိမ်းဆည်းရန်';
         }
       }
 
-      showToast(status === 'published' ? 'ဘလော့ခ် တင်ပြီးပါပြီ။' : 'မူကြမ်း သိမ်းဆည်းပြီးပါပြီ။', 'success');
+      showToast(status === 'published' ? 'ဆောင်းပါး တင်ပြီးပါပြီ။' : 'မူကြမ်း သိမ်းဆည်းပြီးပါပြီ။', 'success');
 
       if (status === 'published') {
         setTimeout(function(){ window.location.href = '/pages/blogs.html'; }, 500);

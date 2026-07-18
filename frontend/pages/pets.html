@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Browse Pets — Pet Rehoming</title>
+  <title>အိမ်မွေးတိရစ္ဆာန်များ ရှာဖွေရန် — </title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/css/style.css">
   <script>
@@ -44,57 +44,55 @@
 
     <div class="page-header-row">
       <div>
-        <h1>Pets</h1>
-        <p style="color:var(--text-secondary);margin-top:4px" id="result-count">Loading...</p>
+        <h1>အိမ်မွေးတိရစ္ဆာန်များ</h1>
+        <p style="color:var(--text-secondary);margin-top:4px" id="result-count">ဖွင့်နေသည်...</p>
       </div>
-      <a href="/pages/add-pet.html" class="btn btn-primary" id="list-btn" style="display:none">List a Pet</a>
+      <a href="/pages/add-pet.html" class="btn btn-primary" id="list-btn" style="display:none">အိမ်မွေးတိရစ္ဆာန် စာရင်းတင်ရန်</a>
     </div>
 
-    <!-- FILTERS -->
     <div class="card" style="margin-bottom:20px;padding:12px 16px">
       <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.7fr auto;gap:8px;align-items:end">
         <div>
-          <div class="filter-label">Search</div>
-          <input type="text" id="filter-search" class="form-control" placeholder="Name or breed..." oninput="debounceSearch()">
+          <div class="filter-label">ရှာဖွေရန်</div>
+          <input type="text" id="filter-search" class="form-control" placeholder="အမည် သို့မဟုတ် မျိုးစိတ်..." oninput="debounceSearch()">
         </div>
         <div>
-          <div class="filter-label">Type</div>
+          <div class="filter-label">အမျိုးအစား</div>
           <select id="filter-type" class="form-control" onchange="applyFilters()">
-            <option value="">All</option>
+            <option value="">အားလုံး</option>
           </select>
         </div>
         <div>
-          <div class="filter-label">City</div>
+          <div class="filter-label">မြို့</div>
           <select id="filter-city" class="form-control" onchange="applyFilters()">
-            <option value="">All</option>
+            <option value="">အားလုံး</option>
           </select>
         </div>
         <div>
-          <div class="filter-label">Fee</div>
+          <div class="filter-label">အခကြေးငွေ</div>
           <select id="filter-fee" class="form-control" onchange="applyFilters()">
-            <option value="">Any</option>
-            <option value="free">Free</option>
-            <option value="paid">Paid</option>
+            <option value="">အားလုံး</option>
+            <option value="free">အခမဲ့</option>
+            <option value="paid">အခကြေးငွေဖြင့်</option>
           </select>
         </div>
         <div>
-          <button class="btn btn-outline btn-sm" onclick="clearFilters()" style="margin-bottom:1px">Clear</button>
+          <button class="btn btn-outline btn-sm" onclick="clearFilters()" style="margin-bottom:1px">ရှင်းလင်းရန်</button>
         </div>
       </div>
 
       <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-        <span style="font-size:0.72rem;font-weight:600;color:var(--text-muted);margin-right:2px">GENDER</span>
-        <button class="filter-chip active" data-gender="" onclick="setGender(this,'')">All</button>
-        <button class="filter-chip" data-gender="male" onclick="setGender(this,'male')">Male</button>
-        <button class="filter-chip" data-gender="female" onclick="setGender(this,'female')">Female</button>
-        <button class="filter-chip" data-gender="unknown" onclick="setGender(this,'unknown')">Unknown</button>
+        <span style="font-size:0.72rem;font-weight:600;color:var(--text-muted);margin-right:2px">ကျား/မ</span>
+        <button class="filter-chip active" data-gender="" onclick="setGender(this,'')">အားလုံး</button>
+        <button class="filter-chip" data-gender="male" onclick="setGender(this,'male')">အထီး</button>
+        <button class="filter-chip" data-gender="female" onclick="setGender(this,'female')">အမ</button>
+        <button class="filter-chip" data-gender="unknown" onclick="setGender(this,'unknown')">မသိရှိပါ</button>
         <span style="width:1px;height:18px;background:var(--border);margin:0 4px;flex-shrink:0"></span>
-        <span style="font-size:0.72rem;font-weight:600;color:var(--text-muted);margin-right:2px">PET</span>
+        <span style="font-size:0.72rem;font-weight:600;color:var(--text-muted);margin-right:2px">အိမ်မွေးတိရစ္ဆာန်</span>
         <div id="type-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
       </div>
     </div>
 
-    <!-- RESULTS -->
     <div id="pets-grid" class="grid-4">
       <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
     </div>
@@ -216,16 +214,16 @@ async function loadPets() {
   try {
     var res = await Pets.list(q);
     if (!res || !res.ok) {
-      grid.innerHTML = '<p style="color:var(--danger);grid-column:1/-1">Failed to load pets.</p>';
+      grid.innerHTML = '<p style="color:var(--danger);grid-column:1/-1">အိမ်မွေးတိရစ္ဆာန်များ ဖွင့်၍မရပါ။</p>';
       return;
     }
     var pets = res.data.pets || [];
     var total = res.data.total || 0;
 
-    document.getElementById('result-count').textContent = total + ' pet' + (total !== 1 ? 's' : '') + ' found';
+    document.getElementById('result-count').textContent = total + ' အိမ်မွေးတိရစ္ဆာန်' + (total !== 1 ? 'များ' : '') + ' တွေ့ရှိသည်';
 
     if (!pets.length) {
-      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">No results</div><h3>No pets found</h3><p>Try adjusting your filters.</p></div>';
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">ရလဒ်မရှိပါ</div><h3>အိမ်မွေးတိရစ္ဆာန် မတွေ့ရှိပါ</h3><p>သင်၏စစ်ထုတ်မှုများကို ချိန်ညှိကြည့်ပါ။</p></div>';
       document.getElementById('pagination').innerHTML = '';
       return;
     }
@@ -247,7 +245,7 @@ async function loadPets() {
       currentPage = p; loadPets(); window.scrollTo(0,0);
     });
   } catch(e) {
-    grid.innerHTML = '<p style="color:var(--danger);grid-column:1/-1">Something went wrong.</p>';
+    grid.innerHTML = '<p style="color:var(--danger);grid-column:1/-1">တစ်ခုခု မှားယွင်းသွားသည်။</p>';
   }
 }
 
@@ -266,11 +264,11 @@ function petCardWithFav(pet, isFaved) {
     : '<div class="pet-card-placeholder" style="font-size:1rem">' + (pet.name ? pet.name.charAt(0).toUpperCase() : '?') + '</div>';
 
   var fee = pet.fee_type === 'free'
-    ? '<span class="pill pill-free">Free</span>'
+    ? '<span class="pill pill-free">အခမဲ့</span>'
     : '<span class="pill pill-paid">' + fmtMoney(pet.adoption_fee) + '</span>';
 
   var favBtn = getToken()
-    ? '<button class="fav-btn ' + (isFaved ? 'faved' : '') + '" onclick="event.stopPropagation();toggleFav(this, ' + petId + ')" title="' + (isFaved ? 'Remove from favorites' : 'Save') + '">' +
+    ? '<button class="fav-btn ' + (isFaved ? 'faved' : '') + '" onclick="event.stopPropagation();toggleFav(this, ' + petId + ')" title="' + (isFaved ? 'စိတ်ကြိုက်များမှ ဖယ်ရှားရန်' : 'သိမ်းဆည်းရန်') + '">' +
         '<svg class="fav-icon" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' +
       '</button>'
     : '';
@@ -299,13 +297,13 @@ async function toggleFav(btn, petId) {
     if (isFaved) {
       await Favorites.remove(petId);
       btn.classList.remove('faved');
-      btn.title = 'Save';
+      btn.title = 'သိမ်းဆည်းရန်';
     } else {
       await Favorites.add(petId);
       btn.classList.add('faved');
-      btn.title = 'Remove from favorites';
+      btn.title = 'စိတ်ကြိုက်များမှ ဖယ်ရှားရန်';
     }
-  } catch(e) { showToast('Failed to update favorites.', 'error'); }
+  } catch(e) { showToast('စိတ်ကြိုက်များ ပြောင်းလဲ၍မရပါ။', 'error'); }
 }
 </script>
 </body>

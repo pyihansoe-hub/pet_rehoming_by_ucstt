@@ -1,21 +1,22 @@
 /**
- * PawBot AI Service — now powered by NVIDIA Build API
- * NVIDIA Build Console: https://build.nvidia.com/
+ * PawBot AI Service — now powered by OpenRouter API
+ * OpenRouter Console: https://openrouter.ai/
  *
  * Add to .env:
- *   NVIDIA_API_KEY=nvapi-xxxxxxxxxxxx
+ *   OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxx
  */
 
 const { Agent } = require('https');
 
-// NVIDIA's OpenAI-compatible endpoint
-const API_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
+// OpenRouter's OpenAI-compatible endpoint
+const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Keep-alive agent to reuse TLS connections (saves 100-300ms per request)
 const keepAliveAgent = new Agent({ keepAlive: true, maxSockets: 50 });
 
-// Note: NVIDIA uses different model IDs. Adjust this if you want to use Llama, Mistral, etc.
-const AI_MODEL = 'deepseek-ai/deepseek-v4-flash'; 
+// OpenRouter model IDs use the format "provider/model-name".
+// Examples: "qwen/qwen-2.5-72b-instruct", "meta-llama/llama-3.3-70b-instruct", "openai/gpt-4o-mini"
+const AI_MODEL = 'google/gemma-4-26b-a4b-it:free'; 
 
 const SYSTEM_PROMPT = `You are PawBot, a warm and knowledgeable assistant for the Pet Rehoming & Monitoring System.
 You help users with:
@@ -45,8 +46,10 @@ const chat = async (messages) => {
       signal: controller.signal,
       headers: {
         'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.NVIDIA_API_KEY}`,
-        // OpenRouter specific headers removed for NVIDIA
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        // OpenRouter uses these for ranking and attribution (optional but recommended)
+        'HTTP-Referer':  process.env.OPENROUTER_REFERER || 'http://localhost:3000', 
+        'X-Title':       'PawBot', 
       },
       body: JSON.stringify({
         model: AI_MODEL,
@@ -62,7 +65,7 @@ const chat = async (messages) => {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || err.message || `NVIDIA API error: ${res.status}`);
+      throw new Error(err.error?.message || err.message || `OpenRouter API error: ${res.status}`);
     }
 
     const data = await res.json();
@@ -92,7 +95,9 @@ const chatStream = async (messages, res, onDone) => {
       signal: controller.signal,
       headers: {
         'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.NVIDIA_API_KEY}`,
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer':  process.env.OPENROUTER_REFERER || 'http://localhost:3000', 
+        'X-Title':       'PawBot',
         'Accept':        'text/event-stream',
       },
       body: JSON.stringify({
@@ -110,7 +115,7 @@ const chatStream = async (messages, res, onDone) => {
 
     if (!response.ok) {
       const errText = await response.text(); 
-      console.error("NVIDIA API RAW ERROR:", errText); 
+      console.error("OpenRouter API RAW ERROR:", errText); 
       res.write(`data: ${JSON.stringify({ error: errText })}\n\n`);
       res.end();
       return;
