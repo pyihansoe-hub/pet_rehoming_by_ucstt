@@ -76,10 +76,12 @@ function showToast(msg, type) {
   setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 3500);
 }
 
+// FIXED: Removed hardcoded :3000 port so it works on HTTPS hosting platforms
 function imgUrl(path) {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  return window.location.protocol + '//' + window.location.hostname + ':3000' + path;
+  // If it's an absolute path (starts with /), return as is. Otherwise prepend /
+  return path.startsWith('/') ? path : '/' + path;
 }
 
 function handleImgError(img) {
@@ -238,10 +240,12 @@ function renderNavbar() {
   var moonSvg = '<svg class="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 
   var avatarHtml = '';
-  if (user.avatar_url) {
-    avatarHtml = '<img src="' + imgUrl(user.avatar_url) + '" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=\'' + escapeHtml(initials(user.name)) + '\'">';
-  } else {
-    avatarHtml = initials(user.name);
+  if (user) {
+    if (user.avatar_url) {
+      avatarHtml = '<img src="' + imgUrl(user.avatar_url) + '" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=\'' + escapeHtml(initials(user.name)) + '\'">';
+    } else {
+      avatarHtml = initials(user.name);
+    }
   }
 
   nav.innerHTML =

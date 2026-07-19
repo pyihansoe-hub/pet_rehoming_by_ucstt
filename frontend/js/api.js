@@ -1,4 +1,5 @@
-const API = 'http://localhost:3000';
+// Removed 'http://localhost:3000' so it automatically uses the current HTTPS domain
+const API = '';
 
 async function request(method, path, body, isFormData) {
   var headers = {};
@@ -13,8 +14,8 @@ async function request(method, path, body, isFormData) {
   try {
     res = await fetch(API + path, opts);
   } catch(e) {
-    console.error('Network error — is backend running on port 3000?', e.message);
-    return { ok: false, status: 0, data: { message: 'Cannot connect to server. Make sure the backend is running on port 3000.' } };
+    console.error('Network error — is backend running?', e.message);
+    return { ok: false, status: 0, data: { message: 'Cannot connect to server. Make sure the backend is running.' } };
   }
 
   var data;

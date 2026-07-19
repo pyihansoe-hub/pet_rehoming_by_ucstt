@@ -5,10 +5,23 @@ const helmet     = require('helmet');
 const path       = require('path');
 const rateLimit  = require('express-rate-limit');
 const seedAdmin  = require('./services/seedAdmin');
-
 const app = express();
 
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+// Tell Express to trust proxy headers (required for localtunnel / Koyeb / Render)
+app.set('trust proxy', 1);
+
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"], // Allows inline scripts in HTML
+      scriptSrcAttr: ["'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:"],     // Allows base64/placeholder images
+      styleSrc: ["'self'", "'unsafe-inline'"]   // Allows inline styles
+    }
+  }
+}));
 const isProd = process.env.NODE_ENV === 'production';
 
 const allowedOrigins = [
@@ -68,7 +81,7 @@ const authLimiter = rateLimit({ windowMs: 15*60*1000, max: 100, message: { messa
 const chatLimiter = rateLimit({ windowMs: 60*1000,    max: 20, message: { message: 'Chat limit: 20 messages per minute.' } });
 app.use(rateLimit({ windowMs: 15*60*1000, max: 1000,   message: { message: 'Too many requests.' } }));
 
-app.get('/', (_req, res) => res.json({ message: ' Pet Rehoming & Monitoring System' }));
+// app.get('/', (_req, res) => res.json({ message: ' Pet Rehoming & Monitoring System' }));
 
 app.use('/api/auth',              authLimiter, require('./routes/auth'));
 app.use('/api/user',              require('./routes/user'));
