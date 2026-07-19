@@ -50,13 +50,13 @@ app.use(cors({
 const { handleWebhook } = require('./controllers/webhookController');
 app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 
-// Increase payload limit to 50mb (handles large base64 JSON payloads if you aren't using multer)
+// Increase payload limit to 50mb
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Serve static files with caching to improve load times and prevent redundant downloads
+// Serve static files with caching
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
-  maxAge: '30d', // Browser caches images for 30 days
+  maxAge: '30d',
   setHeaders: (res, filepath) => {
     if (filepath.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
@@ -82,9 +82,29 @@ app.use('/api/reports',           require('./routes/report'));
 app.use('/api/notifications',     require('./routes/notification'));
 app.use('/api/favorites',         require('./routes/favorite'));
 app.use('/api/chat', chatLimiter, require('./routes/chat'));
-app.use('/api/messages', require('./routes/messages'));
+app.use('/api/messages',          require('./routes/messages'));
 app.use('/api/admin',             require('./routes/admin'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// --- SERVE FRONTEND ---
+const frontendPath = path.join(__dirname, '../frontend');
+app.use(express.static(frontendPath));
+
+// Serve specific frontend pages (HTML files)
+app.get(/^\/(index\.html|pages\/.*)$/, (req, res) => {
+  res.sendFile(path.join(frontendPath, req.path));
+});
+
+// Catch-all to serve index.html for any other non-API route
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+    return next();
+  }
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+// ----------------------
+
+// Error handler (Must be after all routes)
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ message: err.message || 'Unexpected error.' });
