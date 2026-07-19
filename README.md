@@ -93,3 +93,6 @@ Official home of Qwen. The absolute best at Burmese. Gives free credits to new u
 
 nividia
 const API_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
+
+export NODE_OPTIONS="--dns-result-order=ipv4first"
+lt --port 3000
