@@ -168,7 +168,7 @@
         </div>
         <div class="grid-2" style="gap:20px">
           <div>
-            <h3 style="margin-bottom:14px">အိမ်မွေးတိရစ္ဆာန် အခြေအနေ ခွဲခြမ်းစိတ်ဖြာချက်</h3>
+            <h3 style="margin-bottom:14px">အိမ်မွေးတိရစ္ဆာန် အခြေအနေ</h3>
             <div id="pet-stats-breakdown" class="card" style="padding:16px"></div>
           </div>
           <div>
@@ -383,7 +383,6 @@ function showPanel(name, navEl) {
   if (name === 'reports'    && document.getElementById('reports-table-wrap').querySelector('.spinner'))    loadReports();
   if (name === 'auditlog'   && document.getElementById('auditlog-list').querySelector('.spinner'))         loadAuditLog();
 }
-
 async function loadDashboard() {
   try {
     var res = await Admin.stats();
@@ -394,7 +393,7 @@ async function loadDashboard() {
       statCard('', s.users.total, 'စုစုပေါင်း အသုံးပြုသူများ',  s.users.newThisWeek + ' ယခုအပတ် အသစ်များ \u00b7 ' + s.users.suspended + ' ဆိုင်းငံ့ထားသည်') +
       statCard('', Object.values(s.pets).reduce(function(a,b){ return a+b; }, 0), 'စုစုပေါင်း အိမ်မွေးတိရစ္ဆာန်များ', (s.pets.available||0) + ' ရရှိနိုင်သည်') +
       statCard('', Object.values(s.adoptions).reduce(function(a,b){ return a+b; }, 0), 'စုစုပေါင်း မွေးစားခြင်းများ', (s.adoptions.approved||0) + ' အတည်ပြုပြီး') +
-      statCard('', (s.payments.completed ? fmtMoney(s.payments.completed.profit) : '0 MMK'), 'ဝင်ငွေ (Platform Profit)', (s.payments.completed ? s.payments.completed.count : 0) + ' ငွေပေးချေမှု ပြီးစီးသည်') +
+      statCard('', 'ငွေပေးချေမှု ' + (s.payments.completed ? s.payments.completed.count : 0) + ' ခု') +
       statCard('', (s.blogs.published||0), 'တင်ထားသော ဆောင်းပါးများ', (s.blogs.draft||0) + ' မူကြမ်းများ') +
       statCard('', s.followups||0, 'နောက်ဆက်တွဲများ တင်သွင်းပြီး', 'မွေးစားပြီးနောက် စောင့်ကြည့်ခြင်း') +
       statCard('', s.reports.pending||0, 'ဆိုင်းငံ့ဆဲ တိုင်ကြားချက်များ', 'ပြန်လည်သုံးသပ်ရန် လိုအပ်သည်', s.reports.pending > 0 ? '#fdf0ec' : null) +
@@ -415,7 +414,7 @@ function statCard(icon, value, label, sub, bg) {
   return '<div class="stat-card" style="' + (bg ? 'background:' + bg : '') + '">' +
     '<div class="stat-card-icon">' + icon + '</div>' +
     '<div class="stat-card-value">' + value + '</div>' +
-    '<div class="stat-card-label">' + label + '</div>' +
+    (label ? '<div class="stat-card-label">' + label + '</div>' : '') +
     (sub ? '<div class="stat-card-sub">' + sub + '</div>' : '') +
   '</div>';
 }
