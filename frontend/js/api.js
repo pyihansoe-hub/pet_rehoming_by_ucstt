@@ -116,24 +116,16 @@ var Monitoring = {
   getHealthLogs:   function(petId)         { return get('/api/monitoring/pets/' + petId + '/health-logs'); },
   deleteHealthLog: function(petId, logId)  { return del('/api/monitoring/pets/' + petId + '/health-logs/' + logId); },
 };
+
 var Blogs = {
   categories:   function()        { return get('/api/blogs/categories'); },
   list:         function(q)       { return get('/api/blogs?' + new URLSearchParams(q)); },
   
-  // FIXED: Handles both ?id= (number) and ?slug= (string)
-  get: async function(idOrSlug) {
-    
-    if (!isNaN(idOrSlug)) {
-      var res = await get('/api/blogs?limit=200');
-      if (res && res.ok && res.data && res.data.blogs) {
-        var blog = res.data.blogs.find(function(b) { return String(b.id) === String(idOrSlug); });
-        if (blog) return { ok: true, data: { blog: blog } };
-      }
-      return { ok: false, data: { message: 'Blog not found' } };
-    }
-    // If it's text (a slug), use normal backend route
-    return get('/api/blogs/' + idOrSlug); 
-  },
+  // FIXED: Properly hits the detail endpoint which returns the full blog content
+  get:          function(idOrSlug) { return get('/api/blogs/' + idOrSlug); },
+  
+  // NEW: Gets related posts for the sidebar
+  getRelated:   function(id)      { return get('/api/blogs/' + id + '/related'); },
 
   create:       function(fd)      { return postForm('/api/blogs', fd); },
   update:       function(id, fd)  { return patchForm('/api/blogs/' + id, fd); },

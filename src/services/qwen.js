@@ -16,7 +16,7 @@ const keepAliveAgent = new Agent({ keepAlive: true, maxSockets: 50 });
 
 // OpenRouter model IDs use the format "provider/model-name".
 // Examples: "qwen/qwen-2.5-72b-instruct", "meta-llama/llama-3.3-70b-instruct", "openai/gpt-4o-mini"
-const AI_MODEL = 'google/gemma-4-26b-a4b-it:free'; 
+const AI_MODEL = 'deepseek/deepseek-chat'; 
 
 const SYSTEM_PROMPT = `You are PawBot, a warm and knowledgeable assistant for the Pet Rehoming & Monitoring System.
 You help users with:
