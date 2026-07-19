@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ဆောင်းပါး ရေးသားရန် — </title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <style>
+    #content { min-height:340px; font-size:0.93rem; line-height:1.8; border-radius:8px; }
+    .preview-cover { width:100%; max-height:280px; object-fit:cover; border-radius:8px; margin-top:10px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+    <div style="max-width:800px;margin:0 auto">
+
+      <div class="page-header">
+        <a href="/pages/blogs.html" style="font-size:0.86rem;color:var(--text-secondary)">ဆောင်းပါးများသို့ ပြန်သွားရန်</a>
+        <h1 style="margin-top:8px" id="page-title">ဆောင်းပါး ရေးသားရန်</h1>
+      </div>
+
+      <div id="alert-area"></div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="form-group">
+          <label for="title">ခေါင်းစဉ် <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="title" class="form-control" placeholder="အသုံးဝင်ပြီး ဖော်ပြချက်ပြည့်စုံသော ခေါင်းစဉ်တစ်ခု ရေးသားပါ...">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="category">အမျိုးအစား</label>
+            <select id="category" class="form-control">
+              <option value="">အမျိုးအစား မရှိပါ</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>အခြေအနေ</label>
+            <div style="display:flex;gap:20px;padding-top:8px">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem">
+                <input type="radio" name="status" value="draft" checked> မူကြမ်းအဖြစ် သိမ်းဆည်းမည်
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem">
+                <input type="radio" name="status" value="published"> ယခု တင်မည်
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="summary">အကျဉ်းချုပ်</label>
+          <textarea id="summary" class="form-control" rows="2" placeholder="ဆောင်းပါးကတ်များတွင် ပြသမည့် အတိုချုပ် ဖော်ပြချက် (မဖြည့်လည်းရပါသည်)..."></textarea>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="form-group" style="margin-bottom:0;">
+          <label style="font-size:0.86rem;font-weight:bold;margin-bottom:8px;display:block">
+            အကြောင်းအရာ <span style="color:var(--danger)">*</span>
+          </label>
+          <textarea id="content" class="form-control" placeholder="သင်၏ဆောင်းပါးကို ဤနေရာတွင် ရေးသားပါ..."></textarea>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:24px">
+        <div class="form-group">
+          <label>ကာဗာဓာတ်ပုံ</label>
+          <div class="file-upload" onclick="document.getElementById('cover-input').click()">
+            <input type="file" id="cover-input" accept="image/*" onchange="previewCover(this)">
+            <div style="font-size:1.8rem;margin-bottom:6px">+</div>
+            <div style="font-size:0.86rem;color:var(--text-secondary)">
+              ကာဗာဓာတ်ပုံတစ်ပုံ <span style="color:var(--accent);font-weight:bold">အပ်လုဒ်လုပ်ရန် နှိပ်ပါ</span>
+            </div>
+            <div style="font-size:0.76rem;color:var(--text-muted);margin-top:3px">JPG, PNG, WEBP · အများဆုံး 5MB</div>
+          </div>
+          <div id="cover-preview-area"></div>
+          <div id="existing-cover-area"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+        <a href="/pages/blogs.html" class="btn btn-secondary">မလုပ်တော့ပါ</a>
+        <button class="btn btn-outline" id="draft-btn" onclick="saveBlog('draft')">မူကြမ်း သိမ်းဆည်းရန်</button>
+        <button class="btn btn-primary" id="publish-btn" onclick="saveBlog('published')">တင်ရန်</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script>
+var editId = null;
+
+document.addEventListener('DOMContentLoaded', async function() {
+  if (!requireAuth()) return;
+
+  try {
+    var res = await Blogs.categories();
+    if (res && res.ok) {
+      var sel = document.getElementById('category');
+      res.data.categories.forEach(function(c) {
+        var o = document.createElement('option');
+        o.value = c.id; o.textContent = c.name;
+        sel.appendChild(o);
+      });
+    }
+  } catch(e) {}
+
+  var params = new URLSearchParams(window.location.search);
+  editId = params.get('id');
+  if (editId) {
+    document.getElementById('page-title').textContent = 'ဆောင်းပါး ပြင်ဆင်ရန်';
+    document.getElementById('publish-btn').textContent = 'ပြင်ဆင်သိမ်းဆည်းရန်';
+    loadForEdit(editId);
+  }
+});
+
+async function loadForEdit(id) {
+  var blog = null;
+  try {
+    var statuses = ['published', 'draft', 'archived'];
+    for (var si = 0; si < statuses.length && !blog; si++) {
+      var r = await Blogs.list({ status: statuses[si], limit: 100, page: 1 });
+      if (r && r.ok) {
+        blog = (r.data.blogs || []).find(function(b){ return String(b.id) === String(id); });
+      }
+    }
+  } catch(e) {}
+
+  if (!blog) { showToast('ဆောင်းပါး မတွေ့ရှိပါ။', 'error'); return; }
+
+  document.getElementById('title').value   = blog.title   || '';
+  document.getElementById('summary').value = blog.summary || '';
+  document.getElementById('content').value = blog.content || '';
+  if (blog.category_id) document.getElementById('category').value = blog.category_id;
+
+  document.querySelectorAll('input[name="status"]').forEach(function(r) {
+    r.checked = r.value === (blog.status || 'draft');
+  });
+
+  if (blog.cover_image_url) {
+    document.getElementById('existing-cover-area').innerHTML =
+      '<div style="margin-top:8px">' +
+        '<img src="' + imgUrl(blog.cover_image_url) + '" class="preview-cover">' +
+        '<p style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">ဤကာဗာဓာတ်ပုံကို အစားထိုးရန် ဓာတ်ပုံအသစ်တစ်ပုံ အပ်လုဒ်လုပ်ပါ။</p>' +
+      '</div>';
+  }
+}
+
+function previewCover(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('cover-preview-area').innerHTML =
+      '<img src="' + e.target.result + '" class="preview-cover">' +
+      '<button type="button" onclick="removeCoverPreview()" class="btn btn-secondary btn-sm" style="margin-top:6px">ဖယ်ရှားရန်</button>';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeCoverPreview() {
+  document.getElementById('cover-input').value = '';
+  document.getElementById('cover-preview-area').innerHTML = '';
+}
+
+async function saveBlog(forceStatus) {
+  var alertArea  = document.getElementById('alert-area');
+  var draftBtn   = document.getElementById('draft-btn');
+  var publishBtn = document.getElementById('publish-btn');
+  alertArea.innerHTML = '';
+
+  var title   = document.getElementById('title').value.trim();
+  var content = document.getElementById('content').value.trim();
+  var status  = forceStatus || document.querySelector('input[name="status"]:checked').value;
+
+  if (!title)   { alertArea.innerHTML = '<div class="alert alert-danger">ခေါင်းစဉ် လိုအပ်ပါသည်။</div>';   return; }
+  if (!content) { alertArea.innerHTML = '<div class="alert alert-danger">အကြောင်းအရာ လိုအပ်ပါသည်။</div>'; return; }
+
+  draftBtn.disabled = publishBtn.disabled = true;
+  publishBtn.textContent = 'သိမ်းဆည်းနေသည်...';
+
+  var fd = new FormData();
+  fd.append('title',   title);
+  fd.append('content', content);
+  fd.append('status',  status);
+
+  var summary  = document.getElementById('summary').value.trim();
+  var catId    = document.getElementById('category').value;
+  var cover    = document.getElementById('cover-input').files[0];
+
+  if (summary) fd.append('summary',     summary);
+  if (catId)   fd.append('category_id', catId);
+  if (cover)   fd.append('cover', cover);
+
+  try {
+    var res = editId
+      ? await Blogs.update(editId, fd)
+      : await Blogs.create(fd);
+
+    if (res && res.ok) {
+      var savedBlog = res.data.blog;
+
+      if (!editId && savedBlog) {
+        editId = savedBlog.id || savedBlog._id;
+        if (editId) {
+          window.history.replaceState({}, '', '/pages/write-blog.html?id=' + editId);
+          document.getElementById('page-title').textContent = 'ဆောင်းပါး ပြင်ဆင်ရန်';
+          document.getElementById('publish-btn').textContent = 'ပြင်ဆင်သိမ်းဆည်းရန်';
+        }
+      }
+
+      showToast(status === 'published' ? 'ဆောင်းပါး တင်ပြီးပါပြီ။' : 'မူကြမ်း သိမ်းဆည်းပြီးပါပြီ။', 'success');
+
+      if (status === 'published') {
+        setTimeout(function(){ window.location.href = '/pages/blogs.html'; }, 500);
+      } else {
+        alertArea.innerHTML = '<div class="alert alert-success">မူကြမ်း သိမ်းဆည်းပြီးပါပြီ။</div>';
+      }
+    } else {
+      alertArea.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'သိမ်းဆည်း၍မရပါ။') + '</div>';
+    }
+  } catch(e) {
+    alertArea.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။ ထပ်မံကြိုးစားပါ။</div>';
+  }
+
+  draftBtn.disabled = publishBtn.disabled = false;
+  publishBtn.textContent = editId ? 'ပြင်ဆင်သိမ်းဆည်းရန်' : 'တင်ရန်';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ပို့စ်များ</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+
+    <div class="page-header-row">
+      <h1>ကျွန်ုပ်၏ အိမ်မွေးတိရစ္ဆာန်များ</h1>
+      <a href="/pages/add-pet.html" class="btn btn-primary">+ အိမ်မွေးတိရစ္ဆာန် စာရင်းတင်ရန်</a>
+    </div>
+
+    <div id="pets-list">
+      <div class="loading-wrap"><div class="spinner"></div></div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+  if (!requireAuth()) return;
+  loadMyPets();
+});
+
+async function loadMyPets() {
+  var list = document.getElementById('pets-list');
+  try {
+    var res = await Pets.my();
+    if (!res || !res.ok) { list.innerHTML = '<div class="alert alert-danger">အိမ်မွေးတိရစ္ဆာန်များ ဖွင့်၍မရပါ။</div>'; return; }
+    var pets = res.data.pets || [];
+
+    if (!pets.length) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🐾</div><h3>အိမ်မွေးတိရစ္ဆာန် စာရင်းမတင်ရသေးပါ</h3><p>မွေးစားရန် အိမ်မွေးတိရစ္ဆာန်တစ်ကောင် စာရင်းတင်ခြင်းဖြင့် စတင်ပါ။</p><a href="/pages/add-pet.html" class="btn btn-primary">အိမ်မွေးတိရစ္ဆာန် စာရင်းတင်ရန်</a></div>';
+      return;
+    }
+
+    list.innerHTML = pets.map(function(pet) {
+      var petId = petIdOf(pet);
+      var detailHref = petDetailHref(petId);
+      var img = pet.images && pet.images[0] ? pet.images[0].url : (pet.primary_image || null);
+      
+      var imgHtml = img
+        ? '<img src="' + imgUrl(img) + '" alt="' + escapeHtml(pet.name) + '" loading="lazy" decoding="async" onerror="handleImgError(this)" style="width:80px;height:80px;object-fit:cover;border-radius:8px;flex-shrink:0">'
+        : '<div style="width:80px;height:80px;background:var(--bg-muted);color:var(--text-muted);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0">🐾</div>';
+
+      return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;display:flex;gap:16px;align-items:flex-start">' +
+        '<a href="' + detailHref + '">' + imgHtml + '</a>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px">' +
+            '<a href="' + detailHref + '" style="font-size:1rem;font-weight:bold;color:var(--text-primary)">' + escapeHtml(pet.name) + '</a>' +
+            pill(pet.status) +
+          '</div>' +
+          '<div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:8px">' +
+            escapeHtml((pet.pet_type_name||'') + (pet.breed ? ' · ' + pet.breed : '') +
+            (pet.city || pet.location ? ' · ' + (pet.city||pet.location) : '')) +
+          '</div>' +
+          '<div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:10px">' +
+            (pet.fee_type === 'free' ? '<span class="pill pill-free">အခမဲ့</span>' : '<span class="pill pill-paid">' + fmtMoney(pet.adoption_fee) + '</span>') +
+            ' <span style="margin-left:8px">စာရင်းတင်ချိန် ' + timeAgo(pet.created_at) + '</span>' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+            '<a href="' + detailHref + '" class="btn btn-outline btn-sm">ကြည့်ရှုရန်</a>' +
+            '<a href="/pages/add-pet.html?id=' + petId + '" class="btn btn-secondary btn-sm">ပြင်ဆင်ရန်</a>' +
+            '<a href="/pages/adoption-requests.html?tab=received&pet=' + petId + '" class="btn btn-secondary btn-sm">တောင်းဆိုချက်များ</a>' +
+            '<button onclick="deletePet(' + petId + ',\'' + escapeHtml(pet.name) + '\')" class="btn btn-danger btn-sm">ဖျက်ရန်</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div>';
+  }
+}
+
+async function deletePet(id, name) {
+  if (!confirm('"' + name + '" အတွက် စာရင်းကို ဖျက်မှာ သေချာပါသလား။ ဤလုပ်ဆောင်ချက်ကို ပြန်၍မရနိုင်ပါ။')) return;
+  try {
+    var res = await Pets.delete(id);
+    if (res && res.ok) { showToast('စာရင်း ဖျက်လိုက်ပါပြီ။', 'success'); loadMyPets(); }
+    else showToast(res.data.message || 'ဖျက်၍မရပါ။', 'error');
+  } catch(e) { showToast('တစ်ခုခု မှားယွင်းသွားသည်။', 'error'); }
+}
+</script>
+</body>
+</html>

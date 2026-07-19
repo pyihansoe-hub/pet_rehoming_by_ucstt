@@ -1,12 +1,34 @@
 const pool = require('../db/pool');
 const path = require('path');
 const fs   = require('fs');
+
+const { logStatusChange } = require('../services/petStatusHistory');
+
 // ── helpers ──────────────────────────────────────────────────────────────────
+
+// const PET_SELECT = `
+// SELECT
+//   p.*,
+//   pt.name  AS pet_type_name,
+//   u.name   AS owner_name,
+//   u.phone  AS owner_phone,
+//   COALESCE(
+//     json_agg(pi ORDER BY pi.is_primary DESC, pi.id) FILTER (WHERE pi.id IS NOT NULL),
+//     '[]'
+//   ) AS images
+// FROM pets p
+// JOIN pet_types pt ON pt.id = p.pet_type_id
+// JOIN users     u  ON u.id  = p.owner_id
+// LEFT JOIN pet_images pi ON pi.pet_id = p.id
+// `;
+// Heavy query used for the DETAIL page (gets all images)
 const PET_SELECT = `
+SELECT
   p.*,
   pt.name  AS pet_type_name,
   u.name   AS owner_name,
   u.phone  AS owner_phone,
+  (SELECT COUNT(*) FROM pet_likes pl WHERE pl.pet_id = p.id) AS like_count,
   COALESCE(
     json_agg(pi ORDER BY pi.is_primary DESC, pi.id) FILTER (WHERE pi.id IS NOT NULL),
     '[]'
@@ -17,58 +39,93 @@ JOIN users     u  ON u.id  = p.owner_id
 LEFT JOIN pet_images pi ON pi.pet_id = p.id
 `;
 
-// GET /api/pets  — list with filters
+// Lightweight query used for the LISTING GRID (gets only 1 primary image)
+const PET_LIST_SELECT = `
+SELECT
+  p.id, p.name, p.breed, p.gender, p.color, p.city, p.location,
+  p.fee_type, p.adoption_fee, p.status, p.created_at,
+  pt.name AS pet_type_name,
+  u.name  AS owner_name,
+  u.phone AS owner_phone,
+  (SELECT COUNT(*) FROM pet_likes pl WHERE pl.pet_id = p.id) AS like_count,
+  (SELECT url FROM pet_images WHERE pet_id = p.id ORDER BY is_primary DESC, id ASC LIMIT 1) AS primary_image
+FROM pets p
+JOIN pet_types pt ON pt.id = p.pet_type_id
+JOIN users     u  ON u.id  = p.owner_id
+`;
+
+// GET /api/pets
 const listPets = async (req, res) => {
   const {
-    type,        // pet_type_id
+    type,
     status = 'available',
     fee_type,
     gender,
     page = 1,
-    limit = 20,
+    limit = 12, // Changed default limit to 12
     search,
   } = req.query;
 
   const conditions = [];
-  const values     = [];
-  let   i          = 1;
+  const values = [];
+  let i = 1;
 
-  if (status)   { conditions.push(`p.status = $${i++}`);       values.push(status); }
-  if (type)     { conditions.push(`p.pet_type_id = $${i++}`);  values.push(type); }
-  if (fee_type) { conditions.push(`p.fee_type = $${i++}`);     values.push(fee_type); }
-  if (gender)   { conditions.push(`p.gender = $${i++}`);       values.push(gender); }
-  if (search)   {
+  if (status) { conditions.push(`p.status = $${i++}`); values.push(status); }
+  if (type) { conditions.push(`p.pet_type_id = $${i++}`); values.push(type); }
+  if (fee_type) { conditions.push(`p.fee_type = $${i++}`); values.push(fee_type); }
+  if (gender) { conditions.push(`p.gender = $${i++}`); values.push(gender); }
+
+  if (search) {
     conditions.push(`(p.name ILIKE $${i} OR p.breed ILIKE $${i} OR p.description ILIKE $${i})`);
-    values.push(`%${search}%`); i++;
+    values.push(`%${search}%`);
+    i++;
   }
 
-  const WHERE  = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  const WHERE = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
   const offset = (Math.max(1, page) - 1) * limit;
 
   try {
+    // Use the lightweight select here, and notice we removed GROUP BY because there are no aggregations
     const { rows } = await pool.query(
-      `${PET_SELECT} ${WHERE} GROUP BY p.id, pt.name, u.name, u.phone
-       ORDER BY p.created_at DESC LIMIT $${i++} OFFSET $${i}`,
+      `${PET_LIST_SELECT} ${WHERE}
+       ORDER BY p.created_at DESC
+       LIMIT $${i++} OFFSET $${i}`,
       [...values, limit, offset]
     );
-    const count = await pool.query(
-      `SELECT COUNT(*) FROM pets p ${WHERE}`, values
-    );
-    res.json({ pets: rows, total: parseInt(count.rows[0].count), page: +page, limit: +limit });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+
+    const count = await pool.query(`SELECT COUNT(*) FROM pets p ${WHERE}`, values);
+
+    res.json({
+      pets: rows,
+      total: parseInt(count.rows[0].count),
+      page: +page,
+      limit: +limit
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
 };
 
 // GET /api/pets/:id
 const getPet = async (req, res) => {
   try {
-    await pool.query('UPDATE pets SET views = COALESCE(views,0)+1 WHERE id=$1', [req.params.id]).catch(() => {});
+    await pool.query(
+      'UPDATE pets SET views = COALESCE(views,0)+1 WHERE id=$1',
+      [req.params.id]
+    ).catch(() => {});
+
     const { rows } = await pool.query(
       `${PET_SELECT} WHERE p.id=$1 GROUP BY p.id, pt.name, u.name, u.phone`,
       [req.params.id]
     );
-    if (!rows.length) return res.status(404).json({ message: 'Pet not found.' });
+
+    if (!rows.length)
+      return res.status(404).json({ message: 'Pet not found.' });
+
     res.json({ pet: rows[0] });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
 };
 
 // POST /api/pets
@@ -81,24 +138,32 @@ const createPet = async (req, res) => {
     images = [],
   } = req.body;
 
-  if (!pet_type_id || !name) return res.status(400).json({ message: 'pet_type_id and name are required.' });
+  if (!pet_type_id || !name)
+    return res.status(400).json({ message: 'pet_type_id and name are required.' });
 
   const client = await pool.connect();
+
   try {
     await client.query('BEGIN');
 
     const { rows } = await client.query(
       `INSERT INTO pets
-         (owner_id, pet_type_id, name, breed, birth_date, is_sure,
-          gender, color, weight_kg, description, health_notes,
-          is_vaccinated, is_neutered, fee_type, adoption_fee, location)
+       (owner_id, pet_type_id, name, breed, birth_date, is_sure,
+        gender, color, weight_kg, description, health_notes,
+        is_vaccinated, is_neutered, fee_type, adoption_fee, location)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
        RETURNING *`,
-      [req.user.id, pet_type_id, name, breed || null, birth_date || null, is_sure || null,
-       gender || null, color || null, weight_kg || null, description || null,
-       health_notes || null, is_vaccinated, is_neutered,
-       fee_type, fee_type === 'free' ? 0 : adoption_fee, location || null]
+      [
+        req.user.id, pet_type_id, name, breed || null,
+        birth_date || null, is_sure != null ? is_sure : false,
+        gender || null, color || null, weight_kg || null,
+        description || null, health_notes || null,
+        is_vaccinated, is_neutered,
+        fee_type, fee_type === 'free' ? 0 : (Number(adoption_fee) || 0),
+        location || null
+      ]
     );
+
     const pet = rows[0];
 
     if (images.length) {
@@ -112,82 +177,151 @@ const createPet = async (req, res) => {
 
     await client.query('COMMIT');
     res.status(201).json({ message: 'Pet listed successfully.', pet });
+
   } catch (err) {
     await client.query('ROLLBACK');
     res.status(500).json({ message: 'Server error.', error: err.message });
-  } finally { client.release(); }
+  } finally {
+    client.release();
+  }
 };
 
 // PATCH /api/pets/:id
 const updatePet = async (req, res) => {
-  const allowed = ['name','breed','birth_date','is_sure','gender','color','weight_kg',
-                   'description','health_notes','is_vaccinated','is_neutered',
-                   'fee_type','adoption_fee','status','location'];
-  const fields = []; const values = []; let i = 1;
+  const allowed = [
+    'name','breed','birth_date','is_sure','gender','color','weight_kg',
+    'description','health_notes','is_vaccinated','is_neutered',
+    'fee_type','adoption_fee','status','location'
+  ];
+
+  const fields = [];
+  const values = [];
+  let i = 1;
 
   for (const key of allowed) {
-    if (req.body[key] !== undefined) { fields.push(`${key}=$${i++}`); values.push(req.body[key]); }
+    if (req.body[key] !== undefined) {
+      fields.push(`${key}=$${i++}`);
+      values.push(req.body[key]);
+    }
   }
-  if (!fields.length) return res.status(400).json({ message: 'No fields to update.' });
+
+  if (!fields.length)
+    return res.status(400).json({ message: 'No fields to update.' });
 
   try {
-    const check = await pool.query('SELECT owner_id FROM pets WHERE id=$1', [req.params.id]);
-    if (!check.rows.length) return res.status(404).json({ message: 'Pet not found.' });
+    const check = await pool.query(
+      'SELECT owner_id, status FROM pets WHERE id=$1',
+      [req.params.id]
+    );
+
+    if (!check.rows.length)
+      return res.status(404).json({ message: 'Pet not found.' });
+
     if (check.rows[0].owner_id !== req.user.id && req.user.role !== 'admin')
       return res.status(403).json({ message: 'Not authorized.' });
 
+    const oldStatus = check.rows[0].status;
+
     values.push(req.params.id);
+
     const { rows } = await pool.query(
-      `UPDATE pets SET ${fields.join(',')} WHERE id=$${i} RETURNING *`, values
+      `UPDATE pets SET ${fields.join(',')} WHERE id=$${i} RETURNING *`,
+      values
     );
+
+    // REQUIRED ADDITION
+    if (req.body.status) {
+      await logStatusChange(
+        req.params.id,
+        oldStatus,
+        req.body.status,
+        req.user.id
+      );
+    }
+
     res.json({ message: 'Pet updated.', pet: rows[0] });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
 };
 
 // DELETE /api/pets/:id
 const deletePet = async (req, res) => {
   try {
-    const check = await pool.query('SELECT owner_id FROM pets WHERE id=$1', [req.params.id]);
-    if (!check.rows.length) return res.status(404).json({ message: 'Pet not found.' });
+    const check = await pool.query(
+      'SELECT owner_id FROM pets WHERE id=$1',
+      [req.params.id]
+    );
+
+    if (!check.rows.length)
+      return res.status(404).json({ message: 'Pet not found.' });
+
     if (check.rows[0].owner_id !== req.user.id && req.user.role !== 'admin')
       return res.status(403).json({ message: 'Not authorized.' });
+
     await pool.query('DELETE FROM pets WHERE id=$1', [req.params.id]);
+
     res.json({ message: 'Pet listing deleted.' });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
 };
 
 // POST /api/pets/:id/images
 const addPetImage = async (req, res) => {
-  if (!req.file) return res.status(400).json({ message: 'Image file is required.' });
+  if (!req.file)
+    return res.status(400).json({ message: 'Image file is required.' });
 
-  const url        = '/uploads/pets/${req.file.filename}';
+  const url = `/uploads/pets/${req.file.filename}`;
   const is_primary = req.body.is_primary === 'true';
 
   try {
-    const check = await pool.query('SELECT owner_id FROM pets WHERE id=$1', [req.params.id]);
-    if (!check.rows.length) return res.status(404).json({ message: 'Pet not found.' });
+    const check = await pool.query(
+      'SELECT owner_id FROM pets WHERE id=$1',
+      [req.params.id]
+    );
+
+    if (!check.rows.length)
+      return res.status(404).json({ message: 'Pet not found.' });
+
     if (check.rows[0].owner_id !== req.user.id && req.user.role !== 'admin')
       return res.status(403).json({ message: 'Not authorized.' });
 
     if (is_primary) {
-      await pool.query('UPDATE pet_images SET is_primary=FALSE WHERE pet_id=$1', [req.params.id]);
+      await pool.query(
+        'UPDATE pet_images SET is_primary=FALSE WHERE pet_id=$1',
+        [req.params.id]
+      );
     }
+
     const { rows } = await pool.query(
       'INSERT INTO pet_images (pet_id, url, is_primary) VALUES ($1,$2,$3) RETURNING *',
       [req.params.id, url, is_primary]
     );
+
     res.status(201).json({ image: rows[0] });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
 };
 
-// DELETE /api/pets/:id/images/:imageId
+// DELETE image
 const deletePetImage = async (req, res) => {
   try {
     const check = await pool.query(
-      'SELECT pi.url, p.owner_id FROM pet_images pi JOIN pets p ON p.id=pi.pet_id WHERE pi.id=$1',
+      `SELECT pi.url, p.owner_id
+       FROM pet_images pi
+       JOIN pets p ON p.id=pi.pet_id
+       WHERE pi.id=$1`,
       [req.params.imageId]
     );
-    if (!check.rows.length) return res.status(404).json({ message: 'Image not found.' });
+
+    if (!check.rows.length)
+      return res.status(404).json({ message: 'Image not found.' });
+
     if (check.rows[0].owner_id !== req.user.id && req.user.role !== 'admin')
       return res.status(403).json({ message: 'Not authorized.' });
 
@@ -195,19 +329,99 @@ const deletePetImage = async (req, res) => {
     fs.unlink(filePath, () => {});
 
     await pool.query('DELETE FROM pet_images WHERE id=$1', [req.params.imageId]);
+
     res.json({ message: 'Image deleted.' });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
 };
 
-// GET /api/pets/my  — owner's own listings
+// GET /api/pets/my
 const myPets = async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `${PET_SELECT} WHERE p.owner_id=$1 GROUP BY p.id, pt.name, u.name, u.phone ORDER BY p.created_at DESC`,
+      `${PET_SELECT}
+       WHERE p.owner_id=$1
+       GROUP BY p.id, pt.name, u.name, u.phone
+       ORDER BY p.created_at DESC`,
       [req.user.id]
     );
+
     res.json({ pets: rows });
+
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
+};
+
+//pet's comment and likes
+// POST /api/pets/:id/like
+const toggleLike = async (req, res) => {
+  try {
+    const existing = await pool.query(
+      'SELECT 1 FROM pet_likes WHERE user_id=$1 AND pet_id=$2',
+      [req.user.id, req.params.id]
+    );
+    if (existing.rows.length) {
+      await pool.query('DELETE FROM pet_likes WHERE user_id=$1 AND pet_id=$2', [req.user.id, req.params.id]);
+      res.json({ liked: false });
+    } else {
+      await pool.query('INSERT INTO pet_likes (user_id, pet_id) VALUES ($1,$2)', [req.user.id, req.params.id]);
+      res.json({ liked: true });
+    }
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 
-module.exports = { listPets, getPet, createPet, updatePet, deletePet, addPetImage, deletePetImage, myPets };
+// GET /api/pets/:id/comments
+const getComments = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT pc.*, u.name AS user_name FROM pet_comments pc
+       JOIN users u ON u.id=pc.user_id
+       WHERE pc.pet_id=$1 ORDER BY pc.created_at ASC`,
+      [req.params.id]
+    );
+    res.json({ comments: rows });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
+// POST /api/pets/:id/comments
+const addComment = async (req, res) => {
+  const { content } = req.body;
+  if (!content?.trim()) return res.status(400).json({ message: 'Comment content is required.' });
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO pet_comments (pet_id, user_id, content) VALUES ($1,$2,$3) RETURNING *',
+      [req.params.id, req.user.id, content.trim()]
+    );
+    res.status(201).json({ comment: rows[0] });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
+// DELETE /api/pets/:id/comments/:commentId
+const deleteComment = async (req, res) => {
+  try {
+    const check = await pool.query('SELECT user_id FROM pet_comments WHERE id=$1', [req.params.commentId]);
+    if (!check.rows.length) return res.status(404).json({ message: 'Comment not found.' });
+    if (check.rows[0].user_id !== req.user.id && req.user.role !== 'admin')
+      return res.status(403).json({ message: 'Not authorized.' });
+    await pool.query('DELETE FROM pet_comments WHERE id=$1', [req.params.commentId]);
+    res.json({ message: 'Comment deleted.' });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
+module.exports = {
+  listPets,
+  getPet,
+  createPet,
+  updatePet,
+  deletePet,
+  addPetImage,
+  deletePetImage,
+  myPets,
+  toggleLike,      
+  getComments,    
+  addComment,     
+  deleteComment   
+};

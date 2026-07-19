@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>အကြောင်းကြားချက်များ — </title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <style>
+    .notif-item { display:flex; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border); cursor:pointer; align-items:flex-start; }
+    .notif-item.unread { background:var(--accent-light-bg); }
+    .notif-dot { width:9px; height:9px; border-radius:50%; background:var(--accent); flex-shrink:0; margin-top:6px; }
+    .notif-dot.read { background:var(--border); }
+    .notif-icon { width:40px; height:40px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:bold; color:var(--text-secondary); flex-shrink:0; letter-spacing:0.3px; text-transform:uppercase; }
+    .notif-title { font-size:0.9rem; font-weight:bold; color:var(--text-primary); margin-bottom:2px; }
+    .notif-body  { font-size:0.82rem; color:var(--text-secondary); margin-bottom:3px; }
+    .notif-time  { font-size:0.75rem; color:var(--text-muted); }
+    .notif-del   { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.85rem; flex-shrink:0; padding:2px 6px; border-radius:4px; margin-left:auto; }
+    .chip { padding:6px 16px; border-radius:20px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-secondary); font-size:0.82rem; cursor:pointer; }
+    .chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  </style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+    <div style="max-width:680px;margin:0 auto">
+
+      <div class="page-header-row">
+        <div>
+          <h1>အကြောင်းကြားချက်များ</h1>
+          <p style="color:var(--text-secondary);margin-top:4px" id="unread-label"></p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="markAllRead()">အားလုံး ဖတ်ပြီးဟု မှတ်သားရန်</button>
+          <button class="btn btn-outline btn-sm" onclick="clearRead()">ဖတ်ပြီးများ ရှင်းလင်းရန်</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+        <button class="chip active" data-filter="all" onclick="setFilter(this,'all')">အားလုံး</button>
+        <button class="chip" data-filter="unread" onclick="setFilter(this,'unread')">မဖတ်ရသေး</button>
+        <button class="chip" data-filter="adoption" onclick="setFilter(this,'adoption')">မွေးစားခြင်း</button>
+        
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="notif-list">
+          <div class="loading-wrap"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script>
+var allNotifications = [];
+var currentFilter = 'all';
+
+var NOTIF_ICONS = {
+  new_adoption_request: { label:'မွေးစား',  bg:'var(--accent-light-bg)', color:'var(--accent)' },
+  adoption_reviewed:    { label:'သုံးသပ်', bg:'var(--success-bg)', color:'var(--success-text)' },
+  payment_completed:    { label:'ငွေပေး',   bg:'var(--warning-bg)', color:'var(--warning-text)' },
+  follow_up_reminder:   { label:'အိမ်မွေး',    bg:'var(--accent-light-bg)', color:'var(--accent)' },
+};
+
+document.addEventListener('DOMContentLoaded', async function() {
+  if (!requireAuth()) return;
+  loadNotifications();
+});
+
+async function loadNotifications() {
+  var el = document.getElementById('notif-list');
+  try {
+    var res = await Notifications.list();
+    if (!res || !res.ok) { el.innerHTML = '<div style="padding:20px"><div class="alert alert-danger">ဖွင့်၍မရပါ။</div></div>'; return; }
+    allNotifications = res.data.notifications || [];
+    var unread = res.data.unread || 0;
+    document.getElementById('unread-label').textContent = unread
+      ? unread + ' မဖတ်ရသေးသော အကြောင်းကြားချက်' + (unread !== 1 ? 'များ' : '')
+      : 'အားလုံး ဖတ်ပြီးပါပြီ';
+    renderList();
+  } catch(e) {
+    el.innerHTML = '<div style="padding:20px"><div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div></div>';
+  }
+}
+
+function setFilter(el, filter) {
+  currentFilter = filter;
+  document.querySelectorAll('[data-filter]').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  renderList();
+}
+
+function renderList() {
+  var el = document.getElementById('notif-list');
+  var list = allNotifications;
+
+  if (currentFilter === 'unread') {
+    list = list.filter(function(n){ return !n.is_read; });
+  } else if (currentFilter === 'adoption') {
+    list = list.filter(function(n){ return n.type && n.type.includes('adoption'); });
+  } else if (currentFilter === 'payment') {
+    list = list.filter(function(n){ return n.type && n.type.includes('payment'); });
+  }
+
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state"><h3>အကြောင်းကြားချက် မရှိပါ</h3><p>အားလုံး ဖတ်ပြီးပါပြီ။</p></div>';
+    return;
+  }
+
+  el.innerHTML = list.map(function(n) {
+    var meta   = NOTIF_ICONS[n.type] || { label:'N', bg:'var(--bg-muted)', color:'var(--text-secondary)' };
+    var isRead = n.is_read;
+    var iconColor = isRead ? 'var(--text-muted)' : meta.color;
+    var iconBg    = isRead ? 'var(--bg-muted)' : meta.bg;
+    return '<div class="notif-item ' + (isRead ? '' : 'unread') + '" onclick="openNotif(' + n.id + ',\'' + (n.link||'') + '\')">' +
+      '<div class="notif-dot ' + (isRead ? 'read' : '') + '"></div>' +
+      '<div class="notif-icon" style="background:' + iconBg + ';color:' + iconColor + '">' + meta.label + '</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div class="notif-title">' + (n.title||'') + '</div>' +
+        (n.body ? '<div class="notif-body">' + n.body + '</div>' : '') +
+        '<div class="notif-time">' + timeAgo(n.created_at) + '</div>' +
+      '</div>' +
+      '<button class="notif-del" onclick="event.stopPropagation();deleteNotif(' + n.id + ')" title="ဖျက်ရန်">x</button>' +
+    '</div>';
+  }).join('');
+}
+
+async function openNotif(id, link) {
+  var notif = allNotifications.find(function(n){ return n.id === id; });
+  if (notif && !notif.is_read) {
+    try {
+      await Notifications.read(id);
+      notif.is_read = true;
+      renderList();
+      var badge = document.getElementById('notif-badge');
+      if (badge) {
+        var count = Math.max(0, parseInt(badge.textContent) - 1);
+        badge.textContent = count;
+        badge.classList.toggle('hidden', count === 0);
+      }
+    } catch(e) {}
+  }
+  if (link) window.location.href = link;
+}
+
+async function markAllRead() {
+  try {
+    var res = await Notifications.readAll();
+    if (res && res.ok) {
+      allNotifications.forEach(function(n){ n.is_read = true; });
+      document.getElementById('unread-label').textContent = 'အားလုံး ဖတ်ပြီးပါပြီ';
+      var badge = document.getElementById('notif-badge');
+      if (badge) { badge.textContent = '0'; badge.classList.add('hidden'); }
+      renderList();
+      showToast('အားလုံး ဖတ်ပြီးဟု မှတ်သားပြီးပါပြီ။', 'success');
+    }
+  } catch(e) { showToast('မအောင်မြင်ပါ။', 'error'); }
+}
+
+async function deleteNotif(id) {
+  try {
+    var res = await Notifications.delete(id);
+    if (res && res.ok) {
+      allNotifications = allNotifications.filter(function(n){ return n.id !== id; });
+      renderList();
+    }
+  } catch(e) { showToast('မအောင်မြင်ပါ။', 'error'); }
+}
+
+async function clearRead() {
+  var readIds = allNotifications.filter(function(n){ return n.is_read; }).map(function(n){ return n.id; });
+  if (!readIds.length) { showToast('ရှင်းလင်းရန် ဖတ်ပြီးသား အကြောင်းကြားချက် မရှိပါ။', 'info'); return; }
+  if (!confirm('ဖတ်ပြီးသား အကြောင်းကြားချက်အားလုံးကို ဖျက်မှာ သေချာပါသလား။')) return;
+  try {
+    for (var i = 0; i < readIds.length; i++) {
+      await Notifications.delete(readIds[i]);
+    }
+    allNotifications = allNotifications.filter(function(n){ return !n.is_read; });
+    renderList();
+    showToast('ဖတ်ပြီးသား အကြောင်းကြားချက်များ ရှင်းလင်းပြီးပါပြီ။', 'success');
+  } catch(e) { showToast('မအောင်မြင်ပါ။', 'error'); }
+}
+</script>
+</body>
+</html>

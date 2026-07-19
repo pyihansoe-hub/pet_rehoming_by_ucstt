@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PawBot </title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <style>
+    body { display:flex; flex-direction:column; min-height:100vh; }
+    .page-wrap { flex:1 !important; display:flex !important; flex-direction:column !important; padding-bottom:0 !important; }
+    .page-wrap .container { flex:1; display:flex; flex-direction:column; }
+
+    .typing-dots span { animation: typing-bounce 1s ease infinite; display:inline-block; }
+    .typing-dots span:nth-child(2) { animation-delay:0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay:0.4s; }
+
+    .pawbot-wrap { 
+      display:grid; 
+      grid-template-columns:240px 1fr; 
+      border:1px solid var(--border); 
+      border-radius:12px; 
+      overflow:hidden; 
+      background:var(--bg-card); 
+      flex:1; 
+      min-height:500px;          
+      max-height:200vh;          
+      box-shadow: 0 1px 3px var(--shadow-sm);
+    }
+    
+    .pawbot-sidebar { border-right:1px solid var(--border); display:flex; flex-direction:column; background:var(--bg-chat); }
+    .pawbot-sidebar-header { padding:14px 16px; border-bottom:1px solid var(--border); background:var(--bg-card); display:flex; align-items:center; justify-content:space-between; }
+    .session-list { flex:1; overflow-y:auto; }
+    .session-item { padding:11px 14px; cursor:pointer; border-bottom:1px solid var(--border); transition:background 0.1s; }
+    .session-item:hover { background:var(--accent-light-bg); }
+    .session-item.active { background:var(--accent-light-bg); border-left:3px solid var(--accent); }
+    .session-title { font-size:0.83rem; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .session-preview { font-size:0.75rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+    .pawbot-main { display:flex; flex-direction:column; min-height:0; }
+    .pawbot-header { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; background:var(--bg-card); }
+    .bot-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent-hover)); display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:800; color:#fff; }
+    .pawbot-messages { flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:14px; background:var(--bg-chat); min-height:380px;}
+    .chat-msg { display:flex; gap:8px; max-width:78%; }
+    .chat-msg.user { align-self:flex-end; flex-direction:row-reverse; }
+    .chat-bubble { padding:10px 15px; border-radius:18px; font-size:0.88rem; line-height:1.6; }
+    .chat-msg.bot  .chat-bubble { background:var(--bg-card); color:var(--text-primary); border-bottom-left-radius:4px; box-shadow:0 1px 2px var(--shadow-sm); }
+    .chat-msg.user .chat-bubble { background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
+    .chat-bubble p { margin-bottom:8px; }
+    .chat-bubble p:last-child { margin-bottom:0; }
+    .chat-bubble ul { margin:4px 0 8px 18px; }
+    .chat-bubble li { margin-bottom:3px; }
+    .chat-msg-avatar { width:30px; height:30px; border-radius:50%; background:var(--accent-light-bg); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:800; flex-shrink:0; align-self:flex-end; }
+    .typing-indicator { display:flex; gap:4px; align-items:center; padding:10px 14px; background:var(--bg-card); border-radius:18px; border-bottom-left-radius:4px; width:fit-content; box-shadow:0 1px 2px var(--shadow-sm); }
+    .typing-indicator span { width:7px; height:7px; border-radius:50%; background:var(--text-muted); animation:typing-bounce 1.2s ease infinite; }
+    .typing-indicator span:nth-child(2) { animation-delay:0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay:0.4s; }
+    @keyframes typing-bounce { 0%,80%,100%{ transform:translateY(0); } 40%{ transform:translateY(-6px); } }
+    .pawbot-input-area { padding:14px 18px; border-top:1px solid var(--border); display:flex; gap:8px; align-items:flex-end; background:var(--bg-card); }
+    .pawbot-input { flex:1; padding:10px 16px; border:1.5px solid var(--border); border-radius:20px; font-size:0.88rem; font-family:inherit; color:var(--text-primary); background:var(--bg-input); outline:none; resize:none; line-height:1.4; max-height:100px; overflow-y:auto; transition:border-color 0.15s; }
+    .pawbot-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(42,157,143,0.1); }
+    .pawbot-send { width:38px; height:38px; border-radius:50%; background:var(--accent); color:#fff; border:none; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:background 0.15s; }
+    .pawbot-send:hover { background:var(--accent-hover); }
+    .pawbot-send:disabled { background:var(--text-muted); cursor:not-allowed; }
+    .pawbot-send svg { width:18px; height:18px; fill:currentColor; }
+    .suggestion-chips { display:flex; gap:6px; flex-wrap:wrap; padding:10px 18px; border-top:1px solid var(--border-light); background:var(--bg-card); }
+    .suggestion-chip { padding:5px 12px; background:var(--bg-muted); border:1.5px solid var(--border); border-radius:999px; font-size:0.78rem; cursor:pointer; color:var(--text-secondary); white-space:nowrap; transition:all 0.15s; }
+    .suggestion-chip:hover { background:var(--accent-light-bg); border-color:var(--accent); color:var(--accent); }
+
+    .features-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+    .feature-card { text-align:center; padding:20px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; }
+    .feature-card .icon-box { margin-bottom:10px; }
+    .feature-card h4 { font-size:0.9rem; margin-bottom:6px; }
+    .feature-card p { font-size:0.8rem; color:var(--text-secondary); }
+    @media(max-width:700px){ 
+      .pawbot-wrap{ grid-template-columns:1fr; } 
+      .pawbot-sidebar{ display:none; } 
+      .features-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap" style="padding-bottom:0">
+  <div class="container">
+    <div class="page-header-row" style="margin-bottom:16px">
+      <div>
+        <h1>PawBot</h1>
+        <p style="color:var(--text-secondary);margin-top:2px;font-size:0.88rem">အိမ်မွေးတိရစ္ဆာန်လေးတွေအကြောင်း သိချင်တာကို မေးနိုင်ပါတယ်</p>
+      </div>
+    </div>
+
+    <div class="pawbot-wrap">
+
+      <div class="pawbot-sidebar">
+        <div class="pawbot-sidebar-header">
+          <span style="font-size:0.9rem;font-weight:700">စာများ</span>
+          <button onclick="newSession()" class="btn btn-primary btn-sm" title="စာအသစ်">စာအသစ်</button>
+        </div>
+        <div class="session-list" id="session-list">
+          <div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">
+            စက်ရှင်များ ဖွင့်နေသည်...
+          </div>
+        </div>
+      </div>
+
+      <div class="pawbot-main">
+        <div class="pawbot-header">
+          <div class="bot-avatar">PB</div>
+          <div>
+            <div style="font-weight:700;font-size:0.92rem">PawBot</div>
+            <div style="font-size:0.76rem;color:#52b788;display:flex;align-items:center;gap:4px">
+              <span style="width:7px;height:7px;border-radius:50%;background:#52b788;display:inline-block"></span>
+              အွန်လိုင်း
+            </div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button id="delete-session-btn" onclick="deleteCurrentSession()" class="btn btn-outline btn-sm" style="display:none" title="ဤစာကို ဖျက်ရန်">စာဖျက်ရန်</button>
+          </div>
+        </div>
+
+        <div class="pawbot-messages" id="pawbot-messages">
+          <div class="chat-msg bot">
+            <div class="chat-msg-avatar">PB</div>
+            <div>
+              <div class="chat-bubble">
+                <p>မင်္ဂလာပါ။ ကျွန်ုပ်က <strong>PawBot</strong> ဖြစ်ပါတယ်။</p>
+                <p>အောက်ပါအကြောင်းအရာများအတွက် ကူညီနိုင်ပါတယ်-</p>
+                <ul>
+                  <li>အိမ်မွေးတိရစ္ဆာန် စောင့်ရှောက်နည်းများ (ခွေး၊ ကြောင် နှင့် အခြားတိရစ္ဆာန်များ)</li>
+                  <li>မွေးစားခြင်းဆိုင်ရာ အကြံဉာဏ်များနှင့် မျှော်လင့်သင့်သည့်အရာများ</li>
+                  <li>လေ့ကျင့်သင်ကြားရေးနှင့် အာဟာရဆိုင်ရာ လမ်းညွှန်ချက်များ</li>
+                  <li>ဤပလက်ဖောင်းနှင့် ပတ်သက်သော မေးခွန်းများ</li>
+                </ul>
+                <p>ဘာကိုသိချင်ပါသလဲ။</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="suggestion-chips" id="suggestion-chips">
+          <button class="suggestion-chip" onclick="sendSuggestion(this)">အိမ်မွေးတိရစ္ဆာန်တစ်ကောင်ကို ဘယ်လိုမွေးစားရမလဲ။</button>
+          <button class="suggestion-chip" onclick="sendSuggestion(this)">ကြောင်ကလေးကို ဘာကျွေးသင့်သလဲ။</button>
+          <button class="suggestion-chip" onclick="sendSuggestion(this)">ခွေးကလေးကို ဘယ်လိုလေ့ကျင့်သင်ကြားရမလဲ။</button>
+          <button class="suggestion-chip" onclick="sendSuggestion(this)">ကြောင်စောင့်ရှောက်နည်း အခြေခံများ</button>
+        </div>
+
+        <div class="pawbot-input-area">
+          <textarea class="pawbot-input" id="pawbot-input" placeholder="အိမ်မွေးတိရစ္ဆာန်များအကြောင်း ဘာမဆိုမေးနိုင်ပါတယ်..." rows="1"
+            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="pawbot-send" id="send-btn" onclick="sendMsg()" title="ပို့ရန်">
+            <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script>
+var activeSessionId = null;
+var isWaiting       = false;
+
+document.addEventListener('DOMContentLoaded', async function() {
+  if (getToken()) {
+    loadSessions();
+  } else {
+    document.getElementById('session-list').innerHTML =
+      '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">' +
+        'စာမှတ်တမ်းကို သိမ်းဆည်းရန် <a href="/pages/login.html" style="color:var(--accent)">အကောင့်ဝင်ပါ</a>' +
+      '</div>';
+  }
+});
+
+async function loadSessions() {
+  var el = document.getElementById('session-list');
+  try {
+    var res = await Chat.listSessions();
+    if (!res || !res.ok) { el.innerHTML = '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">စက်ရှင်များ ဖွင့်၍မရပါ။</div>'; return; }
+    var sessions = res.data.sessions || [];
+    if (!sessions.length) {
+      el.innerHTML = '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">စာ မရှိသေးပါ။<br>စကားစမြည် စတင်ပြောဆိုပါ။</div>';
+      return;
+    }
+    el.innerHTML = sessions.map(function(s) {
+      return '<div class="session-item' + (s.id === activeSessionId ? ' active' : '') + '" onclick="openSession(' + s.id + ',this)">' +
+        '<div class="session-title">' + (s.title || 'စာအသစ်') + '</div>' +
+        '<div class="session-preview">' + (s.last_message || '') + '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="padding:14px;font-size:0.82rem;color:var(--text-muted);text-align:center">ဖွင့်၍မရပါ။</div>';
+  }
+}
+
+async function newSession() {
+  if (!getToken()) return;
+  try {
+    var res = await Chat.createSession();
+    if (res && res.ok) {
+      activeSessionId = res.data.session.id;
+      clearMessages();
+      loadSessions();
+      document.getElementById('delete-session-btn').style.display = 'inline-flex';
+    }
+  } catch(e) { showToast('စက်ရှင် ဖန်တီး၍မရပါ။', 'error'); }
+}
+
+async function openSession(id, el) {
+  activeSessionId = id;
+  document.querySelectorAll('.session-item').forEach(function(s){ s.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  document.getElementById('delete-session-btn').style.display = 'inline-flex';
+  clearMessages();
+  document.getElementById('suggestion-chips').style.display = 'none';
+
+  try {
+    var res = await Chat.getMessages(id);
+    if (res && res.ok) {
+      var msgs = res.data.messages || [];
+      if (!msgs.length) {
+        addBotMessage('ဒီနေ့ ဘာကူညီပေးရမလဲ။');
+        return;
+      }
+      msgs.forEach(function(m) {
+        if (m.role === 'user') addUserMessage(m.content);
+        else addBotMessage(m.content);
+      });
+      scrollToBottom();
+    }
+  } catch(e) { showToast('စာ ဖွင့်၍မရပါ။', 'error'); }
+}
+
+async function deleteCurrentSession() {
+  if (!activeSessionId) return;
+  if (!confirm('ဤစာစက်ရှင်ကို ဖျက်မှာ သေချာပါသလား။')) return;
+  try {
+    var res = await Chat.deleteSession(activeSessionId);
+    if (res && res.ok) {
+      activeSessionId = null;
+      clearMessages();
+      addBotMessage('စာ ဖျက်လိုက်ပါပြီ။ စကားစမြည်အသစ် စတင်ပါ။');
+      document.getElementById('delete-session-btn').style.display = 'none';
+      loadSessions();
+    }
+  } catch(e) { showToast('ဖျက်၍မရပါ။', 'error'); }
+}
+
+async function sendMsg() {
+  var input = document.getElementById('pawbot-input');
+  var msg   = input.value.trim();
+  if (!msg || isWaiting) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('suggestion-chips').style.display = 'none';
+  isWaiting = true;
+  document.getElementById('send-btn').disabled = true;
+
+  addUserMessage(msg);
+
+  var botBubble = addBotMessageEmpty();
+
+  try {
+    var streamUrl;
+
+    if (getToken()) {
+      if (!activeSessionId) {
+        var sessRes = await Chat.createSession();
+        if (sessRes && sessRes.ok) {
+          activeSessionId = sessRes.data.session.id;
+          document.getElementById('delete-session-btn').style.display = 'inline-flex';
+          loadSessions();
+        }
+      }
+      streamUrl = 'http://localhost:3000/api/chat/sessions/' + activeSessionId
+                + '/stream?message=' + encodeURIComponent(msg);
+    } else {
+      streamUrl = 'http://localhost:3000/api/chat/stream?message=' + encodeURIComponent(msg);
+    }
+
+    streamResponse(streamUrl, botBubble, function() {
+      isWaiting = false;
+      document.getElementById('send-btn').disabled = false;
+      if (activeSessionId) loadSessions();
+    });
+
+  } catch(e) {
+    botBubble.innerHTML = 'တောင်းပန်ပါတယ်၊ တစ်ခုခု မှားယွင်းသွားပါတယ်။ ထပ်မံကြိုးစားပါ။';
+    isWaiting = false;
+    document.getElementById('send-btn').disabled = false;
+  }
+}
+
+function stripThinking(text) {
+  if (!text) return '';
+  
+  let result = text.replace(/<think>[\s\S]*?<\/think>/g, '');
+  
+  result = result.replace(/<think>[\s\S]*$/g, '');
+  
+  result = result.replace(/<\/think>/g, '');
+  
+  const partialRegex = /<\/?(t(h(i(n(k(>)?)?)?)?)?)?$/;
+  const match = result.match(partialRegex);
+  if (match && match[0] !== '<') {
+    result = result.substring(0, match.index);
+  }
+  
+  return result;
+}
+
+function streamResponse(url, bubbleEl, onDone) {
+  var token = getToken();
+  var fullUrl = token ? url + '&token=' + token : url;
+
+  bubbleEl.innerHTML = '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>';
+
+  var es       = new EventSource(fullUrl);
+  var fullText = '';
+  var started  = false;
+
+  es.onmessage = function(e) {
+    try {
+      var data = JSON.parse(e.data);
+
+      if (data.error) {
+        bubbleEl.innerHTML = escapeAndFormat('တောင်းပန်ပါတယ်၊ အမှားတစ်ခု ဖြစ်ပွားခဲ့ပါတယ်- ' + data.error);
+        es.close();
+        if (onDone) onDone();
+        return;
+      }
+
+      if (data.token) {
+        fullText += data.token;
+        
+        var visibleText = stripThinking(fullText);
+        
+        if (visibleText.trim() && !started) {
+          bubbleEl.innerHTML = '';
+          started = true;
+        }
+        
+        if (started) {
+          bubbleEl.innerHTML = escapeAndFormat(visibleText);
+          scrollToBottom();
+        }
+      }
+
+      if (data.done) {
+        es.close();
+        var finalVisible = stripThinking(fullText);
+        if (finalVisible.trim()) {
+          bubbleEl.innerHTML = escapeAndFormat(finalVisible);
+        } else if (!started) {
+          bubbleEl.innerHTML = '<span style="color:var(--text-muted)">တုံ့ပြန်မှု မရရှိပါ။</span>';
+        }
+        scrollToBottom();
+        if (onDone) onDone();
+      }
+    } catch(err) {
+    }
+  };
+
+  es.onerror = function() {
+    es.close();
+    if (!started) {
+      bubbleEl.innerHTML = 'ချိတ်ဆက်မှု ပြတ်တောက်သွားပါတယ်။ ထပ်မံကြိုးစားပါ။';
+    }
+    if (onDone) onDone();
+  };
+}
+
+function addBotMessageEmpty() {
+  var area = document.getElementById('pawbot-messages');
+  var wrap = document.createElement('div');
+  wrap.className = 'chat-msg bot';
+  var bubble = document.createElement('div');
+  bubble.className = 'chat-bubble';
+  bubble.innerHTML = '';
+  var avatarDiv = document.createElement('div');
+  avatarDiv.className = 'chat-msg-avatar';
+  avatarDiv.textContent = 'PB';
+  wrap.appendChild(avatarDiv);
+  var inner = document.createElement('div');
+  inner.appendChild(bubble);
+  wrap.appendChild(inner);
+  area.appendChild(wrap);
+  scrollToBottom();
+  return bubble;
+}
+
+function sendSuggestion(btn) {
+  document.getElementById('pawbot-input').value = btn.textContent;
+  sendMsg();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function addUserMessage(text) {
+  var area = document.getElementById('pawbot-messages');
+  var div  = document.createElement('div');
+  div.className = 'chat-msg user';
+  div.innerHTML = '<div><div class="chat-bubble">' + escapeAndFormat(text) + '</div></div>';
+  area.appendChild(div);
+  scrollToBottom();
+}
+
+function addBotMessage(text) {
+  var area = document.getElementById('pawbot-messages');
+  var div  = document.createElement('div');
+  div.className = 'chat-msg bot';
+  div.innerHTML =
+    '<div class="chat-msg-avatar">PB</div>' +
+    '<div><div class="chat-bubble">' + escapeAndFormat(stripThinking(text)) + '</div></div>';
+  area.appendChild(div);
+  scrollToBottom();
+}
+
+function showTyping() {
+  var area = document.getElementById('pawbot-messages');
+  var div  = document.createElement('div');
+  div.className = 'chat-msg bot';
+  div.id = 'typing-indicator';
+  div.innerHTML =
+    '<div class="chat-msg-avatar">PB</div>' +
+    '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+  area.appendChild(div);
+  scrollToBottom();
+}
+
+function hideTyping() {
+  var el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+function clearMessages() {
+  document.getElementById('pawbot-messages').innerHTML = '';
+}
+
+function scrollToBottom() {
+  var area = document.getElementById('pawbot-messages');
+  area.scrollTop = area.scrollHeight;
+}
+
+function escapeAndFormat(text) {
+  var safe = text
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+
+  safe = safe
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>');
+
+  var lines  = safe.split('\n');
+  var html   = '';
+  var inList = false;
+
+  lines.forEach(function(line) {
+    if (line.match(/^[\-\*] /)) {
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += '<li>' + line.replace(/^[\-\*] /, '') + '</li>';
+    } else {
+      if (inList) { html += '</ul>'; inList = false; }
+      if (line.trim()) html += '<p>' + line + '</p>';
+    }
+  });
+  if (inList) html += '</ul>';
+  return html || '<p>' + safe + '</p>';
+}
+</script>
+</body>
+</html>

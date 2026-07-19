@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>အိမ်မွေးတိရစ္ဆာန်များ ရှာဖွေရန် — </title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <style>
+    .filter-chip {
+      display: inline-flex; align-items: center;
+      padding: 5px 14px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 999px; font-size: 0.8rem; font-weight: 500;
+      color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+    }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .filter-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .filter-row .form-control { padding:7px 10px; font-size:0.82rem; }
+    .filter-label { font-size:0.72rem; font-weight:600; color:var(--text-muted); margin-bottom:3px; text-transform:uppercase; letter-spacing:0.04em; }
+    .fav-btn { background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px; transition: background 0.15s; }
+    .fav-btn:hover { background: var(--bg-muted); }
+    .fav-icon { width: 20px; height: 20px; fill: none; stroke: var(--text-muted); stroke-width: 2; transition: all 0.15s; }
+    .fav-btn.faved .fav-icon { fill: var(--danger); stroke: var(--danger); }
+  </style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+
+    <div class="page-header-row">
+      <div>
+        <h1>အိမ်မွေးတိရစ္ဆာန်များ</h1>
+        <p style="color:var(--text-secondary);margin-top:4px" id="result-count">ဖွင့်နေသည်...</p>
+      </div>
+      <a href="/pages/add-pet.html" class="btn btn-primary" id="list-btn" style="display:none">အိမ်မွေးတိရစ္ဆာန် စာရင်းတင်ရန်</a>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;padding:12px 16px">
+      <div style="display:grid;grid-template-columns:1.2fr 0.8fr 0.8fr 0.7fr auto;gap:8px;align-items:end">
+        <div>
+          <div class="filter-label">ရှာဖွေရန်</div>
+          <input type="text" id="filter-search" class="form-control" placeholder="အမည် သို့မဟုတ် မျိုးစိတ်..." oninput="debounceSearch()">
+        </div>
+        <div>
+          <div class="filter-label">အမျိုးအစား</div>
+          <select id="filter-type" class="form-control" onchange="applyFilters()">
+            <option value="">အားလုံး</option>
+          </select>
+        </div>
+        <div>
+          <div class="filter-label">မြို့</div>
+          <select id="filter-city" class="form-control" onchange="applyFilters()">
+            <option value="">အားလုံး</option>
+          </select>
+        </div>
+        <div>
+          <div class="filter-label">အခကြေးငွေ</div>
+          <select id="filter-fee" class="form-control" onchange="applyFilters()">
+            <option value="">အားလုံး</option>
+            <option value="free">အခမဲ့</option>
+            <option value="paid">အခကြေးငွေဖြင့်</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="clearFilters()" style="margin-bottom:1px">ရှင်းလင်းရန်</button>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:0.72rem;font-weight:600;color:var(--text-muted);margin-right:2px">ကျား/မ</span>
+        <button class="filter-chip active" data-gender="" onclick="setGender(this,'')">အားလုံး</button>
+        <button class="filter-chip" data-gender="male" onclick="setGender(this,'male')">အထီး</button>
+        <button class="filter-chip" data-gender="female" onclick="setGender(this,'female')">အမ</button>
+        <button class="filter-chip" data-gender="unknown" onclick="setGender(this,'unknown')">မသိရှိပါ</button>
+        <span style="width:1px;height:18px;background:var(--border);margin:0 4px;flex-shrink:0"></span>
+        <span style="font-size:0.72rem;font-weight:600;color:var(--text-muted);margin-right:2px">အိမ်မွေးတိရစ္ဆာန်</span>
+        <div id="type-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
+    <div id="pets-grid" class="grid-4">
+      <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
+    </div>
+
+    <div id="pagination"></div>
+
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script>
+var currentPage = 1;
+var currentGender = '';
+var searchTimer = null;
+var LIMIT = 12; 
+
+document.addEventListener('DOMContentLoaded', async function() {
+  if (getToken()) document.getElementById('list-btn').style.display = 'inline-flex';
+
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('type')) document.getElementById('filter-type').value = params.get('type') || '';
+
+  try {
+    var typesRes = await PetTypes.list();
+    if (typesRes && typesRes.ok) {
+      var sel = document.getElementById('filter-type');
+      
+      var allowedTypes = ['Dog', 'Cat', 'Other'];
+      var filteredTypes = typesRes.data.petTypes.filter(function(t) {
+        return allowedTypes.indexOf(t.name) !== -1;
+      });
+
+      filteredTypes.forEach(function(t) {
+        var opt = document.createElement('option');
+        opt.value = t.id; 
+        opt.textContent = t.name;
+        sel.appendChild(opt);
+      });
+      if (params.get('type')) sel.value = params.get('type');
+
+      var chipsHtml = '';
+      filteredTypes.forEach(function(t) {
+        chipsHtml += '<button class="filter-chip ' + (params.get('type') == t.id ? 'active' : '') + '" onclick="setTypeChip(this,\'' + t.id + '\')">' + t.name + '</button>';
+      });
+      document.getElementById('type-chips').innerHTML = chipsHtml;
+    }
+  } catch(e) {}
+
+  try {
+    var citiesRes = await Pets.cities();
+    if (citiesRes && citiesRes.ok) {
+      var citySel = document.getElementById('filter-city');
+      citiesRes.data.cities.forEach(function(c) {
+        var opt = document.createElement('option');
+        opt.value = c; opt.textContent = c;
+        citySel.appendChild(opt);
+      });
+    }
+  } catch(e) {}
+
+  loadPets();
+});
+
+function setTypeChip(el, val) {
+  document.querySelectorAll('#type-chips .filter-chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('filter-type').value = val;
+  currentPage = 1;
+  loadPets();
+}
+
+function setGender(el, val) {
+  document.querySelectorAll('[data-gender]').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  currentGender = val;
+  currentPage = 1;
+  loadPets();
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() { currentPage = 1; loadPets(); }, 400);
+}
+
+function applyFilters() { currentPage = 1; loadPets(); }
+
+function clearFilters() {
+  document.getElementById('filter-search').value = '';
+  document.getElementById('filter-type').value = '';
+  document.getElementById('filter-city').value = '';
+  document.getElementById('filter-fee').value = '';
+  currentGender = '';
+  document.querySelectorAll('[data-gender]').forEach(function(c){ c.classList.remove('active'); });
+  document.querySelector('[data-gender=""]').classList.add('active');
+  document.querySelectorAll('#type-chips .filter-chip').forEach(function(c){ c.classList.remove('active'); });
+  currentPage = 1;
+  loadPets();
+}
+
+async function loadPets() {
+  var grid = document.getElementById('pets-grid');
+  grid.innerHTML = '<div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>';
+
+  var q = { status: 'available', page: currentPage, limit: LIMIT };
+  var search = document.getElementById('filter-search').value.trim();
+  var type   = document.getElementById('filter-type').value;
+  var city   = document.getElementById('filter-city').value;
+  var fee    = document.getElementById('filter-fee').value;
+
+  if (search) q.search   = search;
+  if (type)   q.type     = type;
+  if (city)   q.city     = city;
+  if (fee)    q.fee_type = fee;
+  if (currentGender) q.gender = currentGender;
+
+  try {
+    var res = await Pets.list(q);
+    if (!res || !res.ok) {
+      grid.innerHTML = '<p style="color:var(--danger);grid-column:1/-1">အိမ်မွေးတိရစ္ဆာန်များ ဖွင့်၍မရပါ။</p>';
+      return;
+    }
+    var pets = res.data.pets || [];
+    var total = res.data.total || 0;
+
+    document.getElementById('result-count').textContent = total + ' အိမ်မွေးတိရစ္ဆာန်' + (total !== 1 ? 'များ' : '') + ' တွေ့ရှိသည်';
+
+    if (!pets.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">ရလဒ်မရှိပါ</div><h3>အိမ်မွေးတိရစ္ဆာန် မတွေ့ရှိပါ</h3><p>သင်၏စစ်ထုတ်မှုများကို ချိန်ညှိကြည့်ပါ။</p></div>';
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+
+    var favIds = [];
+    if (getToken()) {
+      try {
+        var favRes = await Favorites.list();
+        if (favRes && favRes.ok) favIds = (favRes.data.favorites || []).map(function(f){ return f.id; });
+      } catch(e) {}
+    }
+
+    grid.innerHTML = pets.map(function(pet) {
+      var petId = petIdOf(pet);
+      return petCardWithFav(pet, favIds.indexOf(petId) !== -1);
+    }).join('');
+
+    renderPagination('pagination', total, LIMIT, currentPage, function(p) {
+      currentPage = p; loadPets(); window.scrollTo(0,0);
+    });
+  } catch(e) {
+    grid.innerHTML = '<p style="color:var(--danger);grid-column:1/-1">တစ်ခုခု မှားယွင်းသွားသည်။</p>';
+  }
+}
+
+function petCardWithFav(pet, isFaved) {
+  var petId = petIdOf(pet);
+
+  var img = null;
+  if (pet.images && pet.images[0] && pet.images[0].url) {
+    img = pet.images[0].url;
+  } else if (pet.primary_image) {
+    img = pet.primary_image;
+  }
+
+  var imgHtml = img
+    ? '<img class="pet-card-img" src="' + imgUrl(img) + '" alt="' + escapeHtml(pet.name) + '" loading="lazy" decoding="async" onerror="handleImgError(this)">' 
+    : '<div class="pet-card-placeholder" style="font-size:1rem">' + (pet.name ? pet.name.charAt(0).toUpperCase() : '?') + '</div>';
+
+  var fee = pet.fee_type === 'free'
+    ? '<span class="pill pill-free">အခမဲ့</span>'
+    : '<span class="pill pill-paid">' + fmtMoney(pet.adoption_fee) + '</span>';
+
+  var favBtn = getToken()
+    ? '<button class="fav-btn ' + (isFaved ? 'faved' : '') + '" onclick="event.stopPropagation();toggleFav(this, ' + petId + ')" title="' + (isFaved ? 'စိတ်ကြိုက်များမှ ဖယ်ရှားရန်' : 'သိမ်းဆည်းရန်') + '">' +
+        '<svg class="fav-icon" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' +
+      '</button>'
+    : '';
+
+  var meta = (pet.pet_type_name || '') + 
+    (pet.breed ? ' · ' + pet.breed : '') + 
+    (pet.city || pet.location ? ' · ' + (pet.city || pet.location) : '');
+
+  return '<div class="pet-card" onclick="window.location.href=\'' + petDetailHref(petId) + '\'" style="cursor:pointer">' +
+    imgHtml +
+    '<div class="pet-card-body">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+        '<div class="pet-card-title">' + escapeHtml(pet.name) + '</div>' +
+        favBtn +
+      '</div>' +
+      '<div class="pet-card-meta">' + escapeHtml(meta) + '</div>' +
+      '<div class="pet-card-footer">' + fee + pill(pet.status) + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+async function toggleFav(btn, petId) {
+  if (!getToken()) { window.location.href = '/pages/login.html'; return; }
+  var isFaved = btn.classList.contains('faved');
+  try {
+    if (isFaved) {
+      await Favorites.remove(petId);
+      btn.classList.remove('faved');
+      btn.title = 'သိမ်းဆည်းရန်';
+    } else {
+      await Favorites.add(petId);
+      btn.classList.add('faved');
+      btn.title = 'စိတ်ကြိုက်များမှ ဖယ်ရှားရန်';
+    }
+  } catch(e) { showToast('စိတ်ကြိုက်များ ပြောင်းလဲ၍မရပါ။', 'error'); }
+}
+</script>
+</body>
+</html>

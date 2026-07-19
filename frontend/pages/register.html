@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>အကောင့်ဖွင့်ရန် </title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+    <div style="max-width:520px;margin:0 auto">
+
+      <div style="text-align:center;margin-bottom:28px">
+        <h1 style="font-size:1.5rem;margin-bottom:6px">အကောင့်တစ်ခု ဖွင့်ရန်</h1>
+        <p style="color:#6b7a8d;font-size:0.9rem">အိမ်မွေးတိရစ္ဆာန်များ မွေးစားရန်ပါဝင်ပါ</p>
+      </div>
+
+      <div class="card">
+        <div id="alert-area"></div>
+
+        <div class="form-group">
+          <label for="name">အမည်အပြည့်အစုံ <span style="color:#e76f51">*</span></label>
+          <input type="text" id="name" class="form-control" placeholder="သင်၏အမည်အပြည့်အစုံ">
+        </div>
+
+        <div class="form-group">
+          <label for="email">အီးမေးလ် <span style="color:#e76f51">*</span></label>
+          <input type="email" id="email" class="form-control" placeholder="you@example.com">
+          <small style="color:#6b7a8d">ဤအီးမေးလ်သို့ အတည်ပြုလင့်ခ် ပေးပို့ပါမည်။</small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="password">စကားဝှက် <span style="color:#e76f51">*</span></label>
+            <input type="password" id="password" class="form-control" placeholder="အနည်းဆုံး စာလုံး ၆ လုံး">
+          </div>
+          <div class="form-group">
+            <label for="confirm">အတည်ပြုရန် <span style="color:#e76f51">*</span></label>
+            <input type="password" id="confirm" class="form-control" placeholder="စကားဝှက် ထပ်ထည့်ပါ">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phone">ဖုန်း <span style="color:#e76f51">*</span></label>
+            <input type="text" id="phone" class="form-control" placeholder="+95 9...">
+          </div>
+          <div class="form-group">
+            <label for="address">လိပ်စာ</label>
+            <input type="text" id="address" class="form-control" placeholder="မြို့၊ မြို့နယ်">
+          </div>
+        </div>
+
+        <hr class="divider">
+        <h3 style="font-size:1.05rem;margin-bottom:10px">ငွေပေးချေမှု နည်းလမ်း</h3>
+        <p style="color:#6b7a8d;font-size:0.82rem;margin-bottom:12px">
+          မွေးစားခနှင့် ငွေပြန်အမ်းခြင်းများအတွက် အသုံးပြုပါသည်။ သင်၏ကတ်အချက်အလက်များကို လုံခြုံစွာ သိမ်းဆည်းထားပါသည် (နောက်ဆုံး ဂဏန်း ၄ လုံးသာ)။
+        </p>
+
+        <div class="form-group">
+          <label for="payment_method">နည်းလမ်း <span style="color:#e76f51">*</span></label>
+          <select id="payment_method" class="form-control" onchange="togglePaymentFields()">
+            <option value="">— ရွေးချယ်ပါ —</option>
+            <option value="credit_card">Credit card</option>
+            <option value="ayapay">AyaPay</option>
+            <option value="wavepay">Wave Pay</option>
+            <option value="kpay">KBZ Pay</option>
+          </select>
+        </div>
+
+        <div id="cc-fields" style="display:none">
+          <div class="form-group">
+            <label for="cc_name">ကတ်ပိုင်ရှင် အမည် <span style="color:#e76f51">*</span></label>
+            <input type="text" id="cc_name" class="form-control" placeholder="ကတ်ပေါ်ရှိ အမည်">
+          </div>
+          <div class="form-group">
+            <label for="cc_number">ကတ်နံပါတ် <span style="color:#e76f51">*</span></label>
+            <input type="text" id="cc_number" class="form-control" placeholder="0000 0000 0000 0000"
+                   maxlength="19" inputmode="numeric" oninput="formatCard(this)">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cc_expiry">သက်တမ်းကုန်ဆုံးရက် (MM/YY) <span style="color:#e76f51">*</span></label>
+              <input type="text" id="cc_expiry" class="form-control" placeholder="MM/YY"
+                     maxlength="5" oninput="formatExpiry(this)">
+            </div>
+            <div class="form-group">
+              <label for="cc_cvc">CVC <span style="color:#e76f51">*</span></label>
+              <input type="password" id="cc_cvc" class="form-control" placeholder="123"
+                     maxlength="4" inputmode="numeric">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cc_billing">ငွေတောင်းခံလွှာ လိပ်စာ</label>
+            <input type="text" id="cc_billing" class="form-control" placeholder="လမ်း၊ မြို့">
+          </div>
+        </div>
+
+        <div id="wallet-fields" style="display:none">
+          <div class="form-group">
+            <label for="wallet_name">အကောင့်ပိုင်ရှင် အမည် <span style="color:#e76f51">*</span></label>
+            <input type="text" id="wallet_name" class="form-control" placeholder="ပိုက်ဆံအိတ်ဖြင့် မှတ်ပုံတင်ထားသော အမည်">
+            <small style="color:#6b7a8d">ဤပိုက်ဆံအိတ်အတွက် အထက်ပါ ပင်မဖုန်းနံပါတ်ကို အသုံးပြုပါမည်။</small>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-full" id="register-btn" onclick="doRegister()">အကောင့် ဖွင့်ရန်</button>
+
+        <hr class="divider">
+        <p style="text-align:center;font-size:0.86rem;color:#6b7a8d">
+          အကောင့်ရှိပြီးသားလား။ <a href="/pages/login.html">အကောင့်ဝင်ရန်</a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script>
+if (getToken()) window.location.href = '/index.html';
+
+function togglePaymentFields() {
+  var method = document.getElementById('payment_method').value;
+  document.getElementById('cc-fields').style.display     = method === 'credit_card' ? 'block' : 'none';
+  document.getElementById('wallet-fields').style.display = ['ayapay','wavepay','kpay'].includes(method) ? 'block' : 'none';
+}
+
+function formatCard(el) {
+  var v = el.value.replace(/\D/g,'').slice(0,16);
+  el.value = v.replace(/(.{4})/g,'$1 ').trim();
+}
+function formatExpiry(el) {
+  var v = el.value.replace(/\D/g,'').slice(0,4);
+  if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2);
+  el.value = v;
+}
+
+function detectBrand(num) {
+  num = num.replace(/\s/g,'');
+  if (/^4/.test(num)) return 'visa';
+  if (/^5[1-5]/.test(num)) return 'mastercard';
+  if (/^3[47]/.test(num)) return 'amex';
+  if (/^6(?:011|5)/.test(num)) return 'discover';
+  if (/^62/.test(num)) return 'unionpay';
+  if (/^35/.test(num)) return 'jcb';
+  return 'unknown';
+}
+
+async function doRegister(event) {
+  if (event) event.preventDefault(); 
+  var name     = document.getElementById('name').value.trim();
+  var email    = document.getElementById('email').value.trim();
+  var password = document.getElementById('password').value;
+  var confirm  = document.getElementById('confirm').value;
+  var phone    = document.getElementById('phone').value.trim();
+  var address  = document.getElementById('address').value.trim();
+  var method   = document.getElementById('payment_method').value;
+  var alertArea = document.getElementById('alert-area');
+  var btn = document.getElementById('register-btn');
+
+  alertArea.innerHTML = '';
+
+  if (!name || !email || !password) {
+    alertArea.innerHTML = '<div class="alert alert-danger">အမည်၊ အီးမေးလ်နှင့် စကားဝှက် လိုအပ်ပါသည်။</div>';
+    return;
+  }
+  if (password.length < 6) {
+    alertArea.innerHTML = '<div class="alert alert-danger">စကားဝှက်သည် အနည်းဆုံး စာလုံး ၆ လုံး ရှိရပါမည်။</div>';
+    return;
+  }
+  if (password !== confirm) {
+    alertArea.innerHTML = '<div class="alert alert-danger">စကားဝှက်များ မတူညီပါ။</div>';
+    return;
+  }
+  if (!method) {
+    alertArea.innerHTML = '<div class="alert alert-danger">ကျေးဇူးပြု၍ ငွေပေးချေမှု နည်းလမ်းတစ်ခု ရွေးချယ်ပါ။</div>';
+    return;
+  }
+
+  var payment = { method_type: method };
+
+  if (method === 'credit_card') {
+    var ccName   = document.getElementById('cc_name').value.trim();
+    var ccNumber = document.getElementById('cc_number').value.replace(/\s/g,'');
+    var ccExp    = document.getElementById('cc_expiry').value.trim();
+    var ccCvc    = document.getElementById('cc_cvc').value;
+    var ccBill   = document.getElementById('cc_billing').value.trim();
+
+    if (!ccName || !ccNumber || !ccExp || !ccCvc) {
+      alertArea.innerHTML = '<div class="alert alert-danger">ကျေးဇူးပြု၍ ကတ်အကွက်အားလုံး ဖြည့်ပါ။</div>';
+      return;
+    }
+    if (ccNumber.length < 13 || ccNumber.length > 16) {
+      alertArea.innerHTML = '<div class="alert alert-danger">ကတ်နံပါတ် အရှည် မမှန်ကန်ပါ။</div>';
+      return;
+    }
+    if (!/^\d{2}\/\d{2}$/.test(ccExp)) {
+      alertArea.innerHTML = '<div class="alert alert-danger">သက်တမ်းကုန်ဆုံးရက်သည် MM/YY ဖြစ်ရပါမည်။</div>';
+      return;
+    }
+    if (ccCvc.length < 3) {
+      alertArea.innerHTML = '<div class="alert alert-danger">CVC မမှန်ကန်ပါ။</div>';
+      return;
+    }
+    var parts = ccExp.split('/');
+    payment.card_holder_name   = ccName;
+    payment.card_last_four     = ccNumber.slice(-4);
+    payment.card_brand         = detectBrand(ccNumber);
+    payment.card_expiry_month  = parseInt(parts[0],10);
+    payment.card_expiry_year   = 2000 + parseInt(parts[1],10);
+    payment.billing_address    = ccBill || null;
+  } else {
+    var wName  = document.getElementById('wallet_name').value.trim();
+    if (!phone) {
+      alertArea.innerHTML = '<div class="alert alert-danger">ပိုက်ဆံအိတ် ငွေပေးချေမှုများအတွက် ဖုန်းနံပါတ် လိုအပ်ပါသည်။</div>';
+      return;
+    }
+    if (!wName) {
+      alertArea.innerHTML = '<div class="alert alert-danger">ပိုက်ဆံအိတ် အကောင့်ပိုင်ရှင် အမည် လိုအပ်ပါသည်။</div>';
+      return;
+    }
+    payment.wallet_phone        = phone;
+    payment.wallet_account_name = wName;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'အကောင့် ဖွင့်နေသည်...';
+
+  try {
+    var body = { name: name, email: email, password: password, payment_method: payment };
+    if (phone)   body.phone   = phone;
+    if (address) body.address = address;
+
+    var res = await Auth.register(body);
+
+    if (res && res.ok && res.data && res.data.token) {
+      saveAuth(res.data.token, res.data.user);
+      showToast('ကြိုဆိုပါသည်၊ ' + res.data.user.name + '။', 'success');
+      setTimeout(function() { 
+        window.location.href = '/index.html'; 
+      }, 600);
+    } else {
+      var errMsg = (res && res.data && res.data.message) ? res.data.message : 'အကောင့်ဖွင့်၍မရပါ။';
+      alertArea.innerHTML = '<div class="alert alert-danger">' + errMsg + '</div>';
+    }
+  } catch(e) {
+    alertArea.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။ ထပ်မံကြိုးစားပါ။</div>';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'အကောင့် ဖွင့်ရန်';
+}
+</script>
+</body>
+</html>

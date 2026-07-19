@@ -20,7 +20,12 @@ const getDashboardStats = async (req, res) => {
 
       pool.query(`SELECT status, COUNT(*) FROM adoption_requests GROUP BY status`),
 
-      pool.query(`SELECT status, COALESCE(SUM(amount),0) AS total, COUNT(*) AS count
+      // ✅ UPDATED: Added SUM(service_fee) as profit and SUM(owner_amount) as owner_payout
+      pool.query(`SELECT status, 
+                         COALESCE(SUM(amount),0) AS total, 
+                         COALESCE(SUM(service_fee),0) AS profit, 
+                         COALESCE(SUM(owner_amount),0) AS owner_payout,
+                         COUNT(*) AS count
                   FROM payments GROUP BY status`),
 
       pool.query(`SELECT status, COUNT(*) FROM reports GROUP BY status`),
@@ -39,7 +44,17 @@ const getDashboardStats = async (req, res) => {
 
     pets.rows.forEach(r      => { petsByStatus[r.status]      = +r.count; });
     adoptions.rows.forEach(r => { adoptionsByStatus[r.status] = +r.count; });
-    payments.rows.forEach(r  => { paymentStats[r.status]      = { count: +r.count, total: +r.total }; });
+    
+    // ✅ UPDATED: Mapping the new profit and owner_payout fields
+    payments.rows.forEach(r  => {
+      paymentStats[r.status] = { 
+        count: +r.count, 
+        total: +r.total,
+        profit: +r.profit,
+        ownerPayout: +r.owner_payout
+      };
+    });
+
     reports.rows.forEach(r   => { reportsByStatus[r.status]   = +r.count; });
 
     res.json({
@@ -517,6 +532,52 @@ const resolveReport = async (req, res) => {
     res.status(500).json({ message: 'Server error.', error: err.message });
   } finally { client.release(); }
 };
+// PATCH /api/admin/users/:id/trust
+const trustUser = async (req, res) => {
+  const { note } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE users
+       SET is_trusted=TRUE, trusted_at=NOW(), trusted_note=$1
+       WHERE id=$2
+       RETURNING id, name, email, is_trusted`,
+      [note || null, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ message: 'User not found.' });
+
+    await audit({
+      adminId: req.user.id, action: 'trust_user',
+      targetType: 'user', targetId: +req.params.id,
+      detail: `Marked ${rows[0].email} as trusted owner. Note: ${note || 'none'}`,
+      ip: getIp(req),
+    });
+
+    res.json({ message: 'User marked as trusted owner.', user: rows[0] });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
+
+// PATCH /api/admin/users/:id/untrust
+const untrustUser = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE users
+       SET is_trusted=FALSE, trusted_at=NULL, trusted_note=NULL
+       WHERE id=$1
+       RETURNING id, name, email`,
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ message: 'User not found.' });
+
+    await audit({
+      adminId: req.user.id, action: 'untrust_user',
+      targetType: 'user', targetId: +req.params.id,
+      detail: `Removed trusted status from ${rows[0].email}`,
+      ip: getIp(req),
+    });
+
+    res.json({ message: 'Trusted status removed.' });
+  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+};
 
 module.exports = {
   getDashboardStats,
@@ -527,4 +588,5 @@ module.exports = {
   listAllFollowups, listAllHealthLogs,
   getAuditLog,
   listReports, resolveReport,
+  trustUser, untrustUser,
 };

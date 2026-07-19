@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet Care Blog — Pet Rehoming</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <style>
+    .blog-hero {
+      text-align: center;
+      padding: 40px 0 24px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .blog-hero h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
+    .blog-hero p { color: var(--text-secondary); max-width: 520px; margin: 8px auto 0; font-size: 0.95rem; line-height: 1.6; }
+
+    .blog-grid-layout {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px;
+    }
+    @media(max-width: 768px) {
+      .blog-grid-layout { grid-template-columns: 1fr; }
+    }
+
+    .blog-grid-layout .blog-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .blog-grid-layout .blog-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 24px var(--shadow-md);
+    }
+    
+    .blog-grid-layout .blog-card-img {
+      height: 210px;
+      width: 100%;
+      object-fit: cover;
+      border-bottom: 1px solid var(--border);
+    }
+    .blog-grid-layout .blog-card-placeholder {
+      height: 210px;
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, var(--accent-light-bg), var(--bg-muted));
+      border-bottom: 1px solid var(--border);
+      color: var(--accent);
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .blog-grid-layout .blog-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 20px;
+    }
+    .blog-grid-layout .blog-card-cat {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .blog-grid-layout .blog-card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .blog-grid-layout .blog-card-summary {
+      flex: 1;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .blog-grid-layout .blog-card-footer {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .chip {
+      display: inline-flex; align-items: center;
+      padding: 6px 16px; background: var(--bg-card); border: 1.5px solid var(--border);
+      border-radius: 999px; font-size: 0.82rem; font-weight: 500;
+      color: var(--text-primary); cursor: pointer; transition: all 0.15s;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--accent); }
+    .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+
+    <div class="blog-hero">
+      <h1>Pet ဆောင်းပါးများ</h1>
+      <p>Pet များနှင့်သက်ဆိုင်သောဆောင်းပါးများ ကျွမ်းကျင်ပညာရှင်များရဲ့ပြောဆိုချက်များ အကြံညဏ်များ Pet မွေးမြူရေးအတွက် အထောက်အကူပေးနိုင်သော ဆောင်းပါးများ</p>
+      <a href="/pages/write-blog.html" class="btn btn-primary" id="write-btn" style="display:none; margin-top:16px">ဆောင်းပါးရေးရန်</a>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <input type="text" id="search" class="form-control" style="flex:1;min-width:200px" placeholder="Search articles..." oninput="debounceSearch()">
+      <select id="filter-cat" class="form-control" style="width:180px" onchange="applyFilters()">
+        <option value="">All Categories</option>
+      </select>
+    </div>
+
+    <div id="cat-chips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px"></div>
+
+    <div id="blog-grid" class="blog-grid-layout">
+      <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
+    </div>
+
+    <div id="pagination" style="margin-top: 32px;"></div>
+
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script>
+var currentPage = 1;
+var searchTimer = null;
+var LIMIT = 10;
+
+document.addEventListener('DOMContentLoaded', async function() {
+  if (getToken()) document.getElementById('write-btn').style.display = 'inline-flex';
+
+  try {
+    var res = await Blogs.categories();
+    if (res && res.ok) {
+      var cats = res.data.categories || [];
+      var sel = document.getElementById('filter-cat');
+      var chips = '<button class="chip active" onclick="setCatChip(this,\'\')">All</button>';
+      cats.forEach(function(c) {
+        var o = document.createElement('option');
+        o.value = c.slug; o.textContent = c.name;
+        sel.appendChild(o);
+        chips += '<button class="chip" onclick="setCatChip(this,\'' + c.slug + '\')">' + c.name + '</button>';
+      });
+      document.getElementById('cat-chips').innerHTML = chips;
+    }
+  } catch(e) {}
+
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('category')) {
+    document.getElementById('filter-cat').value = params.get('category');
+  }
+
+  loadBlogs();
+});
+
+function setCatChip(el, val) {
+  document.querySelectorAll('#cat-chips .chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('filter-cat').value = val;
+  currentPage = 1; loadBlogs();
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function(){ currentPage = 1; loadBlogs(); }, 400);
+}
+
+function applyFilters() { currentPage = 1; loadBlogs(); }
+
+async function loadBlogs() {
+  var grid = document.getElementById('blog-grid');
+  grid.innerHTML = '<div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>';
+
+  var q = { status: 'published', page: currentPage, limit: LIMIT };
+  var s = document.getElementById('search').value.trim();
+  var c = document.getElementById('filter-cat').value;
+  if (s) q.search   = s;
+  if (c) q.category = c;
+
+  try {
+    var res = await Blogs.list(q);
+    if (!res || !res.ok) {
+      grid.innerHTML = '<p style="color:var(--danger);grid-column:1/-1">Failed to load blogs.</p>'; return;
+    }
+    var blogs = res.data.blogs || [];
+    var total = res.data.total || 0;
+    var countEl = document.querySelector('.blog-hero p');
+    if(countEl) countEl.textContent = 'Pet များနှင့်သက်ဆိုင်သောဆောင်းပါးများ ကျွမ်းကျင်ပညာရှင်များရဲ့ပြောဆိုချက်များ ဆောင်းပါး ' + total + (total !== 1 ? '' : '') + ' ရနိုင်သည်။';
+
+    if (!blogs.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">No articles</div><h3>No articles found</h3><p>Try a different search or category.</p></div>';
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+
+    grid.innerHTML = blogs.map(blogCardHtml).join('');
+    renderPagination('pagination', total, LIMIT, currentPage, function(p) {
+      currentPage = p; loadBlogs(); window.scrollTo(0, 0);
+    });
+  } catch(e) {
+    grid.innerHTML = '<p style="color:var(--danger);grid-column:1/-1">Something went wrong.</p>';
+  }
+}
+</script>
+</body>
+</html>

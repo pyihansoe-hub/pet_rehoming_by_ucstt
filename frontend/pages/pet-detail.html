@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>အိမ်မွေးတိရစ္ဆာန် အသေးစိတ် — </title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <style>
+    .gallery { display:grid; grid-template-columns:1fr 180px; gap:8px; margin-bottom:24px; border-radius:10px; overflow:hidden; max-height:420px; }
+    .gallery-main { background:var(--bg-muted); overflow:hidden; }
+    .gallery-main img { width:100%; height:100%; object-fit:cover; cursor:pointer; }
+    .gallery-main-placeholder { width:100%; height:100%; min-height:280px; display:flex; align-items:center; justify-content:center; font-size:2rem; color:var(--text-muted); font-weight:bold; }
+    .gallery-thumbs { display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
+    .gallery-thumb { aspect-ratio:1; object-fit:cover; cursor:pointer; opacity:0.6; border-radius:4px; width:100%; }
+    .gallery-thumb.active, .gallery-thumb:hover { opacity:1; }
+    .info-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 0; }
+    .info-item { background:var(--bg-muted); border-radius:8px; padding:10px 14px; }
+    .info-label { font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px; }
+    .info-value { font-size:0.88rem; font-weight:bold; color:var(--text-primary); }
+    .comment-item { padding:14px 0; border-bottom:1px solid var(--border); }
+    .comment-item:last-child { border-bottom:none; }
+    .comment-avatar { width:32px; height:32px; border-radius:50%; background:var(--accent); color:#fff; font-size:0.78rem; font-weight:bold; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    @media(max-width:700px){ .gallery{ grid-template-columns:1fr; max-height:none; } .gallery-thumbs{ flex-direction:row; overflow-x:auto; } .gallery-thumb{ width:70px; height:70px; } .info-grid{ grid-template-columns:1fr 1fr; } }
+    .pay-method-option { display:flex; align-items:center; gap:10px; padding:12px 14px; border:2px solid var(--border); border-radius:8px; cursor:pointer; transition:border-color 0.15s; margin-bottom:8px; }
+    .pay-method-option:hover { border-color:var(--accent); }
+    .pay-method-option.active { border-color:var(--accent); background:var(--accent-light-bg, #eef2ff); }
+    .pay-method-option input { display:none; }
+    .pay-method-dot { width:18px; height:18px; border-radius:50%; border:2px solid var(--border); flex-shrink:0; position:relative; }
+    .pay-method-option.active .pay-method-dot { border-color:var(--accent); }
+    .pay-method-option.active .pay-method-dot::after { content:''; position:absolute; top:3px; left:3px; width:8px; height:8px; border-radius:50%; background:var(--accent); }
+  </style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+    <div id="loading-area" class="loading-wrap"><div class="spinner"></div></div>
+    <div id="error-area" class="hidden">
+      <div class="alert alert-danger">အိမ်မွေးတိရစ္ဆာန် မတွေ့ရှိပါ သို့မဟုတ် ဖွင့်၍မရပါ။</div>
+      <a href="pets.html" class="btn btn-secondary" style="margin-top:8px">ရှာဖွေရန် ပြန်သွားပါ</a>
+    </div>
+
+    <div id="content-area" class="hidden">
+      <div style="margin-bottom:16px">
+        <a href="pets.html" style="font-size:0.86rem;color:var(--text-secondary)">အိမ်မွေးတိရစ္ဆာန်များ ရှာဖွေရန်</a>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:32px;align-items:start">
+        <div>
+          <div class="gallery" id="gallery">
+            <div class="gallery-main" id="gallery-main">
+              <div class="gallery-main-placeholder">ပုံမရှိပါ</div>
+            </div>
+            <div class="gallery-thumbs" id="gallery-thumbs"></div>
+          </div>
+
+          <div id="tabs-wrap">
+            <div class="tabs">
+              <button class="tab-btn active" data-tab="tab-about">အကြောင်း</button>
+              <button class="tab-btn" data-tab="tab-health">ကျန်းမာရေး</button>
+              <button class="tab-btn" data-tab="tab-history" id="history-tab-btn" style="display:none">အခြေအနေ မှတ်တမ်း</button>
+              <button class="tab-btn" data-tab="tab-logs" id="logs-tab-btn" style="display:none">ကျန်းမာရေး မှတ်တမ်းများ</button>
+            </div>
+            <div class="tab-panel active" id="tab-about">
+              <div class="info-grid" id="info-grid"></div>
+              <div id="description-area"></div>
+            </div>
+            <div class="tab-panel" id="tab-health">
+              <div id="health-badges" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"></div>
+              <div id="health-notes-area"></div>
+            </div>
+            <div class="tab-panel" id="tab-history"><div id="status-history-list"></div></div>
+            <div class="tab-panel" id="tab-logs">
+              <div id="health-logs-list"></div>
+              <div id="add-log-area" class="hidden" style="margin-top:16px">
+                <h4 style="margin-bottom:12px">ကျန်းမာရေး မှတ်တမ်းထည့်ရန်</h4>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>အမျိုးအစား</label>
+                    <select id="log-type" class="form-control">
+                      <option value="vaccination">ကာကွယ်ဆေးထိုးခြင်း</option>
+                      <option value="vet_visit">တိရစ္ဆာန်ဆေးကုဆရာဝန်ထံ သွားရောက်ခြင်း</option>
+                      <option value="deworming">သန်ချခြင်း</option>
+                      <option value="weight">ကိုယ်အလေးချိန် စစ်ဆေးခြင်း</option>
+                      <option value="other">အခြား</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>တိရစ္ဆာန်ဆေးကုဆရာဝန် အမည်</label>
+                    <input type="text" id="log-vet" class="form-control" placeholder="မဖြည့်လည်းရပါသည်">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>ကိုယ်အလေးချိန် (ကီလိုဂရမ်)</label>
+                    <input type="number" id="log-weight" class="form-control" placeholder="မဖြည့်လည်းရပါသည်" step="0.1">
+                  </div>
+                  <div class="form-group">
+                    <label>ပြုလုပ်သည့်ရက်</label>
+                    <input type="date" id="log-next-due" class="form-control">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>မှတ်စုများ</label>
+                  <textarea id="log-desc" class="form-control" rows="2" placeholder="မဖြည့်လည်းရပါသည်"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="submitHealthLog()">မှတ်တမ်း သိမ်းဆည်းရန်</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; margin:24px 0; padding:16px; background:var(--bg-chat); border-radius:10px;">
+            <button id="like-btn" onclick="togglePetLike()" style="display:flex; align-items:center; background:none; border:1.5px solid var(--border); padding:8px 16px; border-radius:8px; font-size:0.88rem; font-weight:bold; cursor:pointer; color:var(--text-secondary); margin-right:16px;">
+              <span id="like-icon" style="margin-right:6px;">ကြိုက်နှစ်သက်သည်</span> <span id="like-count">0</span> ကြိုက်နှစ်သက်မှုများ
+            </button>
+            <span style="font-size:0.84rem; color:var(--text-muted);">ဤအိမ်မွေးတိရစ္ဆာန်ကို ကြိုက်နှစ်သက်ပါသလား။ နှလုံးသားလေး ပေးခဲ့ပါ။</span>
+          </div>
+
+          <hr class="divider">
+
+          <div>
+            <h3 style="margin-bottom:16px;">မေးခွန်းများနှင့် မှတ်ချက်များ <span id="comment-count" style="font-size:0.9rem; color:var(--text-muted); font-weight:normal;"></span></h3>
+            <div id="comments-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+            <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border);">
+              <div id="comment-login-prompt" class="hidden" style="margin-bottom:16px;">
+                <div class="alert alert-info">မှတ်ချက်ရေးရန် <a href="login.html">အကောင့်ဝင်ပါ</a>။</div>
+              </div>
+              <div id="comment-form" class="hidden">
+                <div id="comment-alert"></div>
+                <textarea id="comment-input" class="form-control" rows="3" placeholder="ဤအိမ်မွေးတိရစ္ဆာန်နှင့် ပတ်သက်၍ မေးခွန်းမေးပါ..."></textarea>
+                <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+                  <button class="btn btn-primary btn-sm" onclick="submitPetComment()">မှတ်စာရန်</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+              <h2 id="pet-name" style="font-size:1.4rem"></h2>
+              <span id="pet-status-pill"></span>
+            </div>
+            <p id="pet-type-breed" style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:12px"></p>
+            <div id="fee-area" style="margin-bottom:16px;padding:12px;background:var(--bg-muted);border-radius:8px">
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:2px">မွေးစားခ</div>
+              <div id="fee-value" style="font-size:1.3rem;font-weight:bold"></div>
+            </div>
+            <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:16px" id="location-area"></div>
+            <div id="action-area"></div>
+          </div>
+          <div class="card" id="owner-card" style="margin-bottom:16px">
+            <h4 style="margin-bottom:10px">စာရင်းတင်သူ</h4>
+            <div id="owner-info"></div>
+          </div>
+          <div style="text-align:center">
+            <button onclick="openReportModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.8rem;cursor:pointer;text-decoration:underline">ဤစာရင်းကို တိုင်ကြားရန်</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="adopt-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>မွေးစားရန် တောင်းဆိုချက်</h3>
+      <button class="modal-close" onclick="closeModal('adopt-modal')">x</button>
+    </div>
+    <div id="adopt-alert"></div>
+    
+    <div id="adopt-fee-area" style="display:none; margin-bottom:16px; padding:16px;background:var(--warning-bg); border:1px solid var(--warning-border); border-radius:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:0.84rem;color:var(--warning-text);font-weight:bold;">မွေးစားခ</div>
+          <div id="adopt-fee-amount" style="font-size:1.4rem;font-weight:bold;color:var(--warning-text);"></div>
+        </div>
+        <div style="text-align:right;">
+          <span style="font-size:0.76rem;color:var(--text-secondary);">လုံခြုံသော ငွေပေးချေမှု</span>
+        </div>
+      </div>
+    </div>
+
+    <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:16px">ပိုင်ရှင်အား သင့်အကြောင်း အနည်းငယ်နှင့် အဘယ်ကြောင့် သင့်တော်ကြောင်း ပြောပြပါ။</p>
+    <div class="form-group">
+      <label for="adopt-message">မက်ဆေ့ခ်ျ (မဖြည့်လည်းရပါသည်)</label>
+      <textarea id="adopt-message" class="form-control" rows="4" placeholder="ကျွန်ုပ်တွင် ခြံကျယ်တစ်ခုရှိပါသည်၊ အိမ်မှနေ၍ အလုပ်လုပ်ပါသည်..."></textarea>
+    </div>
+
+    <div id="adopt-pay-area" style="display:none; margin-bottom:16px;">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:20px;box-shadow:0 2px 8px var(--shadow-sm);">
+        <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;justify-content:center;padding:10px;background:var(--success-bg);border-radius:6px;">
+          <span style="font-size:0.88rem;color:var(--success-text);font-weight:600;">လုံခြုံသော ငွေပေးချေမှု</span>
+        </div>
+        
+        <label class="pay-method-option active" onclick="selectPayMethod('card', this)">
+          <input type="radio" name="pay-method" value="card" checked>
+          <div class="pay-method-dot"></div>
+          <span style="font-size:0.9rem;font-weight:500;">Credit card</span>
+        </label>
+        <label class="pay-method-option" onclick="selectPayMethod('kpay', this)">
+          <input type="radio" name="pay-method" value="kpay">
+          <div class="pay-method-dot"></div>
+          <span style="font-size:0.9rem;font-weight:500;">KBZ Pay</span>
+        </label>
+        <label class="pay-method-option" onclick="selectPayMethod('wavepay', this)">
+          <input type="radio" name="pay-method" value="wavepay">
+          <div class="pay-method-dot"></div>
+          <span style="font-size:0.9rem;font-weight:500;">Wave Pay</span>
+        </label>
+        <label class="pay-method-option" onclick="selectPayMethod('ayapay', this)">
+          <input type="radio" name="pay-method" value="ayapay">
+          <div class="pay-method-dot"></div>
+          <span style="font-size:0.9rem;font-weight:500;">AYA Pay</span>
+        </label>
+
+        <div id="pay-card-fields" style="margin-top:16px;">
+          <div class="form-group">
+            <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">ကတ်ပေါ်ရှိ အမည်</label>
+            <input type="text" id="adopt-pay-name" class="form-control" placeholder="John Doe">
+          </div>
+          <div class="form-group">
+            <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">ကတ်နံပါတ်</label>
+            <input type="text" id="adopt-pay-card" class="form-control" placeholder="4242 4242 4242 4242" maxlength="19" autocomplete="cc-number">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">သက်တမ်းကုန်ဆုံးရက်</label>
+              <input type="text" id="adopt-pay-expiry" class="form-control" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp">
+            </div>
+            <div class="form-group">
+              <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">CVV</label>
+              <input type="password" id="adopt-pay-cvv" class="form-control" placeholder="***" maxlength="4" inputmode="numeric">
+            </div>
+          </div>
+        </div>
+
+        <div id="pay-kpay-fields" style="margin-top:16px;display:none;">
+          <div style="display:flex; gap:8px; margin-bottom:16px;">
+            <button type="button" class="btn btn-primary btn-sm" style="flex:1" id="kpay-qr-btn" onclick="selectPayMode('qr', 'kpay')">QR စကင်ဖတ်ရန်</button>
+            <button type="button" class="btn btn-outline btn-sm" style="flex:1" id="kpay-phone-btn" onclick="selectPayMode('phone', 'kpay')">ဖုန်းနံပါတ်</button>
+          </div>
+          <div id="kpay-qr-view" style="text-align:center;">
+            <img src="images/qr-kpay.jpg" alt="KBZ Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+            <p style="font-size:0.84rem;color:var(--text-secondary);margin-top:12px;">KBZ Pay ဖြင့် စကင်ဖတ်ပါ</p>
+          </div>
+          <div id="kpay-phone-view" style="display:none;">
+            <div class="form-group">
+              <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">ဖုန်းနံပါတ်</label>
+              <input type="tel" id="phone-kpay" class="form-control" placeholder="09xxxxxxxxx">
+            </div>
+          </div>
+        </div>
+
+        <div id="pay-wavepay-fields" style="margin-top:16px;display:none;">
+          <div style="display:flex; gap:8px; margin-bottom:16px;">
+            <button type="button" class="btn btn-primary btn-sm" style="flex:1" id="wavepay-qr-btn" onclick="selectPayMode('qr', 'wavepay')">QR စကင်ဖတ်ရန်</button>
+            <button type="button" class="btn btn-outline btn-sm" style="flex:1" id="wavepay-phone-btn" onclick="selectPayMode('phone', 'wavepay')">ဖုန်းနံပါတ်</button>
+          </div>
+          <div id="wavepay-qr-view" style="text-align:center;">
+            <img src="images/qr-wave.jpg" alt="Wave Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+            <p style="font-size:0.84rem;color:var(--text-secondary);margin-top:12px;">Wave Pay ဖြင့် စကင်ဖတ်ပါ</p>
+          </div>
+          <div id="wavepay-phone-view" style="display:none;">
+            <div class="form-group">
+              <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">ဖုန်းနံပါတ်</label>
+              <input type="tel" id="phone-wavepay" class="form-control" placeholder="09xxxxxxxxx">
+            </div>
+          </div>
+        </div>
+
+        <div id="pay-ayapay-fields" style="margin-top:16px;display:none;">
+          <div style="display:flex; gap:8px; margin-bottom:16px;">
+            <button type="button" class="btn btn-primary btn-sm" style="flex:1" id="ayapay-qr-btn" onclick="selectPayMode('qr', 'ayapay')">QR စကင်ဖတ်ရန်</button>
+            <button type="button" class="btn btn-outline btn-sm" style="flex:1" id="ayapay-phone-btn" onclick="selectPayMode('phone', 'ayapay')">ဖုန်းနံပါတ်</button>
+          </div>
+          <div id="ayapay-qr-view" style="text-align:center;">
+            <img src="images/qr-ayapay.jpg" alt="AYA Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+            <p style="font-size:0.84rem;color:var(--text-secondary);margin-top:12px;">AYA Pay ဖြင့် စကင်ဖတ်ပါ</p>
+          </div>
+          <div id="ayapay-phone-view" style="display:none;">
+            <div class="form-group">
+              <label style="font-size:0.82rem;font-weight:bold;margin-bottom:6px;display:block;">ဖုန်းနံပါတ်</label>
+              <input type="tel" id="phone-ayapay" class="form-control" placeholder="09xxxxxxxxx">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal('adopt-modal')">မလုပ်တော့ပါ</button>
+      <button class="btn btn-primary" id="adopt-submit-btn" onclick="submitAdoption()" style="min-width:160px;">တောင်းဆိုချက် တင်သွင်းရန်</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="verify-modal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <h3>ငွေပေးချေမှု အတည်ပြုရန်</h3>
+      <button class="modal-close" onclick="closeModal('verify-modal')">x</button>
+    </div>
+    <div id="verify-alert"></div>
+    <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:16px;">သင်၏ငွေပေးချေမှုကို အတည်ပြုရန် ဂဏန်း ၄ လုံးကုဒ်ကို ထည့်ပါ။</p>
+    <div class="form-group">
+      <label>အတည်ပြုကုဒ်</label>
+      <input type="text" id="verify-code-input" class="form-control" placeholder="####" maxlength="4" inputmode="numeric" style="text-align:center;font-size:1.5rem;letter-spacing:12px;font-weight:bold;">
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal('verify-modal')">မလုပ်တော့ပါ</button>
+      <button class="btn btn-primary" onclick="confirmCodePayment()">အတည်ပြုမည်</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="report-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>စာရင်းတိုင်ကြားရန်</h3>
+      <button class="modal-close" onclick="closeModal('report-modal')">x</button>
+    </div>
+    <div id="report-alert"></div>
+    <div class="form-group">
+      <label>အကြောင်းပြချက်</label>
+      <select id="report-reason" class="form-control">
+        <option value="spam">စပမ်း</option>
+        <option value="abuse">အလွဲသုံးစားမှု</option>
+        <option value="misleading">အထင်အမြင်လွဲမှားစေသော သတင်းအချက်အလက်</option>
+        <option value="inappropriate">မသင့်လျော်သော အကြောင်းအရာ</option>
+        <option value="animal_welfare">တိရစ္ဆာန် သက်သာချောင်ချိရေး စိုးရိမ်ဖွယ်</option>
+        <option value="other">အခြား</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>အသေးစိတ် (မဖြည့်လည်းရပါသည်)</label>
+      <textarea id="report-details" class="form-control" rows="3" placeholder="ပြဿနာကို ဖော်ပြပါ..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('report-modal')">မလုပ်တော့ပါ</button>
+      <button class="btn btn-danger" onclick="submitReport()">တိုင်ကြားချက် တင်သွင်းရန်</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script>
+var petId = null;
+var petData = null;
+var currentUser = getUser();
+var LOG_ICONS = { vaccination:'VAC', vet_visit:'VET', deworming:'DEW', weight:'WT', other:'LOG' };
+var selectedPayMethod = 'card';
+var localPayMode = 'qr';
+
+function getServiceFeeBreakdown(baseFee) {
+  var fee = parseFloat(baseFee) || 0;
+  var serviceFee = Math.round(fee * 0.04 * 100) / 100;
+  var ownerAmount = fee - serviceFee;
+  return { baseFee: fee, serviceFee: serviceFee, ownerAmount: ownerAmount };
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+  var params = new URLSearchParams(window.location.search);
+  petId = params.get('id');
+  if (!petId) { showErr(); return; }
+  initTabs('tabs-wrap');
+
+  try {
+    var res = await Pets.get(petId);
+    if (!res || !res.ok) { showErr(); return; }
+    petData = res.data.pet;
+    renderPet(petData);
+    loadPetComments(petData.id);
+    document.getElementById('loading-area').classList.add('hidden');
+    document.getElementById('content-area').classList.remove('hidden');
+  } catch(e) { showErr(); }
+  
+  var cardInput = document.getElementById('adopt-pay-card');
+  var expiryInput = document.getElementById('adopt-pay-expiry');
+  if (cardInput) {
+    cardInput.addEventListener('input', function(e) {
+      var val = e.target.value.replace(/\D/g, '').substring(0, 16);
+      e.target.value = val.replace(/(.{4})/g, '$1 ').trim();
+    });
+  }
+  if (expiryInput) {
+    expiryInput.addEventListener('input', function(e) {
+      var val = e.target.value.replace(/\D/g, '').substring(0, 4);
+      if (val.length >= 3) val = val.substring(0,2) + '/' + val.substring(2);
+      e.target.value = val;
+    });
+  }
+  
+  var codeInput = document.getElementById('verify-code-input');
+  if (codeInput) {
+    codeInput.addEventListener('input', function(e) {
+      e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+    });
+  }
+});
+
+function selectPayMethod(method, el) {
+  selectedPayMethod = method;
+  document.querySelectorAll('.pay-method-option').forEach(function(opt) { opt.classList.remove('active'); });
+  el.classList.add('active');
+  
+  var methods = ['card', 'kpay', 'wavepay', 'ayapay'];
+  methods.forEach(function(m) {
+    var fieldEl = document.getElementById('pay-' + m + '-fields');
+    if (fieldEl) fieldEl.style.display = m === method ? 'block' : 'none';
+  });
+
+  localPayMode = 'qr';
+  if (method !== 'card') {
+    selectPayMode('qr', method);
+  }
+}
+
+function selectPayMode(mode, method) {
+  if (method === selectedPayMethod) {
+    localPayMode = mode;
+  }
+
+  var qrBtn = document.getElementById(method + '-qr-btn');
+  var phoneBtn = document.getElementById(method + '-phone-btn');
+  var qrView = document.getElementById(method + '-qr-view');
+  var phoneView = document.getElementById(method + '-phone-view');
+  
+  if (mode === 'qr') {
+    if (qrBtn) { qrBtn.classList.add('btn-primary'); qrBtn.classList.remove('btn-outline'); }
+    if (phoneBtn) { phoneBtn.classList.remove('btn-primary'); phoneBtn.classList.add('btn-outline'); }
+    if (qrView) qrView.style.display = 'block';
+    if (phoneView) phoneView.style.display = 'none';
+  } else {
+    if (qrBtn) { qrBtn.classList.remove('btn-primary'); qrBtn.classList.add('btn-outline'); }
+    if (phoneBtn) { phoneBtn.classList.add('btn-primary'); phoneBtn.classList.remove('btn-outline'); }
+    if (qrView) qrView.style.display = 'none';
+    if (phoneView) phoneView.style.display = 'block';
+  }
+}
+
+function showErr() {
+  document.getElementById('loading-area').classList.add('hidden');
+  document.getElementById('error-area').classList.remove('hidden');
+}
+
+function renderPet(pet) {
+  document.title = pet.name + ' — ';
+  var images = pet.images || [];
+  var mainEl = document.getElementById('gallery-main');
+  var thumbsEl = document.getElementById('gallery-thumbs');
+
+  if (images.length) {
+    if (images.length === 1) document.getElementById('gallery').style.gridTemplateColumns = '1fr';
+    var primary = images.find(function(i){ return i.is_primary; }) || images[0];
+    mainEl.innerHTML = '<img id="main-img" src="' + imgUrl(primary.url) + '" alt="' + pet.name + '">';
+    if (images.length > 1) {
+      thumbsEl.innerHTML = images.map(function(img) {
+        return '<img class="gallery-thumb' + (img.is_primary ? ' active' : '') + '" src="' + imgUrl(img.url) + '" alt="" onclick="setMainImg(this,\'' + imgUrl(img.url) + '\')">';
+      }).join('');
+    }
+  }
+
+  document.getElementById('pet-name').textContent = pet.name;
+  document.getElementById('pet-status-pill').innerHTML = pill(pet.status);
+  var typeBreed = pet.pet_type_name || '';
+  if (pet.breed) typeBreed += ' · ' + pet.breed;
+  if (pet.gender) typeBreed += ' · ' + pet.gender.charAt(0).toUpperCase() + pet.gender.slice(1);
+  document.getElementById('pet-type-breed').textContent = typeBreed;
+
+  document.getElementById('fee-value').textContent = pet.fee_type === 'free' ? 'အခမဲ့' : fmtMoney(pet.adoption_fee);
+  document.getElementById('fee-area').style.background = pet.fee_type === 'free' ? 'var(--success-bg)' : 'var(--warning-bg)';
+
+  if (pet.city || pet.location) document.getElementById('location-area').innerHTML = (pet.city || pet.location);
+  renderActions(pet);
+
+  document.getElementById('owner-info').innerHTML =
+    '<div style="font-weight:bold;margin-bottom:4px">' + (pet.owner_name || 'မသိရှိပါ') + '</div>' +
+    (pet.owner_phone ? '<div style="font-size:0.86rem;color:var(--text-secondary)">' + pet.owner_phone + '</div>' : '');
+
+  var age = '';
+  if (pet.birth_date) {
+    var bd = new Date(pet.birth_date);
+    var now = new Date();
+    var months = (now.getFullYear() - bd.getFullYear()) * 12 + (now.getMonth() - bd.getMonth());
+    var yrs = Math.floor(months/12);
+    var mos = months % 12;
+    age = (yrs ? yrs + 'နှစ် ' : '') + (mos ? mos + 'လ' : '');
+    if (!age) age = '< ၁လ';
+    if (pet.is_sure) age += ' (ခန့်မှန်း)';
+  }
+
+  var infoItems = [
+    { label: 'အသက်', value: age || '—' }, { label: 'ကျား/မ', value: pet.gender ? (pet.gender.charAt(0).toUpperCase()+pet.gender.slice(1)) : '—' },
+    { label: 'အရောင်', value: pet.color || '—' }, { label: 'ကိုယ်အလေးချိန်', value: pet.weight_kg ? pet.weight_kg + ' ကီလိုဂရမ်' : '—' },
+    { label: 'မြို့', value: pet.city || pet.location || '—' }, { label: 'စာရင်းတင်ချိန်', value: fmtDate(pet.created_at) },
+  ];
+  document.getElementById('info-grid').innerHTML = infoItems.map(function(item) {
+    return '<div class="info-item"><div class="info-label">' + item.label + '</div><div class="info-value">' + item.value + '</div></div>';
+  }).join('');
+
+  if (pet.description) {
+    document.getElementById('description-area').innerHTML = '<h4 style="margin-bottom:8px;margin-top:16px">' + pet.name + ' အကြောင်း</h4><p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.7">' + pet.description + '</p>';
+  }
+
+  var badges = '';
+  if (pet.is_vaccinated) badges += '<span class="pill pill-available">ကာကွယ်ဆေးထိုးပြီး</span> ';
+  if (pet.is_neutered) badges += '<span class="pill pill-available">သင်းကွပ်ပြီး</span> ';
+  if (!pet.is_vaccinated) badges += '<span class="pill pill-withdrawn">ကာကွယ်ဆေးမထိုးရသေး</span> ';
+  document.getElementById('health-badges').innerHTML = badges;
+  if (pet.health_notes) document.getElementById('health-notes-area').innerHTML = '<p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.7">' + pet.health_notes + '</p>';
+
+  var isOwner = currentUser && pet.owner_id === currentUser.id;
+  var isAdmin = currentUser && currentUser.role === 'admin';
+
+  if (isOwner || isAdmin) {
+    document.getElementById('history-tab-btn').style.display = 'inline-block';
+    document.getElementById('logs-tab-btn').style.display = 'inline-block';
+    document.getElementById('add-log-area').classList.remove('hidden');
+    loadStatusHistory();
+    loadHealthLogs();
+  }
+
+  document.getElementById('like-count').textContent = pet.like_count || 0;
+  if (currentUser) document.getElementById('comment-form').classList.remove('hidden');
+  else document.getElementById('comment-login-prompt').classList.remove('hidden');
+}
+
+function renderActions(pet) {
+  var area = document.getElementById('action-area');
+  var isOwner = currentUser && pet.owner_id === currentUser.id;
+
+  if (isOwner) {
+    area.innerHTML = '<a href="add-pet.html?id=' + pet.id + '" class="btn btn-secondary btn-full" style="margin-bottom:8px">စာရင်း ပြင်ဆင်ရန်</a><a href="my-pets.html" class="btn btn-outline btn-full">ပို့စ်များ</a>';
+    return;
+  }
+  if (pet.status !== 'available') {
+    area.innerHTML = '<div class="alert alert-info" style="text-align:center">ဤအိမ်မွေးတိရစ္ဆာန်သည် မရရှိနိုင်တော့ပါ။</div>';
+    return;
+  }
+  if (!getToken()) {
+    area.innerHTML = '<a href="login.html" class="btn btn-primary btn-full">မွေးစားရန် အကောင့်ဝင်ပါ</a>';
+    return;
+  }
+  area.innerHTML = '<button class="btn btn-primary btn-full" style="margin-bottom:8px" onclick="openAdoptModal()">မွေးစားရန် တောင်းဆိုမည်</button><button onclick="toggleFavDetail()" id="fav-btn" class="btn btn-outline btn-full">သိမ်းဆည်းရန်</button>';
+  
+  Favorites.list().then(function(res) {
+    if (res && res.ok) {
+      var faved = (res.data.favorites || []).find(function(f){ return f.id === pet.id; });
+      var favBtn = document.getElementById('fav-btn');
+      if (favBtn) favBtn.innerHTML = faved ? 'သိမ်းဆည်းပြီး' : 'သိမ်းဆည်းရန်';
+    }
+  }).catch(function(){});
+}
+
+function setMainImg(thumb, url) {
+  document.querySelectorAll('.gallery-thumb').forEach(function(t){ t.classList.remove('active'); });
+  thumb.classList.add('active');
+  var main = document.getElementById('main-img');
+  if (main) main.src = url;
+}
+
+async function toggleFavDetail() {
+  var btn = document.getElementById('fav-btn');
+  var isFaved = btn && btn.innerHTML.includes('သိမ်းဆည်းပြီး');
+  try {
+    if (isFaved) { await Favorites.remove(petId); if (btn) btn.innerHTML = 'သိမ်းဆည်းရန်'; }
+    else { await Favorites.add(petId); if (btn) btn.innerHTML = 'သိမ်းဆည်းပြီး'; }
+  } catch(e) { showToast('စိတ်ကြိုက်များ ပြောင်းလဲ၍မရပါ။', 'error'); }
+}
+
+function openAdoptModal() {
+  if (!petData) return;
+  document.getElementById('adopt-message').value = '';
+  document.getElementById('adopt-alert').innerHTML = '';
+  document.getElementById('adopt-submit-btn').disabled = false;
+  
+  selectedPayMethod = 'card';
+  localPayMode = 'qr';
+  document.querySelectorAll('.pay-method-option').forEach(function(opt) { opt.classList.remove('active'); });
+  document.querySelector('.pay-method-option input[value="card"]').checked = true;
+  document.querySelector('.pay-method-option input[value="card"]').parentNode.classList.add('active');
+  
+  var methods = ['card', 'kpay', 'wavepay', 'ayapay'];
+  methods.forEach(function(m) {
+    var fieldEl = document.getElementById('pay-' + m + '-fields');
+    if (fieldEl) fieldEl.style.display = m === 'card' ? 'block' : 'none';
+  });
+
+  ['kpay', 'wavepay', 'ayapay'].forEach(function(m) {
+    selectPayMode('qr', m);
+  });
+
+  if (currentUser) {
+    var nameEl = document.getElementById('adopt-pay-name');
+    if (nameEl) nameEl.value = currentUser.name || '';
+    
+    ['kpay', 'wavepay', 'ayapay'].forEach(function(m) {
+      var phoneEl = document.getElementById('phone-' + m);
+      if (phoneEl) phoneEl.value = currentUser.phone || '';
+    });
+  }
+  
+  var feeArea = document.getElementById('adopt-fee-area');
+  var payArea = document.getElementById('adopt-pay-area');
+  var feeAmountEl = document.getElementById('adopt-fee-amount');
+  var submitBtn = document.getElementById('adopt-submit-btn');
+  
+  if (petData.fee_type === 'paid' && petData.adoption_fee > 0) {
+    if (feeArea) feeArea.style.display = 'block';
+    if (payArea) payArea.style.display = 'block';
+    if (feeAmountEl) feeAmountEl.innerHTML = fmtMoney(petData.adoption_fee);
+    if (submitBtn) submitBtn.innerHTML = fmtMoney(petData.adoption_fee) + ' ပေးချေပြီး တောင်းဆိုမည်';
+  } else {
+    if (feeArea) feeArea.style.display = 'none';
+    if (payArea) payArea.style.display = 'none';
+    if (submitBtn) submitBtn.innerHTML = 'တောင်းဆိုချက် တင်သွင်းရန်';
+  }
+  openModal('adopt-modal');
+}
+
+async function submitAdoption() {
+  var msg = document.getElementById('adopt-message').value.trim();
+  var alertEl = document.getElementById('adopt-alert');
+  var btn = document.getElementById('adopt-submit-btn');
+  alertEl.innerHTML = '';
+  if (!petData) return;
+
+  var feeType = petData.fee_type;
+  var feeAmount = petData.adoption_fee;
+
+  if (feeType === 'paid' && feeAmount > 0) {
+    if (selectedPayMethod === 'card') {
+      var cardEl = document.getElementById('adopt-pay-card');
+      var expiryEl = document.getElementById('adopt-pay-expiry');
+      var cvvEl = document.getElementById('adopt-pay-cvv');
+      if (cardEl && expiryEl && cvvEl) {
+        var card = cardEl.value.replace(/\s/g, '').replace(/[^0-9]/g, '');
+        var expiry = expiryEl.value.trim();
+        var cvv = cvvEl.value.trim();
+        if (card.length < 13 || card.length > 19) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">ကျေးဇူးပြု၍ မှန်ကန်သော ကတ်နံပါတ် ထည့်ပါ။</div>'; return; }
+        if (!/^\d{2}\/\d{2}$/.test(expiry)) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">ကျေးဇူးပြု၍ မှန်ကန်သော သက်တမ်းကုန်ဆုံးရက် (MM/YY) ထည့်ပါ။</div>'; return; }
+        if (cvv.length < 3) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">ကျေးဇူးပြု၍ မှန်ကန်သော CVV ထည့်ပါ။</div>'; return; }
+      }
+      processPayment(msg, feeType, feeAmount, btn);
+    } else {
+      if (localPayMode === 'phone') {
+        var phoneEl = document.getElementById('phone-' + selectedPayMethod);
+        if (phoneEl && phoneEl.value.trim() && !/^09\d{7,9}$/.test(phoneEl.value.trim())) {
+          alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">ကျေးဇူးပြု၍ မှန်ကန်သော ဖုန်းနံပါတ် (09xxxxxxxxx) ထည့်ပါ။</div>';
+          return;
+        }
+        closeModal('adopt-modal');
+        document.getElementById('verify-code-input').value = '';
+        document.getElementById('verify-alert').innerHTML = '';
+        openModal('verify-modal');
+        setTimeout(function() { document.getElementById('verify-code-input').focus(); }, 100);
+      } else {
+        processPayment(msg, feeType, feeAmount, btn);
+      }
+    }
+    return;
+  }
+
+  processPayment(msg, feeType, feeAmount, btn);
+}
+
+async function confirmCodePayment() {
+  var code = document.getElementById('verify-code-input').value.trim();
+  var alertEl = document.getElementById('verify-alert');
+  
+  if (code !== '1234') {
+    alertEl.innerHTML = '<div class="alert alert-danger">ကုဒ် မှားယွင်းနေပါသည်။</div>';
+    return;
+  }
+
+  closeModal('verify-modal');
+  showToast('ငွေပေးချေမှု လုပ်ဆောင်နေသည်...', 'info');
+  
+  var msg = document.getElementById('adopt-message').value.trim();
+  var feeType = petData.fee_type;
+  var feeAmount = petData.adoption_fee;
+
+  try {
+    var res = await Adoption.request(petData.id, { message: msg || undefined });
+    if (!res || !res.ok) {
+      showToast((res && res.data && res.data.message) || 'တောင်းဆိုချက် တင်သွင်း၍မရပါ။', 'error');
+      return;
+    }
+    var requestId = res.data.request ? res.data.request.id : null;
+
+    if (feeType === 'paid' && feeAmount > 0 && requestId) {
+      try {
+        var breakdown = getServiceFeeBreakdown(feeAmount);
+        await Payments.simulate({
+          adoption_request_id: requestId,
+          amount: breakdown.baseFee,
+          owner_amount: breakdown.ownerAmount,
+          service_fee: breakdown.serviceFee,
+          method: selectedPayMethod,
+          description: 'Adoption fee for ' + petData.name
+        });
+      } catch(pErr) { 
+        console.error('Payment simulation skipped (demo mode):', pErr); 
+      }
+      await new Promise(function(resolve) { setTimeout(resolve, 1500); });
+    }
+
+    showToast('ငွေပေးချေမှု အောင်မြင်ပါသည်။ တောင်းဆိုချက် တင်သွင်းပြီးပါပြီ။', 'success');
+    setTimeout(function(){ window.location.href = p('adoption-requests.html?tab=mine'); }, 1500);
+  } catch(e) { 
+    showToast('တစ်ခုခု မှားယွင်းသွားသည်။', 'error');
+  }
+}
+
+async function processPayment(msg, feeType, feeAmount, btn) {
+  btn.disabled = true; 
+  btn.innerHTML = 'လုပ်ဆောင်နေသည်...';
+  document.getElementById('adopt-alert').innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:0.88rem;">တောင်းဆိုချက် တင်သွင်းနေသည်...</div>';
+
+  try {
+    var res = await Adoption.request(petData.id, { message: msg || undefined });
+    if (!res || !res.ok) {
+      document.getElementById('adopt-alert').innerHTML = '<div class="alert alert-danger">' + ((res && res.data && res.data.message) || 'တောင်းဆိုချက် တင်သွင်း၍မရပါ။') + '</div>';
+      btn.disabled = false;
+      btn.innerHTML = feeType === 'paid' ? fmtMoney(feeAmount) + ' ပေးချေပြီး တောင်းဆိုမည်' : 'တောင်းဆိုချက် တင်သွင်းရန်';
+      return;
+    }
+    
+    var requestId = res.data.request ? res.data.request.id : null;
+
+    if (feeType === 'paid' && feeAmount > 0 && requestId) {
+      document.getElementById('adopt-alert').innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:0.88rem;">ငွေပေးချေမှုကို လုံခြုံစွာ လုပ်ဆောင်နေသည်...</div>';
+
+      try {
+        var breakdown = getServiceFeeBreakdown(feeAmount);
+        
+        await Payments.simulate({
+          adoption_request_id: requestId,
+          amount: breakdown.baseFee,
+          owner_amount: breakdown.ownerAmount,
+          service_fee: breakdown.serviceFee,
+          method: selectedPayMethod,
+          description: 'Adoption fee for ' + petData.name
+        });
+      } catch(pErr) { 
+        console.error('Payment simulation skipped (demo mode):', pErr); 
+      }
+
+      await new Promise(function(resolve) { setTimeout(resolve, 2500); });
+    }
+
+    closeModal('adopt-modal');
+    showToast(feeType === 'paid' ? 'ငွေပေးချေမှု အောင်မြင်ပါသည်။ တောင်းဆိုချက် တင်သွင်းပြီးပါပြီ။ ပိုင်ရှင်၏ အတည်ပြုချက်ကို စောင့်ဆိုင်းနေပါသည်။' : 'မွေးစားရန် တောင်းဆိုချက် တင်သွင်းပြီးပါပြီ။ ပိုင်ရှင်၏ အတည်ပြုချက်ကို စောင့်ဆိုင်းနေပါသည်။', 'success');
+    setTimeout(function(){ window.location.href = p('adoption-requests.html?tab=mine'); }, 1500);
+  } catch(e) { 
+    document.getElementById('adopt-alert').innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; 
+    btn.disabled = false;
+    btn.innerHTML = feeType === 'paid' ? fmtMoney(feeAmount) + ' ပေးချေပြီး တောင်းဆိုမည်' : 'တောင်းဆိုချက် တင်သွင်းရန်';
+  }
+}
+
+function openReportModal() {
+  if (!getToken()) { window.location.href = p('login.html'); return; }
+  openModal('report-modal');
+}
+
+async function submitReport() {
+  var reason = document.getElementById('report-reason').value;
+  var details = document.getElementById('report-details').value.trim();
+  var alertEl = document.getElementById('report-alert');
+  alertEl.innerHTML = '';
+  try {
+    var res = await Reports.submit({ pet_id: parseInt(petId), reason: reason, details: details || undefined });
+    if (res && res.ok) { closeModal('report-modal'); showToast('တိုင်ကြားချက် တင်သွင်းပြီးပါပြီ။ ကျေးဇူးတင်ပါသည်။', 'success'); }
+    else { alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'မအောင်မြင်ပါ။') + '</div>'; }
+  } catch(e) { alertEl.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
+}
+
+async function loadStatusHistory() {
+  try {
+    var res = await Pets.statusHistory(petId);
+    var el = document.getElementById('status-history-list');
+    if (!res || !res.ok || !res.data.history.length) { el.innerHTML = '<p style="color:var(--text-secondary)">အခြေအနေ ပြောင်းလဲမှု မှတ်တမ်း မရှိသေးပါ။</p>'; return; }
+    el.innerHTML = res.data.history.map(function(h) {
+      return '<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);align-items:flex-start"><div style="font-size:0.78rem;color:var(--text-muted);white-space:nowrap;margin-top:2px">' + fmtDate(h.created_at) + '</div><div>' + (h.old_status ? pill(h.old_status) + ' → ' : '') + pill(h.new_status) + (h.reason ? '<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:3px">' + h.reason + '</div>' : '') + (h.changed_by_name ? '<div style="font-size:0.78rem;color:var(--text-muted)">' + h.changed_by_name + ' မှ' + '</div>' : '') + '</div></div>';
+    }).join('');
+  } catch(e) {}
+}
+
+async function loadHealthLogs() {
+  try {
+    var res = await Monitoring.getHealthLogs(petId);
+    var el = document.getElementById('health-logs-list');
+    if (!res || !res.ok || !res.data.logs.length) { el.innerHTML = '<p style="color:var(--text-secondary);margin-bottom:12px">ကျန်းမာရေး မှတ်တမ်း မရှိသေးပါ။</p>'; return; }
+    el.innerHTML = res.data.logs.map(function(log) {
+      return '<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)"><div style="width:36px;height:36px;border-radius:50%;background:var(--accent-light-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:bold;flex-shrink:0">' + (LOG_ICONS[log.type]||'LOG') + '</div><div style="flex:1"><div style="font-weight:bold;font-size:0.88rem">' + log.type.replace(/_/g,' ') + '</div>' + (log.description ? '<div style="font-size:0.82rem;color:var(--text-secondary)">' + log.description + '</div>' : '') + '<div style="font-size:0.76rem;color:var(--text-muted);margin-top:3px">' + fmtDate(log.created_at) + (log.vet_name ? ' · ' + log.vet_name : '') + (log.weight_kg ? ' · ' + log.weight_kg + 'kg' : '') + (log.next_due ? ' · နောက်တစ်ကြိမ်: ' + fmtDate(log.next_due) : '') + '</div></div><button onclick="deleteLog(' + log.id + ',this)" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:0.8rem;flex-shrink:0">x</button></div>';
+    }).join('');
+  } catch(e) {}
+}
+
+async function submitHealthLog() {
+  var body = { type: document.getElementById('log-type').value, description: document.getElementById('log-desc').value.trim() || undefined, vet_name: document.getElementById('log-vet').value.trim() || undefined, weight_kg: document.getElementById('log-weight').value || undefined, next_due: document.getElementById('log-next-due').value || undefined };
+  try {
+    var res = await Monitoring.addHealthLog(petId, body);
+    if (res && res.ok) { showToast('ကျန်းမာရေး မှတ်တမ်း ထည့်သွင်းပြီးပါပြီ။', 'success'); loadHealthLogs(); }
+    else { showToast(res.data.message || 'မအောင်မြင်ပါ။', 'error'); }
+  } catch(e) { showToast('တစ်ခုခု မှားယွင်းသွားသည်။', 'error'); }
+}
+
+async function deleteLog(logId, btn) {
+  if (!confirm('ဤမှတ်တမ်းကို ဖျက်မှာ သေချာပါသလား။')) return;
+  try {
+    var res = await Monitoring.deleteHealthLog(petId, logId);
+    if (res && res.ok) { showToast('မှတ်တမ်း ဖျက်လိုက်ပါပြီ။', 'success'); loadHealthLogs(); }
+    else showToast('ဖျက်၍မရပါ။', 'error');
+  } catch(e) { showToast('တစ်ခုခု မှားယွင်းသွားသည်။', 'error'); }
+}
+async function togglePetLike() {
+  if (!getToken()) { window.location.href = p('login.html'); return; }
+  var btn = document.getElementById('like-btn');
+  try {
+    var res = await Pets.like(petId);
+    if (res && res.ok) {
+      var liked = res.data.liked;
+      var current = parseInt(document.getElementById('like-count').textContent) || 0;
+      var newCount = liked ? current + 1 : Math.max(0, current - 1);
+      btn.innerHTML = (liked ? '❤️' : '🤍') + ' <span id="like-count" style="margin-left:6px;">' + newCount + '</span>  ကြိုက်နှစ်သက်မှုများ';
+    }
+  } catch(e) { showToast('ကြိုက်နှစ်သက်မှု ပြောင်းလဲ၍မရပါ။', 'error'); }
+}
+
+async function loadPetComments(id) {
+  var list = document.getElementById('comments-list');
+  try {
+    var res = await Pets.getComments(id);
+    if (!res || !res.ok) { list.innerHTML = '<p style="color:var(--danger)">မှတ်ချက်များ ဖွင့်၍မရပါ။</p>'; return; }
+    var comments = res.data.comments || [];
+    document.getElementById('comment-count').textContent = '(' + comments.length + ')';
+    if (!comments.length) { list.innerHTML = '<p style="color:var(--text-muted); font-size:0.86rem;">မှတ်ချက် မရှိသေးပါ။ ပထမဆုံး မှတ်ချက်ပေးသူ ဖြစ်လိုက်ပါ။</p>'; return; }
+    list.innerHTML = comments.map(function(c) {
+      var canDelete = currentUser && (currentUser.id === c.user_id || currentUser.role === 'admin');
+      return '<div class="comment-item"><div style="display:flex; gap:10px; align-items:flex-start;"><div class="comment-avatar">' + initials(c.user_name || 'U') + '</div><div style="flex:1;"><div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;"><div style="font-weight:bold; font-size:0.86rem;">' + (c.user_name || 'အသုံးပြုသူ') + '</div><div style="display:flex; align-items:center; gap:8px;"><span style="font-size:0.76rem; color:var(--text-muted);">' + timeAgo(c.created_at) + '</span>' + (canDelete ? '<button onclick="deletePetComment(' + c.id + ')" style="background:none; border:none; color:var(--danger); font-size:0.76rem; cursor:pointer;">ဖျက်ရန်</button>' : '') + '</div></div><p style="font-size:0.88rem; color:var(--text-primary); margin-top:4px; white-space:pre-wrap;">' + c.content + '</p></div></div></div>';
+    }).join('');
+  } catch(e) { list.innerHTML = '<p style="color:var(--danger)">မှတ်ချက်များ ဖွင့်၍မရပါ။</p>'; }
+}
+
+async function submitPetComment() {
+  var input = document.getElementById('comment-input');
+  var alertEl = document.getElementById('comment-alert');
+  var content = input.value.trim();
+  alertEl.innerHTML = '';
+  if (!content) { alertEl.innerHTML = '<div class="alert alert-danger">မှတ်ချက် ဗလာမထားနိုင်ပါ။</div>'; return; }
+  try {
+    var res = await Pets.addComment(petId, { content: content });
+    if (res && res.ok) { input.value=''; showToast('မှတ်ချက် တင်ပြီးပါပြီ။', 'success'); loadPetComments(petId); }
+    else { alertEl.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'မအောင်မြင်ပါ။') + '</div>'; }
+  } catch(e) { alertEl.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
+}
+
+async function deletePetComment(commentId) {
+  if (!confirm('ဤမှတ်ချက်ကို ဖျက်မှာ သေချာပါသလား။')) return;
+  try {
+    var res = await Pets.deleteComment(petId, commentId);
+    if (res && res.ok) { showToast('မှတ်ချက် ဖျက်လိုက်ပါပြီ။', 'success'); loadPetComments(petId); }
+    else showToast('မအောင်မြင်ပါ။', 'error');
+  } catch(e) { showToast('တစ်ခုခု မှားယွင်းသွားသည်။', 'error'); }
+}
+</script>
+</body>
+</html>

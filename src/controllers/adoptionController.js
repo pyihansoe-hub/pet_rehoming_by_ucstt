@@ -1,54 +1,103 @@
 const pool = require('../db/pool');
 const notify = require('../services/notify');
 
-// POST /api/pets/:id/adopt  — submit adoption request
+const { createAgreement } = require('./agreementController');
+const { scheduleFollowupReminders } = require('../services/reminderScheduler');
+const { logStatusChange } = require('../services/petStatusHistory');
+
+const calculateOwnerPayout = (baseFee) => {
+  const fee = parseFloat(baseFee) || 0;
+  const serviceFee = fee * 0.04;
+  const transactionFee = fee * 0.015;
+  const totalDeduction = serviceFee + transactionFee;
+  const netPayout = fee - totalDeduction;
+
+  return {
+    baseFee: fee.toLocaleString(),
+    serviceFee: serviceFee.toLocaleString(),
+    transactionFee: transactionFee.toLocaleString(),
+    totalDeduction: totalDeduction.toLocaleString(),
+    netPayout: netPayout.toLocaleString()
+  };
+};
+
 const requestAdoption = async (req, res) => {
   const petId = req.params.id;
   const { message } = req.body;
 
   try {
     const { rows: pets } = await pool.query(
-      'SELECT id, owner_id, status, fee_type, adoption_fee FROM pets WHERE id=$1', [petId]
+      'SELECT id, name, owner_id, status, fee_type, adoption_fee FROM pets WHERE id=$1', 
+      [petId]
     );
-    if (!pets.length) return res.status(404).json({ message: 'Pet not found.' });
+    
+    if (!pets.length) return res.status(404).json({ message: 'အိမ်မွေးတိရစ္ဆာန် မတွေ့ရှိပါ။' });
     const pet = pets[0];
-    if (pet.status !== 'available') return res.status(400).json({ message: 'Pet is not available for adoption.' });
-    if (pet.owner_id === req.user.id) return res.status(400).json({ message: 'You cannot adopt your own pet.' });
+    
+    if (pet.status !== 'available') return res.status(400).json({ message: 'ဤအိမ်မွေးတိရစ္ဆာန်သည် မွေးစားရန် မရရှိနိုင်ပါ။' });
+    if (pet.owner_id === req.user.id) return res.status(400).json({ message: 'ကိုယ်ပိုင်အိမ်မွေးတိရစ္ဆာန်ကို မွေးစား၍မရပါ။' });
 
-    const { rows } = await pool.query(
+    const { rows: activeReqs } = await pool.query(
+      `SELECT id FROM adoption_requests 
+       WHERE pet_id=$1 AND requester_id=$2 AND status IN ('pending', 'approved')`,
+      [petId, req.user.id]
+    );
+
+    if (activeReqs.length > 0) {
+      return res.status(409).json({ message: 'ဤအိမ်မွေးတိရစ္ဆာန်အတွက် တောင်းဆိုချက်တစ်ခု ရှိနေပါသည်။ အသစ်တစ်ခု တင်သွင်းရန် ယခင်တောင်းဆိုချက်ကို အရင် ဖျက်သိမ်းပါ။' });
+    }
+
+    const ins = await pool.query(
       `INSERT INTO adoption_requests (pet_id, requester_id, message)
        VALUES ($1,$2,$3) RETURNING *`,
       [petId, req.user.id, message || null]
     );
+    const requestRow = ins.rows[0];
 
     res.status(201).json({
-      message: 'Adoption request submitted.',
-      request: rows[0],
+      message: 'မွေးစားရန် တောင်းဆိုချက် တင်သွင်းပြီးပါပြီ။',
+      request: requestRow,
       paymentRequired: pet.fee_type === 'paid',
       adoptionFee: pet.fee_type === 'paid' ? pet.adoption_fee : 0,
     });
-    //@2
+
+    let notifTitle = `${pet.name} အတွက် မွေးစားရန် တောင်းဆိုချက်အသစ်`;
+    let notifBody = `${req.user.name} မှ သင်၏အိမ်မွေးတိရစ္ဆာန်ကို မွေးစားလိုပါသည်။`;
+    
+    if (pet.fee_type === 'paid' && pet.adoption_fee > 0) {
+      const calc = calculateOwnerPayout(pet.adoption_fee);
+      
+      notifBody = 
+        `${req.user.name} မှ မွေးစားခ ${calc.baseFee} ကျပ် ပေးချေထားပါသည်။ ` +
+        `သင်၏ရရှိငွေမှ ပလက်ဖောင်းအခကြေးငွေများ နုတ်ယူထားပါသည်- ` +
+        `ဝန်ဆောင်မှုခ (4%) = ${calc.serviceFee} ကျပ်၊ ` +
+        `ငွေလွှဲခ (1.5%) = ${calc.transactionFee} ကျပ်။ ` +
+        `စုစုပေါင်း နုတ်ယူငွေ = ${calc.totalDeduction} ကျပ်။ ` +
+        `သင်၏ နောက်ဆုံးရရှိငွေမှာ ${calc.netPayout} ကျပ် ဖြစ်ပါသည်။`;
+    }
+
     notify(pet.owner_id, {
-  type:  'new_adoption_request',
-  title: `New adoption request for ${pet.name}`,
-  body:  `${req.user.name} wants to adopt your pet.`,
-  link:  `/adoption-requests/received`,
-});
+      type: 'new_adoption_request',
+      title: notifTitle,
+      body: notifBody,
+      link: `/pages/adoption-requests.html?tab=received`,
+    });
+
     const { send, emails } = require('../services/email');
     pool.query('SELECT name, email FROM users WHERE id=$1', [pet.owner_id])
-    .then(({ rows }) => {
-    const tmpl = emails.adoptionRequestReceived(rows[0].name, pet.name, req.user.name);
-    return send(rows[0].email, tmpl.subject, tmpl.html);
-  })
-  .catch(err => console.error('Email failed:', err.message));
+      .then(({ rows }) => {
+        if (rows.length > 0) {
+          const tmpl = emails.adoptionRequestReceived(rows[0].name, pet.name, req.user.name);
+          return send(rows[0].email, tmpl.subject, tmpl.html);
+        }
+      })
+      .catch(err => console.error('Email failed:', err.message));
 
   } catch (err) {
-    if (err.code === '23505') return res.status(409).json({ message: 'You already have a pending request for this pet.' });
-    res.status(500).json({ message: 'Server error.', error: err.message });
+    res.status(500).json({ message: 'ဆာဗာ အမှား။', error: err.message });
   }
 };
 
-// GET /api/adoption-requests/mine  — requester's own requests
 const myRequests = async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -61,10 +110,11 @@ const myRequests = async (req, res) => {
       [req.user.id]
     );
     res.json({ requests: rows });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ message: 'server error', error: err.message });
+  }
 };
 
-// GET /api/adoption-requests/received  — requests on owner's pets
 const receivedRequests = async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -77,14 +127,15 @@ const receivedRequests = async (req, res) => {
       [req.user.id]
     );
     res.json({ requests: rows });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ message: 'server error', error: err.message });
+  }
 };
 
-// PATCH /api/adoption-requests/:id  — approve / reject (owner)
 const reviewRequest = async (req, res) => {
-  const { status } = req.body; // approved | rejected
+  const { status } = req.body;
   if (!['approved', 'rejected'].includes(status))
-    return res.status(400).json({ message: 'Status must be approved or rejected.' });
+    return res.status(400).json({ message: 'အခြေအနေသည် အတည်ပြုပြီး သို့မဟုတ် ငြင်းပယ်ထားသည် ဖြစ်ရပါမည်။' });
 
   const client = await pool.connect();
   try {
@@ -95,82 +146,215 @@ const reviewRequest = async (req, res) => {
        JOIN pets p ON p.id=ar.pet_id WHERE ar.id=$1`,
       [req.params.id]
     );
-    if (!rows.length) return res.status(404).json({ message: 'Request not found.' });
+
+    if (!rows.length) return res.status(404).json({ message: 'တောင်းဆိုချက် မတွေ့ရှိပါ။' });
     const req_ = rows[0];
+
     if (req_.owner_id !== req.user.id && req.user.role !== 'admin')
-      return res.status(403).json({ message: 'Not authorized.' });
+      return res.status(403).json({ message: 'အခွင့်အာဏာ မရှိပါ။' });
 
     await client.query(
       `UPDATE adoption_requests SET status=$1, reviewed_at=NOW() WHERE id=$2`,
       [status, req.params.id]
     );
 
-    // If approved + free → mark pet as adopted immediately
-    if (status === 'approved' && req_.fee_type === 'free') {
+    if (status === 'approved') {
       await client.query(`UPDATE pets SET status='adopted' WHERE id=$1`, [req_.pet_id]);
-      // Reject all other pending requests for this pet
-      await client.query(
-        `UPDATE adoption_requests SET status='rejected', reviewed_at=NOW()
-         WHERE pet_id=$1 AND id<>$2 AND status='pending'`,
+
+      // Find all OTHER pending requests for this pet to auto-reject and refund
+      const { rows: otherReqs } = await client.query(
+        `SELECT ar.id, ar.requester_id, p.name AS pet_name, p.fee_type, p.adoption_fee
+         FROM adoption_requests ar
+         JOIN pets p ON p.id = ar.pet_id
+         WHERE ar.pet_id=$1 AND ar.id<>$2 AND ar.status='pending'`,
         [req_.pet_id, req.params.id]
       );
+
+      const { send, emails } = require('../services/email');
+
+      // Loop through each rejected user and issue a 100% full refund notification
+      for (const otherReq of otherReqs) {
+        await client.query(
+          `UPDATE adoption_requests SET status='rejected', reviewed_at=NOW() WHERE id=$1`,
+          [otherReq.id]
+        );
+
+        let notifBody = `အနှုးအညွတ်တောင်းပန်ပါတယ်ဗျာ၊ "${otherReq.pet_name}" ကို အခြားသူတစ်ဦးမှ မွေးစားရန်ရွေးချယ်ခံထားရပါသည်။ ထို့ကြောင့် သင်၏ တောင်းဆိုချက်ကို ငြင်းပယ်လိုက်ပါသည်။`;
+        if (otherReq.fee_type === 'paid' && otherReq.adoption_fee > 0) {
+          const refundAmount = parseFloat(otherReq.adoption_fee) || 0;
+          notifBody += `\n\nသင်၏ ပေးချေခဲ့သော ငွေ ${refundAmount.toLocaleString()} ကျပ် အား အပြည့်အဝ ပြန်လည် ထုတ်ပေးထားပါသည်။ (အခကြေးငွေ မယူပါ)`;
+          
+          // TODO: Call 100% refund API (like Stripe) here if using a real payment gateway
+        }
+
+        notify(otherReq.requester_id, {
+          type: 'adoption_rejected_refunded',
+          title: 'မွေးစားရန် တောင်းဆိုချက် ငြင်းပယ်ခြင်း',
+          body: notifBody,
+          link: `/pages/adoption-requests.html?tab=mine`,
+        });
+
+        try {
+          const { rows: userRows } = await client.query('SELECT name, email FROM users WHERE id=$1', [otherReq.requester_id]);
+          if (userRows.length > 0) {
+            const emailSubject = `မွေးစားရန် တောင်းဆိုချက် အပြီးသတ်ခြင်း - ${otherReq.pet_name}`;
+            let emailHtml = `
+              <p>မင်္ဂလာပါ ${userRows[0].name}၊</p>
+              <p>အနှုးအညွတ်တောင်းပန်ပါတယ်ဗျာ၊  "${otherReq.pet_name}" ကို အခြားသူတစ်ဦးမှ မွေးစားရွေးချယ်ခံထားရပါသည်။ ထို့ကြောင့် သင်၏ တောင်းဆိုချက်ကို ငြင်းပယ်လိုက်ပါသည်။</p>
+            `;
+            if (otherReq.fee_type === 'paid' && otherReq.adoption_fee > 0) {
+              emailHtml += `<p>သင်၏ ပေးချေခဲ့သော ငွေ (ကျပ် ${parseFloat(otherReq.adoption_fee).toLocaleString()}) ကို <strong>အပြည့်အဝ ပြန်လည် ထုတ်ပေးထားပါသည်</strong>။ မည်သည့် ဝန်ဆောင်မှုခ သို့မဟုတ် ငွေလွှဲခ များ ကျသင့်မှု မရှိပါ။ ငွေပြန်လည်ရရှိမှုသည် ရက်သတ္တပတ်အနည်းငယ်အတွင်း ပြီးမြောက်ပါမည်။</p>`;
+            }
+            emailHtml += `<p>ဝက်ဘ်ဆိုက်တွင် အခြား အိမ်မွေးတိရစ္ဆာန်များကို ဆက်လက် ရှာဖွေနိုင်ပါသည်။ ကျေးဇူးတင်ပါသည်။</p>`;
+            
+            await send(userRows[0].email, emailSubject, emailHtml);
+          }
+        } catch (emailErr) {
+          console.error('Auto-reject email failed (non-fatal):', emailErr.message);
+        }
+      }
     }
 
     await client.query('COMMIT');
+
+    if (status === 'approved') {
+      await createAgreement(req.params.id);
+      await scheduleFollowupReminders(req.params.id);
+      await logStatusChange(
+        req_.pet_id,
+        'available',
+        'adopted',
+        req.user.id,
+        'Adoption approved by owner'
+      );
+    }
+
     const { send, emails } = require('../services/email');
-    // notify requester @1
-  notify(req_.requester_id, {
-  type:  'adoption_reviewed',
-  title: status === 'approved' ? `Your adoption request was approved!` : `Adoption request update`,
-  body:  status === 'approved'
-    ? `Your request has been approved. ${req_.fee_type === 'paid' ? 'Please complete payment.' : 'Contact the owner to arrange pickup.'}`
-    : `Your adoption request was not approved this time.`,
-  link:  `/adoption-requests/${req.params.id}`,
-});
 
+    // Notify the approved/rejected user (The one directly actioned)
+    notify(req_.requester_id, {
+      type: 'adoption_reviewed',
+      title: status === 'approved'
+        ? 'သင်၏မွေးစားရန် တောင်းဆိုချက် အတည်ပြုပြီးပါပြီ။'
+        : 'မွေးစားရန် တောင်းဆိုချက် အပ်ဒိတ်',
+      body: status === 'approved'
+        ? `သင်၏တောင်းဆိုချက် အတည်ပြုပြီးပါပြီ။ ${req_.fee_type === 'paid' ? 'မက်ဆေ့ခ်ျများတွင် ပိုင်ရှင်နှင့် ဆက်သွယ်၍ အိမ်မွေးတိရစ္ဆာန်ကို သွားရောက်ကြိုယူရန် စီစဉ်ပါ။' : 'မက်ဆေ့ခ်ျများတွင် ပိုင်ရှင်နှင့် ဆက်သွယ်၍ အိမ်မွေးတိရစ္ဆာန်ကို သွားရောက်ကြိုယူရန် စီစဉ်ပါ။'}`
+        : 'ဤတစ်ကြိမ်တွင် သင်၏မွေးစားရန် တောင်းဆိုချက် အတည်ပြုမခံရပါ။',
+      link: `/pages/messages.html?conv=recent`,
+    });
 
-try {
-  // notify requester
-  const { rows: userRows } = await pool.query(
-    'SELECT name, email FROM users WHERE id=$1', [req_.requester_id]
-  );
-  const { rows: petRows } = await pool.query(
-    'SELECT name FROM pets WHERE id=$1', [req_.pet_id]
-  );
-  const requester = userRows[0];
-  const pet       = petRows[0];
+    try {
+      const { rows: userRows } = await pool.query(
+        'SELECT name, email FROM users WHERE id=$1', [req_.requester_id]
+      );
+      const { rows: petRows } = await pool.query(
+        'SELECT name FROM pets WHERE id=$1', [req_.pet_id]
+      );
 
-  if (status === 'approved') {
-    const tmpl = emails.adoptionApproved(requester.name, pet.name, req_.fee_type === 'free');
-    await send(requester.email, tmpl.subject, tmpl.html);
-  } else {
-    const tmpl = emails.adoptionRejected(requester.name, pet.name);
-    await send(requester.email, tmpl.subject, tmpl.html);
-  }
-} catch (emailErr) {
-  console.error('Email failed (non-fatal):', emailErr.message);
-}
+      const requester = userRows[0];
+      const pet = petRows[0];
 
-    res.json({ message: `Request ${status}.`, requiresPayment: status === 'approved' && req_.fee_type === 'paid' });
+      if (status === 'approved') {
+        const tmpl = emails.adoptionApproved(
+          requester.name,
+          pet.name,
+          req_.fee_type === 'free'
+        );
+        await send(requester.email, tmpl.subject, tmpl.html);
+      } else {
+        const tmpl = emails.adoptionRejected(requester.name, pet.name);
+        await send(requester.email, tmpl.subject, tmpl.html);
+      }
+    } catch (emailErr) {
+      console.error('Email failed (non-fatal):', emailErr.message);
+    }
+
+    if (status === 'approved') {
+      try {
+        await pool.query(
+          `INSERT INTO conversations (adoption_request_id) VALUES ($1) ON CONFLICT DO NOTHING`,
+          [req.params.id]
+        );
+      } catch(e) { console.error('Chat creation skipped:', e.message); }
+    }
+
+    res.json({
+      message: `တောင်းဆိုချက် ${status}။`,
+      requiresPayment: status === 'approved' && req_.fee_type === 'paid'
+    });
+
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ message: 'Server error.', error: err.message });
-  } finally { client.release(); }
+    res.status(500).json({ message: 'ဆာဗာ အမှား။', error: err.message });
+  } finally {
+    client.release();
+  }
 };
 
-// PATCH /api/adoption-requests/:id/cancel  — requester cancels
 const cancelRequest = async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT requester_id, status FROM adoption_requests WHERE id=$1', [req.params.id]
+      'SELECT requester_id, status FROM adoption_requests WHERE id=$1',
+      [req.params.id]
     );
-    if (!rows.length) return res.status(404).json({ message: 'Request not found.' });
-    if (rows[0].requester_id !== req.user.id) return res.status(403).json({ message: 'Not authorized.' });
-    if (rows[0].status !== 'pending') return res.status(400).json({ message: 'Only pending requests can be cancelled.' });
 
-    await pool.query(`UPDATE adoption_requests SET status='cancelled' WHERE id=$1`, [req.params.id]);
-    res.json({ message: 'Request cancelled.' });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+    if (!rows.length) return res.status(404).json({ message: 'တောင်းဆိုချက် မတွေ့ရှိပါ။' });
+    if (rows[0].requester_id !== req.user.id)
+      return res.status(403).json({ message: 'အခွင့်အာဏာ မရှိပါ။' });
+    if (rows[0].status !== 'pending')
+      return res.status(400).json({ message: 'ဆိုင်းငံ့ဆဲ တောင်းဆိုချက်များကိုသာ ဖျက်သိမ်းနိုင်ပါသည်။' });
+
+    await pool.query(
+      `UPDATE adoption_requests SET status='cancelled' WHERE id=$1`,
+      [req.params.id]
+    );
+
+    res.json({ message: 'တောင်းဆိုချက် ဖျက်သိမ်းပြီးပါပြီ။' });
+  } catch (err) {
+    res.status(500).json({ message: 'ဆာဗာ အမှား။', error: err.message });
+  }
 };
 
-module.exports = { requestAdoption, myRequests, receivedRequests, reviewRequest, cancelRequest };
+const linkPayment = async (req, res) => {
+  try {
+    const { payment_id } = req.body;
+    const requestId = req.params.id;
+    const userId = req.user.id;
+
+    if (!payment_id) {
+      return res.status(400).json({ ok: false, message: 'ငွေပေးချေမှု ID လိုအပ်ပါသည်' });
+    }
+
+    const check = await pool.query(
+      'SELECT id FROM adoption_requests WHERE id = $1 AND requester_id = $2',
+      [requestId, userId]
+    );
+
+    if (check.rows.length === 0) {
+      return res.status(404).json({ ok: false, message: 'တောင်းဆိုချက် မတွေ့ရှိပါ' });
+    }
+
+    const result = await pool.query(
+      'UPDATE adoption_requests SET payment_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [payment_id, requestId]
+    );
+
+    res.json({ 
+      ok: true, 
+      request: result.rows[0] 
+    });
+
+  } catch (err) {
+    console.error('linkPayment error:', err);
+    res.status(500).json({ ok: false, message: 'ငွေပေးချေမှု ချိတ်ဆက်၍မရပါ' });
+  }
+};
+
+module.exports = {
+  requestAdoption,
+  myRequests,
+  receivedRequests,
+  reviewRequest,
+  cancelRequest,
+  linkPayment
+};

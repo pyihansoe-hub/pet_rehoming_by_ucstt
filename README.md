@@ -1,269 +1,98 @@
-# Pet Rehoming & Monitoring System — API Reference
-
-**Base URL:** `http://localhost:3000`  
-**Auth:** `Authorization: Bearer <token>`  
-**Uploads:** `multipart/form-data` — never set Content-Type manually  
-**Images:** prefix URL → `http://localhost:3000/uploads/pets/file.jpg`  
-🔒 = login required · 👑= admin only
-
----
-
-## Auth
-
-| Method | Endpoint | Body |
-|--------|----------|------|
-| POST | `/api/auth/register` | `name, email, password, phone?, address?` |
-| POST | `/api/auth/login` | `email, password` |
-
-Both return `{ token, user }`.
-
----
+# Setup
+# Create Upload Folders
 
-## User 🔒
+After cloning, run:
+mkdir -p uploads/avatars uploads/blogs uploads/pets
 
-| Method | Endpoint | Body |
-|--------|----------|------|
-| GET | `/api/user/profile` | — |
-| PATCH | `/api/user/profile` | `name?, phone?, address?` + file `avatar` (multipart) |
-| PATCH | `/api/user/change-password` | `currentPassword, newPassword` |
-
----
-
-## Pet Types
-
-| Method | Endpoint | Notes |
-|--------|----------|-------|
-| GET | `/api/pet-types` | Public |
+# run in terminal for install packages
+npm install
 
-Seeded: `1=Dog, 2=Cat, 3=Rabbit, 4=Bird, 5=Fish, 6=Reptile, 7=Hamster, 8=Guinea Pig, 9=Other`
+# Postgresql
+window - psql -U postgres
+Linux -sudo -u postgres psql
 
----
+# Login to PostgreSQL (it will ask for password)
+psql -U postgres
 
-## Pets
-
-| Method | Endpoint | Notes |
-|--------|----------|-------|
-| GET | `/api/pets` | Public · query: `type, status, fee_type, gender, search, page, limit` |
-| GET | `/api/pets/my` | 🔒 Your own listings |
-| GET | `/api/pets/:id` | Public |
-| POST | `/api/pets` | 🔒 JSON |
-| PATCH | `/api/pets/:id` | 🔒 Any pet fields |
-| DELETE | `/api/pets/:id` | 🔒 |
-| POST | `/api/pets/:id/images` | 🔒 multipart · file `image`, field `is_primary` |
-| DELETE | `/api/pets/:id/images/:imageId` | 🔒 |
-
-**Create/update body:**
-```json
-{
-  "pet_type_id": 1,
-  "name": "Buddy",
-  "breed": "Labrador",
-  "birth_date": "01-01-2022",
-  "is_sure": true,
-  "gender": "male",
-  "color": "black",
-  "weight_kg": 25,
-  "description": "...",
-  "health_notes": "...",
-  "is_vaccinated": true,
-  "is_neutered": false,
-  "fee_type": "paid",
-  "adoption_fee": 50000,
-  "location": "Yangon"
-}
-```
-`fee_type`: `free` or `paid`. If `free`, `adoption_fee` is ignored.  
-`birth_date`: format `DD-MM-YYYY`.  
-`is_sure`: `true` if exact birthday is known, `false` if estimated.
-
----
+# Inside psql, create your database
+CREATE DATABASE pet_rehoming;
 
-## Adoption
+# Exit psql
+\q
 
-| Method | Endpoint | Body | Notes |
-|--------|----------|------|-------|
-| POST | `/api/pets/:id/adopt` | `message?` | 🔒 Returns `paymentRequired` flag |
-| GET | `/api/adoption-requests/mine` | — | 🔒 Requests you sent |
-| GET | `/api/adoption-requests/received` | — | 🔒 Requests on your pets |
-| PATCH | `/api/adoption-requests/:id` | `{ status: "approved" or "rejected" }` | 🔒 Owner reviews |
-| PATCH | `/api/adoption-requests/:id/cancel` | — | 🔒 Requester cancels |
-
-Free adoption → approve → pet marked adopted automatically.  
-Paid adoption → approve → requester pays → verify → pet marked adopted automatically.
+# run sql schema
+cd sql
+node migrate.js
 
----
+# create .env file
+.env
 
-## Payments 🔒
++++++++
 
-| Method | Endpoint | Body |
-|--------|----------|------|
-| GET | `/api/payments` | — |
-| GET | `/api/payments/:id` | — |
-| POST | `/api/payments/initiate` | `amount, currency?, description?, adoption_request_id?` |
-| POST | `/api/payments/:id/verify` | — |
+PORT=3000
 
-`initiate` returns `paymentUrl` — redirect user there. Call `verify` after user returns.
+# PostgreSQL
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=pet_rehoming
+DB_USER=postgres
+DB_PASSWORD=
 
----
+# JWT
+JWT_SECRET=your_super_secret_key_change_this_to_something_long
+JWT_EXPIRES_IN=7d
 
-## Favorites 🔒
 
-| Method | Endpoint |
-|--------|----------|
-| GET | `/api/favorites` |
-| POST | `/api/favorites/:petId` |
-| DELETE | `/api/favorites/:petId` |
+QWEN_API_KEY=
 
----
 
-## Monitoring 🔒
+# Frontend URL for CORS
+CLIENT_URL=http://localhost:5500
 
-Private — only owner, adopter, or admin can access.
+# Admin seed — runs ONCE on first npm run dev, then locks
+ADMIN_NAME= Admin
+ADMIN_EMAIL=admin@gmail.com
+ADMIN_PASSWORD=indoor67
++++++
 
-| Method | Endpoint | Body | Notes |
-|--------|----------|------|-------|
-| POST | `/api/monitoring/followups/:adoptionRequestId` | `health_status, weight_kg?, notes?` + file `image?` | multipart |
-| GET | `/api/monitoring/followups/:adoptionRequestId` | — | — |
-| POST | `/api/monitoring/pets/:petId/health-logs` | `type, description?, vet_name?, weight_kg?, next_due?` | Owner only |
-| GET | `/api/monitoring/pets/:petId/health-logs` | — | Owner only |
-| DELETE | `/api/monitoring/pets/:petId/health-logs/:logId` | — | Owner only |
-
-`health_status`: `good / fair / poor`  
-`type`: `vaccination / vet_visit / deworming / weight / other`  
-`next_due`: date `YYYY-MM-DD`
-
----
-
-## Blogs
-
-| Method | Endpoint | Notes |
-|--------|----------|-------|
-| GET | `/api/blogs/categories` | Public |
-| GET | `/api/blogs` | Public · query: `category, pet_type, search, tag, status, page, limit` |
-| GET | `/api/blogs/:slug` | Public |
-| POST | `/api/blogs` | 🔒 multipart · `title, content, summary?, category_id?, status?, tags?` + file `cover?` |
-| PATCH | `/api/blogs/:id` | 🔒 Same fields |
-| DELETE | `/api/blogs/:id` | 🔒 |
-| POST | `/api/blogs/:id/like` | 🔒 Toggle · returns `{ liked: true/false }` |
-| GET | `/api/blogs/:id/comments` | Public |
-| POST | `/api/blogs/:id/comments` | 🔒 `{ content }` |
-| DELETE | `/api/blogs/:id/comments/:commentId` | 🔒 |
-
-Send `tags` as JSON string in multipart: `tags: '["dog","care"]'`  
-`status`: `draft / published / archived`
-
----
-
-## Reports 🔒
-
-| Method | Endpoint | Body |
-|--------|----------|------|
-| POST | `/api/reports` | `pet_id? or blog_id?, reason, details?` |
+# run project _ backend
+npm run dev
+# create new terminal _ frontend
+cd frontend
+npx serve . -l 5500
 
-`reason`: `spam / abuse / misleading / inappropriate / animal_welfare / other`  
-Provide either `pet_id` or `blog_id`, not both.
+nividia model-  z-ai/glm-5.2  mistralai/mistral-medium-3.5-128b
 
----
+1. Groq
 
-## Notifications 🔒
+Extremely fast, great free tier (but strict token limits per minute).
 
-| Method | Endpoint |
-|--------|----------|
-| GET | `/api/notifications` |
-| PATCH | `/api/notifications/read-all` |
-| PATCH | `/api/notifications/:id/read` |
-| DELETE | `/api/notifications/:id` |
+     API URL: https://api.groq.com/openai/v1/chat/completions
+     Header: 'Authorization': 'Bearer ${process.env.GROQ_API_KEY}'
+     Recommended Model (Burmese): llama-3.3-70b-versatile
+     Get Key: https://console.groq.com/keys
 
-Response includes `unread` count — use for bell badge.
+2. OpenRouter
 
----
+Aggregator, hosts almost all models. 200 free requests/day.
 
-## Chat (PawBot)
+     API URL: https://openrouter.ai/api/v1/chat/completions
+     Header: 'Authorization': 'Bearer ${process.env.OPENROUTER_API_KEY}'
+     Extra Headers required: 'HTTP-Referer': 'http://localhost:3000', 'X-Title': 'PawBot'
+     Recommended Model (Burmese): qwen/qwen-2.5-72b-instruct:free
+     Get Key: https://openrouter.ai/keys
 
-| Method | Endpoint | Body | Notes |
-|--------|----------|------|-------|
-| POST | `/api/chat` | `{ message }` | Public · no history |
-| POST | `/api/chat/sessions` | — | Create session |
-| GET | `/api/chat/sessions` | — | 🔒 |
-| GET | `/api/chat/sessions/:id/messages` | — | 🔒 |
-| POST | `/api/chat/sessions/:id/messages` | `{ message }` | History saved |
-| DELETE | `/api/chat/sessions/:id` | — | 🔒 |
+3. Qwen (Alibaba Cloud DashScope)
 
----
+Official home of Qwen. The absolute best at Burmese. Gives free credits to new users.
 
-## Admin 
+     API URL: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+     Header: 'Authorization': 'Bearer ${process.env.DASHSCOPE_API_KEY}'
+     Recommended Model (Burmese): qwen-plus (or qwen-turbo for speed)
+     Get Key: https://dashscope.console.aliyun.com/apiKey
 
-### Dashboard
-| Method | Endpoint |
-|--------|----------|
-| GET | `/api/admin/stats` |
+nividia
+const API_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
-### Users
-| Method | Endpoint | Body | Notes |
-|--------|----------|------|-------|
-| GET | `/api/admin/users` | — | query: `search, role, suspended, page, limit` |
-| GET | `/api/admin/users/:id` | — | — |
-| PATCH | `/api/admin/users/:id/role` | `{ role }` | `user` or `admin` |
-| PATCH | `/api/admin/users/:id/suspend` | `{ reason? }` | Blocks login immediately |
-| PATCH | `/api/admin/users/:id/unsuspend` | — | — |
-| DELETE | `/api/admin/users/:id` | — | Permanent |
-
-### Pets
-| Method | Endpoint | Body |
-|--------|----------|------|
-| GET | `/api/admin/pets` | — |
-| PATCH | `/api/admin/pets/:id/status` | `{ status }` |
-| DELETE | `/api/admin/pets/:id` | — |
-
-`status`: `available / pending / adopted / withdrawn`
-
-### Blogs
-| Method | Endpoint | Body |
-|--------|----------|------|
-| GET | `/api/admin/blogs` | — |
-| PATCH | `/api/admin/blogs/:id/status` | `{ status }` |
-| DELETE | `/api/admin/blogs/:id` | — |
-
-### Adoptions
-| Method | Endpoint | Body |
-|--------|----------|------|
-| GET | `/api/admin/adoptions` | — |
-| PATCH | `/api/admin/adoptions/:id/close` | `{ reason? }` |
-
-### Monitoring (platform-wide)
-| Method | Endpoint | Notes |
-|--------|----------|-------|
-| GET | `/api/admin/followups` | query: `health_status, page, limit` |
-| GET | `/api/admin/health-logs` | query: `type, page, limit` |
-
-### Reports
-| Method | Endpoint | Body |
-|--------|----------|------|
-| GET | `/api/admin/reports` | — |
-| PATCH | `/api/admin/reports/:id/resolve` | `{ status, action? }` |
-
-`status`: `reviewed / dismissed`  
-`action`: `remove_pet / remove_blog / suspend_reporter`
-
-### Audit Log
-| Method | Endpoint | Notes |
-|--------|----------|-------|
-| GET | `/api/admin/audit-log` | query: `admin_id, action, target_type, page, limit` |
-
----
-
-## Notes
-
-**Token storage:** save in `localStorage`, send on every 🔒 request.
-
-**Suspended account:** returns `403 { message: "Your account has been suspended.", reason: "..." }` — clear token and show message.
-
-**Pagination:** all list endpoints return `{ data[], total, page, limit }`.
-
-**Admin setup:** set `ADMIN_EMAIL` + `ADMIN_PASSWORD` in `.env` before first run. Seeds once and locks. Login via `/api/auth/login` normally.
-
-**Image display:**
-```js
-const API = 'http://localhost:3000';
-`${API}${pet.images[0]?.url}`
-`${API}${user.avatar_url}`
+export NODE_OPTIONS="--dns-result-order=ipv4first"
+lt --port 3000
