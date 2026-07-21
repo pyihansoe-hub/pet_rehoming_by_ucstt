@@ -7,6 +7,9 @@ const rateLimit  = require('express-rate-limit');
 const seedAdmin  = require('./services/seedAdmin');
 const app = express();
 
+const compression = require('compression');
+app.use(compression()); // Compress all responses
+
 // Tell Express to trust proxy headers (required for localtunnel / Koyeb / Render)
 app.set('trust proxy', 1);
 
@@ -98,31 +101,40 @@ app.use('/api/chat', chatLimiter, require('./routes/chat'));
 app.use('/api/messages',          require('./routes/messages'));
 app.use('/api/admin',             require('./routes/admin'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
 // --- SERVE FRONTEND ---
 const frontendPath = path.join(__dirname, '../frontend');
-app.use(express.static(frontendPath));
+app.use(express.static(frontendPath, {
+  maxAge: '1d' 
+}));
 
 // Serve specific frontend pages (HTML files)
-app.get(/^\/(index\.html|pages\/.*)$/, (req, res) => {
-  res.sendFile(path.join(frontendPath, req.path));
+app.get(/^\/(index\.html|pages\/.*)$/, (req, res, next) => {
+  // If the request has a file extension (like .jpg, .css, .js), skip this block!
+  if (path.extname(req.path)) {
+    return next();
+  }
+  
+  let filePath = path.join(frontendPath, req.path) + '.html';
+  res.sendFile(filePath, (err) => {
+    if (err) next(err);
+  });
 });
 
 // Catch-all to serve index.html for any other non-API route
 app.get('*', (req, res, next) => {
+  // If it's an API or upload, skip
   if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
     return next();
   }
+  
+  // CRITICAL FIX: If the request has a file extension (like .jpg, .png, .css), DO NOT send index.html. Let it pass.
+  if (path.extname(req.path)) {
+    return next();
+  }
+  
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 // ----------------------
-
-// Error handler (Must be after all routes)
-app.use((err, _req, res, _next) => {
-  console.error(err);
-  res.status(500).json({ message: err.message || 'Unexpected error.' });
-});
-
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, async () => {

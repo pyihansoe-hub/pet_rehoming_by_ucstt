@@ -257,7 +257,7 @@ const submitFollowup = async (req, res) => {
     // raise flag if poor
     if (health_status === 'poor') {
       await welfare.raiseFlag(arId, adoption.pet_id, 'poor_health',
-        `Follow-up submitted with poor health status: ${notes || 'no notes'}`
+        `သင့်အိမ်မွေးတိရစ္ဆာန် ကျန်းမာရေး အခြေအနေ ညံ့ဖျင်းနေသည်ကို ကြားရသဖြင့် အလွန်စိတ်မကောင်းပါ။ ကျေးဇူးပြု၍ မွေးစားသူနှင့် စကားပြောဆိုပြီး အကြံပြုချက်များပေးရန် (သို့မဟုတ်) ငွေပြန်လည်ပေးချေရန် ဆွေးနွေးကြည့်ပါ။ (မှတ်စု - ${notes || 'မရှိပါ'})`
       );
     }
 
@@ -280,22 +280,22 @@ const submitFollowup = async (req, res) => {
       });
 
       // 2. Email Notification
-      const { send } = require('../services/email');
+      // const { send } = require('../services/email');
       const { rows: ownerRows } = await pool.query('SELECT name, email FROM users WHERE id=$1', [ownerId]);
       
-      if (ownerRows.length > 0) {
-        const subject = `${petName} အတွက် နောက်ဆက်တွဲ တင်သွင်းထားပါသည်`;
-        const html = `
-          <p>မင်္ဂလာပါ ${ownerRows[0].name}၊</p>
-          <p>${petName} ကို မွေးစားထားသူမှ နောက်ဆက်တွဲ အသစ် တင်သွင်းထားပါသည်။</p>
-          <p><strong>ကျန်းမာရေးအခြေအနေ:</strong> ${health_status || '-'}</p>
-          <p><strong>ကိုယ်အလေးချိန်:</strong> ${weight_kg || '-'} kg</p>
-          <p><strong>မှတ်စုများ:</strong> ${notes || '-'}</p>
-          ${image_url ? `<p><img src="${req.protocol}://${req.get('host')}${image_url}" style="max-width:300px;border-radius:8px;"></p>` : ''}
-          <p>အသေးစိတ်ကြည့်ရန် ဝက်ဘ်ဆိုက်တွင် ဝင်ရောက်ကြည့်ရှုပါ။</p>
-        `;
-        await send(ownerRows[0].email, subject, html);
-      }
+      // if (ownerRows.length > 0) {
+      //   const subject = `${petName} အတွက် နောက်ဆက်တွဲ တင်သွင်းထားပါသည်`;
+      //   const html = `
+      //     <p>မင်္ဂလာပါ ${ownerRows[0].name}၊</p>
+      //     <p>${petName} ကို မွေးစားထားသူမှ နောက်ဆက်တွဲ အသစ် တင်သွင်းထားပါသည်။</p>
+      //     <p><strong>ကျန်းမာရေးအခြေအနေ:</strong> ${health_status || '-'}</p>
+      //     <p><strong>ကိုယ်အလေးချိန်:</strong> ${weight_kg || '-'} kg</p>
+      //     <p><strong>မှတ်စုများ:</strong> ${notes || '-'}</p>
+      //     ${image_url ? `<p><img src="${req.protocol}://${req.get('host')}${image_url}" style="max-width:300px;border-radius:8px;"></p>` : ''}
+      //     <p>အသေးစိတ်ကြည့်ရန် ဝက်ဘ်ဆိုက်တွင် ဝင်ရောက်ကြည့်ရှုပါ။</p>
+      //   `;
+      //   await send(ownerRows[0].email, subject, html);
+      // }
     } catch (notifErr) {
       console.error('Owner notification failed (non-fatal):', notifErr.message);
     }
@@ -364,23 +364,62 @@ const addHealthLog = async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
 
+// const getHealthLogs = async (req, res) => {
+//   try {
+//     const { rows: petRows } = await pool.query(
+//       'SELECT owner_id FROM pets WHERE id=$1', [req.params.petId]
+//     );
+//     if (!petRows.length) return res.status(404).json({ message: 'Pet not found.' });
+//     if (petRows[0].owner_id !== req.user?.id && req.user?.role !== 'admin')
+//       return res.status(403).json({ message: 'Health logs are private.' });
+
+//     const { rows } = await pool.query(
+//       `SELECT hl.*, u.name AS logged_by_name
+//        FROM pet_health_logs hl JOIN users u ON u.id=hl.logged_by
+//        WHERE hl.pet_id=$1 ORDER BY hl.created_at DESC`,
+//       [req.params.petId]
+//     );
+//     res.json({ logs: rows });
+//   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+// };
+
+// ── Health logs ───────────────────────────────────────────────
 const getHealthLogs = async (req, res) => {
   try {
+    // Update the query to also check if the current user is an approved adopter
     const { rows: petRows } = await pool.query(
-      'SELECT owner_id FROM pets WHERE id=$1', [req.params.petId]
+      `SELECT p.owner_id, 
+              (SELECT COUNT(*) FROM adoption_requests ar 
+               WHERE ar.pet_id = p.id 
+                 AND ar.requester_id = $2 
+                 AND ar.status = 'approved') AS approved_adopter_count
+       FROM pets p WHERE p.id = $1`, 
+      [req.params.petId, req.user.id]
     );
+
     if (!petRows.length) return res.status(404).json({ message: 'Pet not found.' });
-    if (petRows[0].owner_id !== req.user?.id && req.user?.role !== 'admin')
+
+    const isOwner = petRows[0].owner_id === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    const isApprovedAdopter = parseInt(petRows[0].approved_adopter_count) > 0;
+
+    // If they are none of the above, block access
+    if (!isOwner && !isAdmin && !isApprovedAdopter)
       return res.status(403).json({ message: 'Health logs are private.' });
 
+    // Fetch the logs
     const { rows } = await pool.query(
       `SELECT hl.*, u.name AS logged_by_name
-       FROM pet_health_logs hl JOIN users u ON u.id=hl.logged_by
-       WHERE hl.pet_id=$1 ORDER BY hl.created_at DESC`,
+       FROM pet_health_logs hl 
+       JOIN users u ON u.id = hl.logged_by
+       WHERE hl.pet_id = $1 
+       ORDER BY hl.created_at DESC`,
       [req.params.petId]
     );
     res.json({ logs: rows });
-  } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: 'Server error.', error: err.message }); 
+  }
 };
 
 const deleteHealthLog = async (req, res) => {

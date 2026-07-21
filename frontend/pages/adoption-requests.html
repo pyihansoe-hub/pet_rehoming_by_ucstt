@@ -38,7 +38,7 @@
 /* Followup list styles */
 .followup-item { border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:12px; background:var(--bg-card); }
 .followup-img { max-width: 250px; width: 100%; border-radius:8px; margin-top:10px; border:1px solid var(--border); display:block; }
-</style>
+  </style>
 </head>
 <body>
 
@@ -120,11 +120,11 @@
   </div>
 </div>
 
-<!-- NEW MODAL: View Followups -->
+<!-- MODAL: View Followups and Health Logs -->
 <div class="modal-overlay" id="view-followups-modal">
   <div class="modal" style="max-width:600px;">
     <div class="modal-header">
-      <h3>နောက်ဆက်တွဲ မှတ်တမ်းများ</h3>
+      <h3>နောက်ဆက်တွဲ နှင့် ကျန်းမာရေး မှတ်တမ်းများ</h3>
       <button class="modal-close" onclick="closeModal('view-followups-modal')">x</button>
     </div>
     <div id="view-followups-content" style="max-height:60vh; overflow-y:auto;">
@@ -175,6 +175,7 @@ async function loadMine() {
     el.innerHTML = reqs.map(function(r) {
       var actions = '';
       var alertHtml = '';
+      var petId = r.pet_id || (r.pet && r.pet.id) || 'null';
       
       if (r.status === 'pending') {
         alertHtml = '<div class="pay-alert" style="background:var(--info-bg); border-color:var(--info-border)"><div class="pay-alert-text"><h4 style="color:var(--info-text)">အတည်ပြုချက် စောင့်ဆိုင်းဆဲ</h4><p>' + (r.fee_type === 'paid' ? 'သင်၏ငွေပေးချေမှု အောင်မြင်ပါသည်။ ပိုင်ရှင်မှ သင်၏တောင်းဆိုချက်ကို အတည်ပြုရန် စောင့်ဆိုင်းနေပါသည်။' : 'ပိုင်ရှင်မှ သင်၏တောင်းဆိုချက်ကို အတည်ပြုရန် စောင့်ဆိုင်းနေပါသည်။') + '</p></div></div>';
@@ -184,6 +185,7 @@ async function loadMine() {
         actions += '<a href="/pages/messages.html" class="btn btn-primary btn-sm">ပိုင်ရှင်ထံ စာတိုပေးပို့ရန်</a>';
         actions += '<button onclick="openAgreementModal(' + r.id + ')" class="btn btn-outline btn-sm">သဘောတူညီချက် ကြည့်ရှုရန်</button>';
         actions += '<button onclick="openFollowupModal(' + r.id + ')" class="btn btn-outline btn-sm">နောက်ဆက်တွဲ တင်သွင်းရန်</button>';
+        actions += '<button onclick="viewFollowups(' + r.id + ', ' + petId + ')" class="btn btn-outline btn-sm">မှတ်တမ်းများ ကြည့်ရှုရန်</button>';
       } else if (r.status === 'rejected') {
         alertHtml = '<div style="background:var(--danger-bg); border:1px solid var(--danger-border); padding:12px; border-radius:8px; font-size:0.88rem; color:var(--danger-text); margin-bottom:14px;">ပိုင်ရှင်မှ ဤတောင်းဆိုချက်ကို ယခုအချိန်တွင် ဆက်လက်မလုပ်ဆောင်ရန် ဆုံးဖြတ်လိုက်ပါသည်။ ' + (r.fee_type === 'paid' ? 'ထိန်းသိမ်းထားသော ငွေပေးချေမှုများအား ပြန်လည်ထုတ်ပေးပြီးပါပြီ။' : '') + '</div>';
       }
@@ -217,6 +219,7 @@ async function loadReceived() {
     el.innerHTML = reqs.map(function(r) {
       var actionsHtml = '';
       var statusNote = '';
+      var petId = r.pet_id || (r.pet && r.pet.id) || 'null';
       
       if (r.status === 'pending') {
         statusNote = '<div style="margin-bottom:14px;padding:10px;background:var(--info-bg);border-radius:8px;font-size:0.86rem;color:var(--info-text);border:1px solid var(--info-border);">သင်၏ပြန်လည်သုံးသပ်မှုကို စောင့်ဆိုင်းနေပါသည်။ ' + (r.fee_type === 'paid' ? 'မွေးစားသူမှ ငွေပေးချေပြီးပါပြီ။' : '') + '</div>';
@@ -230,7 +233,7 @@ async function loadReceived() {
         statusNote = '<div style="margin-bottom:14px;padding:10px;background:var(--success-bg);border-radius:8px;font-size:0.86rem;color:var(--success-text);border:1px solid var(--success-border);">အတည်ပြုပြီးပါပြီ။ မွေးစားသူနှင့် ယခု စာတိုပေးပို့နိုင်ပါပြီ။</div>';
         actionsHtml = '<a href="/pages/messages.html" class="btn btn-primary btn-sm">မွေးစားသူထံ စာတိုပေးပို့ရန်</a>' +
                       '<button onclick="openAgreementModal(' + r.id + ')" class="btn btn-outline btn-sm">သဘောတူညီချက် ကြည့်ရှုရန်</button>' +
-                      '<button onclick="viewFollowups(' + r.id + ')" class="btn btn-outline btn-sm">နောက်ဆက်တွဲများ ကြည့်ရှုရန်</button>';
+                      '<button onclick="viewFollowups(' + r.id + ', ' + petId + ')" class="btn btn-outline btn-sm">နောက်ဆက်တွဲ များ ကြည့်ရှုရန်</button>';
       } else if (r.status === 'rejected') {
         statusNote = '<div style="margin-bottom:14px;padding:10px;background:var(--danger-bg);border-radius:8px;font-size:0.86rem;color:var(--danger-text);border:1px solid var(--danger-border);">ငြင်းပယ်ထားသည်။</div>';
       }
@@ -262,36 +265,61 @@ async function loadReceived() {
   } catch(e) { el.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
 }
 
-async function viewFollowups(requestId) {
+async function viewFollowups(requestId, petId) {
   var content = document.getElementById('view-followups-content');
   content.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
   openModal('view-followups-modal');
   
+  var html = '';
+  
   try {
     var res = await Monitoring.getFollowups(requestId);
-    if (!res || !res.ok) {
-      content.innerHTML = '<div class="alert alert-danger">ဖွင့်၍မရပါ။</div>';
-      return;
+    if (res && res.ok) {
+      var followups = res.data.followups || [];
+      if (followups.length) {
+        html += '<h4 style="margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:5px;">နောက်ဆက်တွဲ မှတ်တမ်းများ</h4>';
+        html += followups.map(function(f) {
+          var healthColor = f.health_status === 'poor' ? 'var(--danger-text)' : (f.health_status === 'fair' ? 'var(--warning-text)' : 'var(--success-text)');
+          return '<div class="followup-item">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+              '<strong style="color:' + healthColor + ';">ကျန်းမာရေး: ' + (f.health_status || '-') + '</strong>' +
+              '<span style="font-size:0.78rem;color:var(--text-muted)">' + fmtDate(f.created_at) + '</span>' +
+            '</div>' +
+            (f.weight_kg ? '<div style="font-size:0.84rem;color:var(--text-secondary);margin-bottom:6px;">ကိုယ်အလေးချိန်: ' + f.weight_kg + ' ကီလိုဂရမ်</div>' : '') +
+            (f.notes ? '<div style="font-size:0.86rem;color:var(--text-primary);background:var(--bg-chat);padding:8px;border-radius:6px;margin-bottom:8px;">' + escapeHtml(f.notes) + '</div>' : '') +
+            (f.image_url ? '<img src="' + imgUrl(f.image_url) + '" class="followup-img" alt="Followup Image">' : '') +
+          '</div>';
+        }).join('');
+      }
     }
     
-    var followups = res.data.followups || [];
-    if (!followups.length) {
-      content.innerHTML = '<div class="empty-state"><h3>နောက်ဆက်တွဲ မရှိသေးပါ</h3><p>မွေးစားသူမှ တင်သွင်းထားသော နောက်ဆက်တွဲ မရှိသေးပါ။</p></div>';
-      return;
+    // Fetch Health Logs for the specific pet
+    if (petId && petId !== 'null') {
+      var healthRes = await Monitoring.getHealthLogs(petId); 
+      if (healthRes && healthRes.ok) {
+        var logs = healthRes.data.logs || [];
+        if (logs.length) {
+          html += '<h4 style="margin-top:20px; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:5px;">ကျန်းမာရေး မှတ်တမ်းများ</h4>';
+          html += logs.map(function(l) {
+            return '<div class="followup-item" style="border-left: 3px solid var(--accent);">' +
+              '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+                '<strong style="color:var(--text-primary); text-transform:capitalize;">' + (l.type||'').replace(/_/g,' ') + '</strong>' +
+                '<span style="font-size:0.78rem;color:var(--text-muted)">' + fmtDate(l.created_at) + '</span>' +
+              '</div>' +
+              (l.vet_name ? '<div style="font-size:0.84rem;color:var(--text-secondary);margin-bottom:6px;">ဆေးကုဆရာဝန်: ' + l.vet_name + '</div>' : '') +
+              (l.weight_kg ? '<div style="font-size:0.84rem;color:var(--text-secondary);margin-bottom:6px;">ကိုယ်အလေးချိန်: ' + l.weight_kg + ' ကီလိုဂရမ်</div>' : '') +
+              (l.next_due ? '<div style="font-size:0.84rem;color:var(--text-secondary);margin-bottom:6px;">နောက်တစ်ကြိမ်: ' + fmtDate(l.next_due) + '</div>' : '') +
+            '</div>';
+          }).join('');
+        }
+      }
     }
     
-    content.innerHTML = followups.map(function(f) {
-      var healthColor = f.health_status === 'poor' ? 'var(--danger-text)' : (f.health_status === 'fair' ? 'var(--warning-text)' : 'var(--success-text)');
-      return '<div class="followup-item">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
-          '<strong style="color:' + healthColor + ';">ကျန်းမာရေး: ' + (f.health_status || '-') + '</strong>' +
-          '<span style="font-size:0.78rem;color:var(--text-muted)">' + fmtDate(f.created_at) + '</span>' +
-        '</div>' +
-        (f.weight_kg ? '<div style="font-size:0.84rem;color:var(--text-secondary);margin-bottom:6px;">ကိုယ်အလေးချိန်: ' + f.weight_kg + ' ကီလိုဂရမ်</div>' : '') +
-        (f.notes ? '<div style="font-size:0.86rem;color:var(--text-primary);background:var(--bg-chat);padding:8px;border-radius:6px;margin-bottom:8px;">' + escapeHtml(f.notes) + '</div>' : '') +
-        (f.image_url ? '<img src="' + imgUrl(f.image_url) + '" class="followup-img" alt="Followup Image">' : '') +
-      '</div>';
-    }).join('');
+    if (!html) {
+      html = '<div class="empty-state"><h3>မှတ်တမ်း မရှိသေးပါ</h3><p>နောက်ဆက်တွဲ သို့မဟုတ် ကျန်းမာရေး မှတ်တမ်း မရှိသေးပါ။</p></div>';
+    }
+    
+    content.innerHTML = html;
     
   } catch(e) {
     content.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div>';

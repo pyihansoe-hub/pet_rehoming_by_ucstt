@@ -75,13 +75,20 @@ function showToast(msg, type) {
   container.appendChild(t);
   setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 3500);
 }
-
-// FIXED: Removed hardcoded :3000 port so it works on HTTPS hosting platforms
 function imgUrl(path) {
   if (!path) return '';
-  if (path.startsWith('http')) return path;
-  // If it's an absolute path (starts with /), return as is. Otherwise prepend /
-  return path.startsWith('/') ? path : '/' + path;
+  // If it's an absolute URL (starts with http), extract just the pathname
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    try {
+      var urlObj = new URL(path);
+      path = urlObj.pathname; // e.g., turns http://localhost:3000/uploads/img.jpg into /uploads/img.jpg
+    } catch(e) {}
+  }
+
+  if (!path.startsWith('/')) {
+    path = '/' + path;
+  }
+  return path;
 }
 
 function handleImgError(img) {
@@ -261,9 +268,17 @@ function renderNavbar() {
           '<a href="' + p('blogs.html') + '">ဆောင်းပါးများ</a>' +
           '<a href="' + p('chat.html') + '">PawBot</a>' +
           '<a href="' + p('messages.html') + '">မက်ဆေ့ခ်ျများ</a>' +
-          '<a href="' + p('my-pets.html') + '">ပို့စ်များ</a>' +
-          // NEW LINK ADDED HERE:
-          (isLoggedIn ? '<a href="' + p('adoption-requests.html') + '">တောင်းဆိုချက်များ</a>' : '') +
+          (isLoggedIn ? 
+            '<div class="nav-dropdown">' +
+              '<a href="javascript:void(0)" class="dropbtn">ကိုယ်ပိုင် စာမျက်နှာ ▾</a>' +
+              '<div class="dropdown-content">' +
+                '<a href="' + p('my-pets.html') + '">ကျွန်ုပ်တင်ထားသော အိမ်မွေးတိရစ္ဆာန်များ</a>' +
+                '<a href="' + p('rehomed-pets.html') + '">မွေးစားလိုက်သော အိမ်မွေးတိရစ္ဆာန်များ</a>' +
+                '<a href="' + p('adoption-requests.html') + '">အခြေအနေနှင့် တောင်းဆိုချက်</a>' +
+                '<a href="' + p('about-us.html') + '">ကျွန်ုပ်တို့အကြောင်း</a>' +
+              '</div>' +
+            '</div>' 
+          : '') +
           (isAdmin ? '<a href="' + p('admin.html') + '">အက်ဒမင်</a>' : '') +
         '</nav>' +
       '</div>' +
@@ -303,8 +318,8 @@ function renderNavbar() {
     '<a href="' + p('blogs.html') + '">ဆောင်းပါးများ</a>' +
     '<a href="' + p('chat.html') + '">PawBot</a>' +
     '<a href="' + p('messages.html') + '">မက်ဆေ့ခ်ျများ</a>' +
-    '<a href="' + p('my-pets.html') + '">ပို့စ်များ</a>' +
-    (isLoggedIn ? '<a href="' + p('adoption-requests.html') + '">တောင်းဆိုချက်များ</a>' : '') +
+    '<a href="' + p('my-pets.html') + '">ကျွန်ုပ်တင်ထားသော အိမ်မွေးတိရစ္ဆာန်များ</a>' +
+    (isLoggedIn ? '<a href="' + p('adoption-requests.html') + '">အခြေအနေနှင့် တောင်းဆိုချက်</a>' : '') +
     (isLoggedIn ? '<a href="' + p('profile.html') + '">ပရိုဖိုင်</a>' : '') +
     (isAdmin    ? '<a href="' + p('admin.html') + '">အက်ဒမင်</a>' : '') +
     (isLoggedIn ? '<a href="#" onclick="logout()">အကောင့်ထွက်ရန်</a>' : '<a href="' + p('login.html') + '">အကောင့်ဝင်ရန်</a>');
@@ -376,7 +391,7 @@ function renderFooter() {
           '<a href="' + p('profile.html') + '">ပရိုဖိုင်</a>' +
         '</div>' +
       '</div>' +
-      '<div class="footer-bottom">&copy; ' + new Date().getFullYear() + ' နှင့် စောင့်ကြည့်ရေး စနစ်</div>' +
+      '<div class="footer-bottom">&copy; ' + new Date().getFullYear() + ' </div>' +
     '</div>';
 }
 

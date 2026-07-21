@@ -96,3 +96,30 @@ const API_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
 export NODE_OPTIONS="--dns-result-order=ipv4first"
 lt --port 3000
+lt --port 3000 --subdomain mypetapp
+http://localhost:3000
+fuser -k 3000/tcp
+while true; do lt --port 3000 --subdomain ucstt-pet-mm && break; sleep 2; done
+pm2 start src/server.js --name petapp
+
+pyihansoe@debian:~$ sudo ufw allow ssh
+Rules updated
+Rules updated (v6)
+pyihansoe@debian:~$ sudo ufw allow from 192.168.100.49/24 to any port 3000
+WARN: Rule changed after normalization
+Rules updated
+pyihansoe@debian:~$ sudo ufw enable
+Firewall is active and enabled on system startup
+pyihansoe@debian:~$ sudo ufw status
+Status: active
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     ALLOW       Anywhere                  
+3000                       ALLOW       192.168.100.0/24          
+22/tcp (v6)                ALLOW       Anywhere (v6)             
+
+pyihansoe@debian:~$ sudo ufw disable
+Firewall stopped and disabled on system startup
+pyihansoe@debian:~$ sudo ufw delete allow from 192.168.100.0/24 to any port 3000
+Rules updated

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ကျွန်ုပ်တို့အကြောင်း - PetNet</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <style>
+    .about-hero { text-align: center; padding: 40px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 30px; }
+    .about-hero h1 { font-size: 2.2rem; margin-bottom: 10px; color: var(--accent); }
+    .about-hero p { max-width: 700px; margin: 0 auto; color: var(--text-secondary); font-size: 1.05rem; line-height: 1.7; }
+    
+    .mission-section { margin-bottom: 40px; }
+    .mission-section h2 { font-size: 1.5rem; margin-bottom: 16px; border-left: 4px solid var(--accent); padding-left: 12px; }
+    .mission-section p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 12px; }
+
+    .dev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 24px; }
+    .dev-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-align: center; transition: transform 0.2s, box-shadow 0.2s; }
+    .dev-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px var(--shadow-md); }
+    .dev-avatar { width: 90px; height: 90px; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: #fff; }
+    .dev-card h3 { font-size: 1.2rem; margin-bottom: 4px; }
+    .dev-card .role { color: var(--accent); font-weight: 600; font-size: 0.9rem; margin-bottom: 12px; display: block; }
+    .dev-card p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; }
+    
+    .avatar-1 { background: linear-gradient(135deg, #2a9d8f, #21867a); }
+    .avatar-2 { background: linear-gradient(135deg, #264653, #1c2b3a); }
+  </style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+    
+    <!-- Hero Section -->
+    <div class="about-hero">
+      <h1>PetNet မှ ကြိုဆိုပါသည်</h1>
+      <p>ကျွန်ုပ်တို့သည် သထုံကွန်ပျူတာတက္ကသိုလ် (UCSTT) မှ ကျောင်းသားများ ဖြစ်ကြပါသည်။ ချစ်စရာကောင်းသော အိမ်မွေးတိရစ္ဆာန်များအတွက် အကောင်းဆုံးသော အိမ်သစ်များကို ရှာဖွေဆက်သွယ်ပေးရန် ဤ PetNet ပလက်ဖောင်းကို တည်ဆောက်ထားပါသည်။</p>
+    </div>
+
+    <!-- Mission Section -->
+    <div class="mission-section">
+      <h2>ကျွန်ုပ်တို့၏ ရည်ရွယ်ချက်</h2>
+      <p>ကျွန်ုပ်တို့၏ ရည်ရွယ်ချက်မှာ ဗမာ/မြန်မာဘာသာစကားဖြင့် အိမ်မွေးတိရစ္ဆာန်မွေးစားမှုစနစ်ကို ခေတ်မီလွယ်ကူသော ဒီဂျစ်တယ်ပလက်ဖောင်းတစ်ခု ဖန်တီးရန်ဖြစ်ပါသည်။ တိရစ္ဆာန်များ လမ်းပြောက်နေခြင်းမှ ကာကွယ်ရန်၊ သစ္စာရှိသော မွေးစားသူများနှင့် ဆက်သွယ်ပေးရန်၊ ထို့အပြင် မွေးစားပြီးနောက် တိရစ္ဆာန်များ၏ ကျန်းမာရေးနှင့် ဘေးအန္တရာယ်ကင်းမှုကို ဆက်လက်စောင့်ကြည့်ရန် ဤစနစ်ကို တည်ဆောက်ခဲ့ခြင်း ဖြစ်ပါသည်။</p>
+      <p>ကျွန်ုပ်တို့သည် နည်းပညာကို အသုံးပြု၍ လူ့အဖွဲ့အစည်းအတွက် အထိုင်အသုံးဝင်သော ပြောင်းလဲမှုများ လုပ်ဆောင်လိုကြပါသည်။</p>
+    </div>
+
+    <!-- Developers Section -->
+    <div class="mission-section">
+      <h2>ဖွံ့ဖြိုးတိုးတက်ရေး တာဝန်ခံသူများ (Developers)</h2>
+      <p>ဤပရောဂျက်သည် အောက်ပါ လူငယ်များ၏ ပူးပေါင်းဆောင်ရွက်မှုဖြင့် ဖြစ်မြောက်ခဲ့ပါသည်။</p>
+      
+      <div class="dev-grid">
+        <!-- Developer 1: You / The Student -->
+        <div class="dev-card">
+          <div class="dev-avatar avatar-1">UCSTT</div>
+          <h3>UCSTT ကျောင်းသား</h3>
+          <span class="role">Project Lead & Founder</span>
+          
+        </div>
+
+        
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

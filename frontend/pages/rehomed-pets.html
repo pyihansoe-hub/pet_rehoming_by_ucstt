@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ထွက်ခွာသွားသော အိမ်မွေးတိရစ္ဆာန်များ</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <style>
+    .rehomed-card { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:16px; box-shadow:0 2px 4px var(--shadow-sm); display:flex; gap:16px; flex-wrap:wrap; }
+    .rehomed-img { width: 100px; height: 100px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+    .rehomed-info { flex: 1; min-width: 250px; }
+    .status-active { background: var(--info-bg); color: var(--info-text); padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: bold; }
+    .status-flagged { background: var(--danger-bg); color: var(--danger-text); padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: bold; }
+    .status-completed { background: var(--success-bg); color: var(--success-text); padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: bold; }
+    
+    .score-excellent { color: var(--success-text); font-weight: bold; }
+    .score-good { color: var(--success-text); font-weight: bold; }
+    .score-fair { color: var(--warning-text); font-weight: bold; }
+    .score-needs_attention { color: var(--danger-text); font-weight: bold; }
+    .score-no_updates { color: var(--text-muted); font-weight: bold; }
+    
+    .timeline-item { border-left: 3px solid var(--accent); padding-left: 12px; margin-bottom: 12px; }
+    .flag-badge { background: var(--danger-bg); color: var(--danger-text); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; display: inline-block; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+    <div class="page-header">
+      <h1>ထွက်သွားသော အိမ်မွေးတိရစ္ဆာန်များ</h1>
+      <p style="color:var(--text-secondary);margin-top:4px">သင်မွေးစားပေးလိုက်သော အိမ်မွေးတိရစ္ဆာန်များ၏ နောက်ဆက်တွဲ နှင့် ကျန်းမာရေး အခြေအနေများ</p>
+    </div>
+
+    <div id="rehomed-list">
+      <div class="loading-wrap"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Timeline -->
+<div class="modal-overlay" id="timeline-modal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <h3>အသေးစိတ် မှတ်တမ်းများ</h3>
+      <button class="modal-close" onclick="closeModal('timeline-modal')">x</button>
+    </div>
+    <div id="timeline-content" style="max-height:60vh; overflow-y:auto; padding: 10px;">
+      <div class="loading-wrap"><div class="spinner"></div></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('timeline-modal')">ပိတ်ရန်</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer" id="footer"></footer>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (!requireAuth()) return;
+  loadRehomed();
+});
+
+async function loadRehomed() {
+  var el = document.getElementById('rehomed-list');
+  try {
+    // Call the API: GET /api/monitoring/rehomed
+    var res = await Monitoring.rehomed(); 
+    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger">ဖွင့်၍မရပါ။</div>'; return; }
+    
+    var pets = res.data.rehomed || [];
+    if (!pets.length) {
+      el.innerHTML = '<div class="empty-state"><h3>မွေးစားပေးလိုက်သော အိမ်မွေးတိရစ္ဆာန် မရှိပါ</h3><p>သင်၏ အိမ်မွေးတိရစ္ဆာန်များကို အခြားသူများက မွေးစားပါက ဤနေရာတွင် ပြီးမြောက်မှု မှတ်တမ်းများ ပေါ်လာပါမည်။</p></div>';
+      return;
+    }
+
+    el.innerHTML = pets.map(function(p) {
+      var statusClass = 'status-' + (p.monitoring_status || 'active');
+      var scoreClass = 'score-' + (p.welfare_score || 'no_updates');
+      var scoreText = (p.welfare_score || 'no_updates').replace(/_/g, ' ');
+      
+      var imgHtml = p.primary_image 
+        ? '<img src="' + imgUrl(p.primary_image) + '" class="rehomed-img">' 
+        : '<div class="rehomed-img" style="display:flex;align-items:center;justify-content:center;background:var(--bg-muted); color:var(--text-muted)">မရှိ</div>';
+
+      return '<div class="rehomed-card">' +
+        imgHtml +
+        '<div class="rehomed-info">' +
+          '<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; margin-bottom:10px;">' +
+            '<div>' +
+              '<h3 style="margin:0 0 4px;">' + p.pet_name + '</h3>' +
+              '<div style="font-size:0.84rem; color:var(--text-secondary);">မွေးစားသူ: ' + p.adopter_name + '</div>' +
+              '<div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">မွေးစားခဲ့သည်: ' + fmtDate(p.adopted_at) + '</div>' +
+            '</div>' +
+            '<span class="' + statusClass + '">' + (p.monitoring_status || 'active') + '</span>' +
+          '</div>' +
+          
+          '<div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; font-size:0.86rem;">' +
+            '<div>ကျန်းမာရေးအခြေအနေ: <span class="' + scoreClass + '">' + scoreText + '</span></div>' +
+            '<div>နောက်ဆက်တွဲ အရေအတွက်: ' + (p.followup_count || 0) + '</div>' +
+            (p.open_flags > 0 ? '<div class="flag-badge">⚠️ အရေးပေါ် သတိပြုချက် ' + p.open_flags + ' ခု</div>' : '') +
+          '</div>' +
+          
+          '<button onclick="viewTimeline(' + p.adoption_request_id + ')" class="btn btn-primary btn-sm">မှတ်တမ်းများ ကြည့်ရှုရန်</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    
+  } catch(e) {
+    el.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div>';
+  }
+}
+
+async function viewTimeline(adoptionRequestId) {
+  var content = document.getElementById('timeline-content');
+  content.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  openModal('timeline-modal');
+
+  try {
+    // Call the API: GET /api/monitoring/timeline/:adoptionRequestId
+    var res = await Monitoring.getTimeline(adoptionRequestId);
+    if (!res || !res.ok) {
+      content.innerHTML = '<div class="alert alert-danger">မှတ်တမ်း ဖွင့်၍မရပါ။</div>';
+      return;
+    }
+
+    var data = res.data;
+    var html = '';
+
+    // 1. Render Health Logs
+    if (data.healthLogs && data.healthLogs.length) {
+      html += '<h4 style="margin-top:10px; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:5px;">ကျန်းမာရေး မှတ်တမ်းများ</h4>';
+      data.healthLogs.forEach(function(l) {
+        html += '<div class="timeline-item">' +
+          '<strong style="text-transform:capitalize;">' + (l.type||'').replace(/_/g,' ') + '</strong> <span style="font-size:0.76rem; color:var(--text-muted); float:right;">' + fmtDate(l.created_at) + '</span>' +
+          (l.vet_name ? '<div style="font-size:0.84rem; color:var(--text-secondary);">ဆေးကုဆရာဝန်: ' + l.vet_name + '</div>' : '') +
+          (l.weight_kg ? '<div style="font-size:0.84rem; color:var(--text-secondary);">ကိုယ်အလေးချိန်: ' + l.weight_kg + ' ကီလိုဂရမ်</div>' : '') +
+        '</div>';
+      });
+    }
+
+    // 2. Render Followups
+    if (data.followups && data.followups.length) {
+      html += '<h4 style="margin-top:20px; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:5px;">နောက်ဆက်တွဲ တင်သွင်းမှုများ</h4>';
+      data.followups.forEach(function(f) {
+        var healthColor = f.health_status === 'poor' ? 'var(--danger-text)' : (f.health_status === 'fair' ? 'var(--warning-text)' : 'var(--success-text)');
+        html += '<div class="timeline-item">' +
+          '<strong style="color:' + healthColor + ';">ကျန်းမာရေး: ' + (f.health_status || '-') + '</strong> <span style="font-size:0.76rem; color:var(--text-muted); float:right;">' + fmtDate(f.created_at) + '</span>' +
+          (f.weight_kg ? '<div style="font-size:0.84rem; color:var(--text-secondary); margin-top:4px;">ကိုယ်အလေးချိန်: ' + f.weight_kg + ' ကီလိုဂရမ်</div>' : '') +
+          (f.notes ? '<div style="font-size:0.86rem; color:var(--text-primary); background:var(--bg-chat); padding:8px; border-radius:6px; margin-top:6px;">' + escapeHtml(f.notes) + '</div>' : '') +
+          (f.image_url ? '<img src="' + imgUrl(f.image_url) + '" style="max-width:200px; width:100%; border-radius:6px; margin-top:8px;">' : '') +
+        '</div>';
+      });
+    }
+
+    // 3. Render Flags if any
+    if (data.flags && data.flags.length) {
+      html += '<h4 style="margin-top:20px; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:5px; color:var(--danger-text);">⚠️ အရေးပေါ် သတိပြုချက်များ</h4>';
+      data.flags.forEach(function(fl) {
+        html += '<div class="timeline-item" style="border-left-color:var(--danger-text);">' +
+          '<strong style="color:var(--danger-text); text-transform:capitalize;">' + (fl.flag_type||'').replace(/_/g,' ') + '</strong> <span style="font-size:0.76rem; color:var(--text-muted); float:right;">' + fmtDate(fl.created_at) + '</span>' +
+          (fl.detail ? '<div style="font-size:0.86rem; color:var(--text-primary); margin-top:4px;">' + fl.detail + '</div>' : '') +
+          '<div style="font-size:0.82rem; color:var(--text-secondary); margin-top:4px;">' + (fl.resolved ? 'ဖြေရှင်းပြီး' : 'ဖြေရှင်းဆဲ') + '</div>' +
+        '</div>';
+      });
+    }
+
+    if (!html) {
+      html = '<div class="empty-state"><h3>မှတ်တမ်း မရှိသေးပါ</h3></div>';
+    }
+
+    content.innerHTML = html;
+
+  } catch(e) {
+    content.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div>';
+  }
+}
+</script>
+</body>
+</html>

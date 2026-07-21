@@ -5,7 +5,7 @@
 
 const pool = require('../db/pool');
 const notify = require('./notify');
-const { send } = require('./email');
+// REMOVED: const { send } = require('./email');
 
 // ── Welfare score calculator ──────────────────────────────────
 /**
@@ -79,60 +79,49 @@ const seedCheckins = async (adoptionRequestId, startDate) => {
 
 // ── Raise a welfare flag ──────────────────────────────────────
 const raiseFlag = async (adoptionRequestId, petId, flagType, detail) => {
-  // check if same flag already open
-  const existing = await pool.query(
-    `SELECT id FROM welfare_flags
-     WHERE adoption_request_id=$1 AND flag_type=$2 AND resolved=FALSE`,
-    [adoptionRequestId, flagType]
-  );
-  if (existing.rows.length) return; // already flagged
-
-  await pool.query(
-    `INSERT INTO welfare_flags (adoption_request_id, pet_id, flag_type, detail)
-     VALUES ($1,$2,$3,$4)`,
-    [adoptionRequestId, petId, flagType, detail || null]
-  );
-
-  // mark adoption as flagged
-  await pool.query(
-    `UPDATE adoption_requests SET monitoring_status='flagged' WHERE id=$1`,
-    [adoptionRequestId]
-  );
-
-  // notify owner + admin
+  
+  // 1. Notify owner FIRST (so it always sends, even if flag already exists)
   try {
     const { rows } = await pool.query(
-      `SELECT p.name AS pet_name, p.owner_id,
-              owner.name AS owner_name, owner.email AS owner_email,
-              adopter.name AS adopter_name, adopter.email AS adopter_email
+      `SELECT p.name AS pet_name, p.owner_id
        FROM adoption_requests ar
-       JOIN pets  p       ON p.id = ar.pet_id
-       JOIN users owner   ON owner.id = p.owner_id
-       JOIN users adopter ON adopter.id = ar.requester_id
+       JOIN pets p ON p.id = ar.pet_id
        WHERE ar.id = $1`,
       [adoptionRequestId]
     );
     if (rows.length) {
       const d = rows[0];
-      const subject = `⚠️ Welfare concern — ${d.pet_name}`;
-      const body = `
-        <p>A welfare concern has been flagged for <strong>${d.pet_name}</strong>.</p>
-        <p><strong>Type:</strong> ${flagType.replace(/_/g, ' ')}</p>
-        ${detail ? `<p><strong>Detail:</strong> ${detail}</p>` : ''}
-        <p>Please log in to review the situation.</p>
-      `;
-      // notify original owner
-      await send(d.owner_email, subject, body).catch(() => {});
       notify(d.owner_id, {
         type:  'welfare_flag',
-        title: `⚠️ Welfare concern for ${d.pet_name}`,
-        body:  flagType.replace(/_/g, ' '),
+        title: `⚠️ ${d.pet_name} အတွက် သတိပြုဖွယ် အခြေအနေရှိပါသည်`,
+        body:  `အကြောင်းပြချက်: ${flagType.replace(/_/g, ' ')}`,
         link:  `/pages/rehomed-pets.html`,
       });
     }
   } catch(e) {
     console.error('Flag notification failed (non-fatal):', e.message);
   }
+
+  // 2. Check if same flag already open
+  const existing = await pool.query(
+    `SELECT id FROM welfare_flags
+     WHERE adoption_request_id=$1 AND flag_type=$2 AND resolved=FALSE`,
+    [adoptionRequestId, flagType]
+  );
+  if (existing.rows.length) return; // already flagged, don't insert duplicate in DB
+
+  // 3. Insert flag into DB
+  await pool.query(
+    `INSERT INTO welfare_flags (adoption_request_id, pet_id, flag_type, detail)
+     VALUES ($1,$2,$3,$4)`,
+    [adoptionRequestId, petId, flagType, detail || null]
+  );
+
+  // 4. mark adoption as flagged
+  await pool.query(
+    `UPDATE adoption_requests SET monitoring_status='flagged' WHERE id=$1`,
+    [adoptionRequestId]
+  );
 };
 
 // ── Check if monitoring is complete ──────────────────────────
@@ -164,8 +153,7 @@ const processOverdueCheckins = async () => {
     const { rows: overdue } = await pool.query(
       `SELECT mc.*, ar.pet_id,
               p.name AS pet_name,
-              adopter.name AS adopter_name,
-              adopter.email AS adopter_email
+              adopter.name AS adopter_name
        FROM monitoring_checkins mc
        JOIN adoption_requests ar ON ar.id = mc.adoption_request_id
        JOIN pets p ON p.id = ar.pet_id
@@ -183,7 +171,7 @@ const processOverdueCheckins = async () => {
         [c.id]
       );
 
-      // raise welfare flag
+      // raise welfare flag (this will now send the in-app notification automatically)
       await raiseFlag(
         c.adoption_request_id,
         c.pet_id,
@@ -191,17 +179,7 @@ const processOverdueCheckins = async () => {
         `${c.checkin_type} check-in was due on ${new Date(c.due_at).toLocaleDateString()}`
       );
 
-      // email adopter
-      try {
-        await send(
-          c.adopter_email,
-          `Overdue check-in — ${c.pet_name}`,
-          `<p>Hi ${c.adopter_name},</p>
-           <p>Your <strong>${c.checkin_type.replace('_',' ')}</strong> check-in for <strong>${c.pet_name}</strong> is overdue.</p>
-           <p>Please log in and submit a follow-up update to let everyone know how ${c.pet_name} is doing.</p>
-           <a href="${process.env.CLIENT_URL}/pages/my-adopted-pets.html" style="background:#2a9d8f;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:10px">Submit Update</a>`
-        );
-      } catch(e) {}
+      // REMOVED: email sending code block from here
 
       console.log(`⚠️ Overdue flag raised: ${c.pet_name} — ${c.checkin_type}`);
     }

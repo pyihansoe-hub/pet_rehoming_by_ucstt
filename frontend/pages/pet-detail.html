@@ -17,8 +17,8 @@
   </script>
   <style>
     .gallery { display:grid; grid-template-columns:1fr 180px; gap:8px; margin-bottom:24px; border-radius:10px; overflow:hidden; max-height:420px; }
-    .gallery-main { background:var(--bg-muted); overflow:hidden; }
-    .gallery-main img { width:100%; height:100%; object-fit:cover; cursor:pointer; }
+    .gallery-main { background:var(--bg-muted); overflow:hidden; min-height:380px; display:flex; align-items:center; justify-content:center; }
+    .gallery-main img { width:100%; height:100%; min-height:380px; max-height:420px; object-fit:cover; cursor:pointer; display:block; }
     .gallery-main-placeholder { width:100%; height:100%; min-height:280px; display:flex; align-items:center; justify-content:center; font-size:2rem; color:var(--text-muted); font-weight:bold; }
     .gallery-thumbs { display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
     .gallery-thumb { aspect-ratio:1; object-fit:cover; cursor:pointer; opacity:0.6; border-radius:4px; width:100%; }
@@ -59,7 +59,7 @@
         <a href="pets.html" style="font-size:0.86rem;color:var(--text-secondary)">အိမ်မွေးတိရစ္ဆာန်များ ရှာဖွေရန်</a>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 320px;gap:32px;align-items:start">
+      <<div style="display:grid;grid-template-columns:1fr 320px;gap:32px;align-items:start">
         <div>
           <div class="gallery" id="gallery">
             <div class="gallery-main" id="gallery-main">
@@ -257,7 +257,7 @@
             <button type="button" class="btn btn-outline btn-sm" style="flex:1" id="kpay-phone-btn" onclick="selectPayMode('phone', 'kpay')">ဖုန်းနံပါတ်</button>
           </div>
           <div id="kpay-qr-view" style="text-align:center;">
-            <img src="images/qr-kpay.jpg" alt="KBZ Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+            <img src="/pages/images/qr-kpay.jpg" alt="KBZ Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
             <p style="font-size:0.84rem;color:var(--text-secondary);margin-top:12px;">KBZ Pay ဖြင့် စကင်ဖတ်ပါ</p>
           </div>
           <div id="kpay-phone-view" style="display:none;">
@@ -274,7 +274,7 @@
             <button type="button" class="btn btn-outline btn-sm" style="flex:1" id="wavepay-phone-btn" onclick="selectPayMode('phone', 'wavepay')">ဖုန်းနံပါတ်</button>
           </div>
           <div id="wavepay-qr-view" style="text-align:center;">
-            <img src="images/qr-wave.jpg" alt="Wave Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+            <img src="/pages/images/qr-wave.jpg" alt="Wave Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
             <p style="font-size:0.84rem;color:var(--text-secondary);margin-top:12px;">Wave Pay ဖြင့် စကင်ဖတ်ပါ</p>
           </div>
           <div id="wavepay-phone-view" style="display:none;">
@@ -291,7 +291,7 @@
             <button type="button" class="btn btn-outline btn-sm" style="flex:1" id="ayapay-phone-btn" onclick="selectPayMode('phone', 'ayapay')">ဖုန်းနံပါတ်</button>
           </div>
           <div id="ayapay-qr-view" style="text-align:center;">
-            <img src="images/qr-ayapay.jpg" alt="AYA Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+            <img src="/pages/images/qr-ayapay.jpg" alt="AYA Pay QR" style="width:180px;height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
             <p style="font-size:0.84rem;color:var(--text-secondary);margin-top:12px;">AYA Pay ဖြင့် စကင်ဖတ်ပါ</p>
           </div>
           <div id="ayapay-phone-view" style="display:none;">

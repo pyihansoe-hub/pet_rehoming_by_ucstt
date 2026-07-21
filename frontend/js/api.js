@@ -111,11 +111,20 @@ var Favorites = {
 };
 
 var Monitoring = {
+  myAdoptions:     function()             { return get('/api/monitoring/my-adoptions'); },
+  rehomed:         function()             { return get('/api/monitoring/rehomed'); },
+  getTimeline:     function(arId)         { return get('/api/monitoring/timeline/' + arId); },
+  
   submitFollowup:  function(arId, fd)      { return postForm('/api/monitoring/followups/' + arId, fd); },
   getFollowups:    function(arId)          { return get('/api/monitoring/followups/' + arId); },
+  
   addHealthLog:    function(petId, b)      { return post('/api/monitoring/pets/' + petId + '/health-logs', b); },
   getHealthLogs:   function(petId)         { return get('/api/monitoring/pets/' + petId + '/health-logs'); },
   deleteHealthLog: function(petId, logId)  { return del('/api/monitoring/pets/' + petId + '/health-logs/' + logId); },
+  
+  // Admin flag functions (optional, but good to have if you build an admin dashboard later)
+  listFlags:       function(resolved)      { return get('/api/monitoring/flags?resolved=' + resolved); },
+  resolveFlag:     function(flagId)        { return patch('/api/monitoring/flags/' + flagId + '/resolve'); }
 };
 
 var Blogs = {

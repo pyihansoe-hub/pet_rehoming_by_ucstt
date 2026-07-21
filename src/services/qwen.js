@@ -9,15 +9,15 @@
 const { Agent } = require('https');
 
 // OpenRouter's OpenAI-compatible endpoint
+//const API_URL = 'https://tight-dust-f6bf.leob14165.workers.dev';
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-
 // Keep-alive agent to reuse TLS connections (saves 100-300ms per request)
 const keepAliveAgent = new Agent({ keepAlive: true, maxSockets: 50 });
 
 // OpenRouter model IDs use the format "provider/model-name".
 // Examples: "qwen/qwen-2.5-72b-instruct", "meta-llama/llama-3.3-70b-instruct", "openai/gpt-4o-mini"
-const AI_MODEL = 'deepseek/deepseek-chat'; 
-
+//const AI_MODEL = 'deepseek/deepseek-chat'; 
+const AI_MODEL = 'google/gemma-4-26b-a4b-it:free';
 const SYSTEM_PROMPT = `You are PawBot, a warm and knowledgeable assistant for the Pet Rehoming & Monitoring System.
 You help users with:
 - Pet care advice for dogs, cats
