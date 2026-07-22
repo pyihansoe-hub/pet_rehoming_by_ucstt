@@ -51,9 +51,12 @@ var patchForm = function(path, fd)   { return request('PATCH', path, fd, true); 
 var Auth = {
   register:         function(b) { return post('/api/auth/register', b); },
   login:            function(b) { return post('/api/auth/login', b); },
-  forgotPassword:   function(b) { return post('/api/auth/forgot-password', b); },
-  verifyResetToken: function(t) { return get('/api/auth/verify-reset-token?token=' + t); },
-  resetPassword:    function(b) { return post('/api/auth/reset-password', b); },
+  verifyTOTP:       function(b) { return post('/api/auth/verify-totp', b); }, 
+  
+  // New 2FA-only password reset flow
+  checkReset2FA:    function(b) { return post('/api/auth/reset/check', b); },
+  verifyReset2FA:   function(b) { return post('/api/auth/reset/verify-2fa', b); },
+  completeReset2FA: function(b) { return post('/api/auth/reset/complete', b); }
 };
 
 var User = {

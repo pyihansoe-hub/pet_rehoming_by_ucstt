@@ -16,73 +16,156 @@
     })();
   </script>
   <style>
+    /* ===== Blog Hero ===== */
     .blog-hero {
       text-align: center;
-      padding: 40px 0 24px;
-      margin-bottom: 24px;
+      padding: 56px 20px 40px;
+      margin-bottom: 40px;
       border-bottom: 1px solid var(--border);
+      position: relative;
     }
-    .blog-hero h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
-    .blog-hero p { color: var(--text-secondary); max-width: 520px; margin: 8px auto 0; font-size: 0.95rem; line-height: 1.6; }
+    .blog-hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 60px; height: 3px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+    .blog-hero h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 14px;
+      line-height: 1.15;
+    }
+    .blog-hero p {
+      color: var(--text-secondary);
+      max-width: 580px;
+      margin: 0 auto;
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+    #write-btn { margin-top: 22px; }
 
+    /* ===== Filter Bar ===== */
+    .blog-toolbar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .blog-toolbar .form-control {
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 11px 16px;
+      font-size: 0.92rem;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .blog-toolbar .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light-bg, rgba(0,0,0,0.04));
+    }
+
+    /* ===== Category Chips ===== */
+    #cat-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.83rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .chip.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* ===== Blog Grid ===== */
     .blog-grid-layout {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 28px;
+      gap: 32px;
     }
     @media(max-width: 768px) {
-      .blog-grid-layout { grid-template-columns: 1fr; }
+      .blog-grid-layout { grid-template-columns: 1fr; gap: 24px; }
     }
 
     .blog-grid-layout .blog-card {
       display: flex;
       flex-direction: column;
       height: 100%;
-      border-radius: 12px;
+      border-radius: 14px;
       overflow: hidden;
       border: 1px solid var(--border);
       background: var(--bg-card);
-      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
     .blog-grid-layout .blog-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 24px var(--shadow-md);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px var(--shadow-md, rgba(0,0,0,0.08));
+      border-color: var(--accent);
     }
-    
-    .blog-grid-layout .blog-card-img {
-      height: 210px;
+
+    .blog-grid-layout .blog-card-img,
+    .blog-grid-layout .blog-card-placeholder {
+      height: 200px;
       width: 100%;
-      object-fit: cover;
       border-bottom: 1px solid var(--border);
+    }
+    .blog-grid-layout .blog-card-img {
+      object-fit: cover;
     }
     .blog-grid-layout .blog-card-placeholder {
-      height: 210px;
-      font-size: 2.5rem;
-      background: linear-gradient(135deg, var(--accent-light-bg), var(--bg-muted));
-      border-bottom: 1px solid var(--border);
+      font-size: 2.2rem;
+      background: linear-gradient(135deg, var(--accent-light-bg, #f5f5f5), var(--bg-muted, #eee));
       color: var(--accent);
       font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
+      letter-spacing: 0.02em;
     }
-    
+
     .blog-grid-layout .blog-card-body {
       flex: 1;
       display: flex;
       flex-direction: column;
-      padding: 18px 20px;
+      padding: 22px 24px 20px;
     }
     .blog-grid-layout .blog-card-cat {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
       color: var(--accent);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 8px;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
     }
     .blog-grid-layout .blog-card-title {
-      font-size: 1.15rem;
+      font-size: 1.2rem;
       font-weight: 700;
       color: var(--text-primary);
       margin-bottom: 10px;
@@ -90,35 +173,92 @@
       display: -webkit-box;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      transition: color 0.15s;
     }
+    .blog-card:hover .blog-card-title { color: var(--accent); }
     .blog-grid-layout .blog-card-summary {
       flex: 1;
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       color: var(--text-secondary);
       line-height: 1.65;
       display: -webkit-box;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
     .blog-grid-layout .blog-card-footer {
       font-size: 0.8rem;
-      color: var(--text-muted);
+      color: var(--text-muted, var(--text-secondary));
       display: flex;
       justify-content: space-between;
+      align-items: center;
       margin-top: auto;
       padding-top: 14px;
-      border-top: 1px solid var(--border-light);
+      border-top: 1px solid var(--border-light, var(--border));
     }
+    .blog-card-footer .read-more {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .blog-card-footer .read-more:hover { opacity: 0.75; }
 
-    .chip {
-      display: inline-flex; align-items: center;
-      padding: 6px 16px; background: var(--bg-card); border: 1.5px solid var(--border);
-      border-radius: 999px; font-size: 0.82rem; font-weight: 500;
-      color: var(--text-primary); cursor: pointer; transition: all 0.15s;
+    /* ===== Empty / Loading State ===== */
+    .empty-state {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 64px 20px;
+      color: var(--text-secondary);
     }
-    .chip:hover { border-color: var(--accent); color: var(--accent); }
-    .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .empty-state-icon {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted, var(--text-secondary));
+      margin-bottom: 14px;
+    }
+    .empty-state h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .empty-state p { font-size: 0.92rem; }
+
+    /* ===== Pagination ===== */
+    #pagination {
+      margin-top: 44px;
+      display: flex;
+      justify-content: center;
+    }
+    #pagination .page-btn {
+      min-width: 38px;
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    #pagination .page-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    #pagination .page-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    #pagination .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -133,30 +273,29 @@
     <div class="blog-hero">
       <h1>Pet ဆောင်းပါးများ</h1>
       <p>Pet များနှင့်သက်ဆိုင်သောဆောင်းပါးများ ကျွမ်းကျင်ပညာရှင်များရဲ့ပြောဆိုချက်များ အကြံညဏ်များ Pet မွေးမြူရေးအတွက် အထောက်အကူပေးနိုင်သော ဆောင်းပါးများ</p>
-      <a href="/pages/write-blog.html" class="btn btn-primary" id="write-btn" style="display:none; margin-top:16px">ဆောင်းပါးရေးရန်</a>
+      <a href="/pages/write-blog.html" class="btn btn-primary" id="write-btn" style="display:none;">ဆောင်းပါးရေးရန်</a>
     </div>
 
-    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <div class="blog-toolbar">
       <input type="text" id="search" class="form-control" style="flex:1;min-width:200px" placeholder="Search articles..." oninput="debounceSearch()">
       <select id="filter-cat" class="form-control" style="width:180px" onchange="applyFilters()">
         <option value="">All Categories</option>
       </select>
     </div>
 
-    <div id="cat-chips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px"></div>
+    <div id="cat-chips"></div>
 
     <div id="blog-grid" class="blog-grid-layout">
       <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
     </div>
 
-    <div id="pagination" style="margin-top: 32px;"></div>
+    <div id="pagination"></div>
 
   </div>
 </div>
 
 <footer class="footer" id="footer"></footer>
 
-<!-- Floating Chatbot Container -->
 <div id="chat-widget-container"></div>
 
 <script src="../js/api.js"></script>
@@ -220,15 +359,15 @@ async function loadBlogs() {
   try {
     var res = await Blogs.list(q);
     if (!res || !res.ok) {
-      grid.innerHTML = '<p style="color:var(--danger);grid-column:1/-1">Failed to load blogs.</p>'; return;
+      grid.innerHTML = '<p style="color:var(--danger);grid-column:1/-1;text-align:center;padding:40px">Failed to load blogs.</p>'; return;
     }
     var blogs = res.data.blogs || [];
     var total = res.data.total || 0;
     var countEl = document.querySelector('.blog-hero p');
-    if(countEl) countEl.textContent = 'Pet များနှင့်သက်ဆိုင်သောဆောင်းပါးများ ကျွမ်းကျင်ပညာရှင်များရဲ့ပြောဆိုချက်များ ဆောင်းပါး ' + total + (total !== 1 ? '' : '') + ' ရနိုင်သည်။';
+    if(countEl) countEl.textContent = 'Pet များနှင့်သက်ဆိုင်သောဆောင်းပါးများ ကျွမ်းကျင်ပညာရှင်များရဲ့ပြောဆိုချက်များ ဆောင်းပါး ' + total + ' ရနိုင်သည်။';
 
     if (!blogs.length) {
-      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">No articles</div><h3>No articles found</h3><p>Try a different search or category.</p></div>';
+      grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">No articles</div><h3>No articles found</h3><p>Try a different search or category.</p></div>';
       document.getElementById('pagination').innerHTML = '';
       return;
     }
@@ -238,12 +377,11 @@ async function loadBlogs() {
       currentPage = p; loadBlogs(); window.scrollTo(0, 0);
     });
   } catch(e) {
-    grid.innerHTML = '<p style="color:var(--danger);grid-column:1/-1">Something went wrong.</p>';
+    grid.innerHTML = '<p style="color:var(--danger);grid-column:1/-1;text-align:center;padding:40px">Something went wrong.</p>';
   }
 }
 </script>
 
-<!-- ===== Floating Chat Widget Script ===== -->
 <script>
 function loadChatWidget() {
   var container = document.getElementById('chat-widget-container');
@@ -259,22 +397,22 @@ function loadChatWidget() {
         '<div class="bot-avatar-sm">PB</div>' +
         '<div class="bot-info">' +
           '<div class="bot-name">PawBot</div>' +
-          '<div class="bot-status">အွန်လိုင်း — ပုံမှန်အားဖြင့် ချက်ချင်းပြန်ကြားပါသည်</div>' +
+          '<div class="bot-status">အွန်လိုင်း — ပုံမှန်အားဖြင့် ချက်ချင်းပြန်ကြားပါသည်</div>' +
         '</div>' +
         '<button class="close-btn" onclick="toggleChatWidget()">&times;</button>' +
       '</div>' +
       '<div class="chat-widget-messages" id="widget-messages">' +
         '<div class="chat-msg bot">' +
-          '<div class="chat-bubble"><p>မင်္ဂလာပါ။ ကျွန်ုပ်က <strong>PawBot</strong> ဖြစ်ပါတယ်။</p><p>အိမ်မွေးတိရစ္ဆာန် စောင့်ရှောက်နည်းများ၊ မွေးစားခြင်းဆိုင်ရာ အကြံဉာဏ်များနှင့် ပလက်ဖောင်းဆိုင်ရာ မေးခွန်းများအတွက် ကူညီနိုင်ပါတယ်။</p><p>ဘာကိုသိချင်ပါသလဲ။</p></div>' +
+          '<div class="chat-bubble"><p>မင်္ဂလာပါ။ ကျွန်ုပ်က <strong>PawBot</strong> ဖြစ်ပါတယ်။</p><p>အိမ်မွေးတိရစ္ဆာန် စောင့်ရှောက်နည်းများ၊ မွေးစားခြင်းဆိုင်ရာ အကြံဉာဏ်များနှင့် ပလက်ဖောင်းဆိုင်ရာ မေးခွန်းများအတွက် ကူညီနိုင်ပါတယ်။</p><p>ဘာကိုသိချင်ပါသလဲ။</p></div>' +
         '</div>' +
       '</div>' +
       '<div class="chat-widget-suggestions" id="widget-suggestions">' +
         '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">အိမ်မွေးတိရစ္ဆာန်တစ်ကောင်ကို ဘယ်လိုမွေးစားရမလဲ။</button>' +
-        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">ခွေးစောင့်ရှောက်နည်း အကြံပြုချက်များ</button>' +
+        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">ခွေးစောင့်ရှောက်နည်း အကြံပြုချက်များ</button>' +
         '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">ကြောင် အာဟာရ</button>' +
       '</div>' +
       '<div class="chat-widget-input">' +
-        '<textarea id="widget-input" placeholder="စာတိုရိုက်ထည့်ပါ..." rows="1" onkeydown="widgetHandleKey(event)" oninput="widgetAutoResize(this)"></textarea>' +
+        '<textarea id="widget-input" placeholder="စာတိုရိုက်ထည့်ပါ..." rows="1" onkeydown="widgetHandleKey(event)" oninput="widgetAutoResize(this)"></textarea>' +
         '<button class="send-btn" onclick="widgetSendMsg()" title="ပို့ရန်">' +
           '<svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>' +
         '</button>' +
@@ -447,7 +585,6 @@ function widgetEscape(text) {
   return html || '<p>' + safe + '</p>';
 }
 
-// Initialize widget
 loadChatWidget();
 </script>
 </body>

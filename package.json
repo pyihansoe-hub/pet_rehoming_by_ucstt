@@ -25,7 +25,9 @@
     "nodemailer": "^9.0.3",
     "ollama": "^0.6.3",
     "pg": "^8.11.5",
-    "resend": "^6.17.2"
+    "qrcode": "^1.5.4",
+    "resend": "^6.17.2",
+    "speakeasy": "^2.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"

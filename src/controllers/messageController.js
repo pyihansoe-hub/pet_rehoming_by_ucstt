@@ -133,6 +133,7 @@ const getUnreadCount = async (req, res) => {
     res.json({ unread: +rows[0].unread });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
+
 // POST /api/messages/conversations/:id/decline-and-refund
 const declineAndRefund = async (req, res) => {
   const { id: conversationId } = req.params;
@@ -240,46 +241,7 @@ const declineAndRefund = async (req, res) => {
           console.error('Notification failed (non-fatal):', notifErr.message);
         }
 
-        // 6. Send Custom Emails
-        try {
-          const { send } = require('../services/email');
-          const { rows: adopterRows } = await pool.query('SELECT name, email FROM users WHERE id=$1', [adopterId]);
-          const { rows: ownerRows } = await pool.query('SELECT name, email FROM users WHERE id=$1', [ownerDbId]);
-          
-          if (adopterRows.length > 0) {
-            if (isFreePet) {
-              // Free Pet Email
-              const subject = 'မွေးစားရန် တောင်းဆိုချက် ငြင်းပယ်ခြင်း';
-              const html = `
-                <p>မင်္ဂလာပါ ${adopterRows[0].name}၊</p>
-                <p>အနှုးအညွတ်တောင်းပန်ပါတယ်ဗျာ၊ "${petName}" ကို အခြားသူတစ်ဦးမှ မွေးစားရွေးချယ်ခံထားရပါသည်။ ထို့ကြောင့် သင်၏ တောင်းဆိုချက်ကို ငြင်းပယ်လိုက်ပါသည်။</p>
-              `;
-              await send(adopterRows[0].email, subject, html);
-            } else {
-              // Paid Pet Email
-              const subject = 'မွေးစားရန် တောင်းဆိုချက် ပယ်ဖျက်ခြင်း နှင့် ငွေပြန်အမ်းခြင်း';
-              const html = `
-                <p>မင်္ဂလာပါ ${adopterRows[0].name} သူ/မ၊</p>
-                <p>${ownerName} မှ "${petName}" အတွက် သင်၏ မွေးစားရန် တောင်းဆိုချက်ကို ပယ်ဖျက်ပြီး ငွေပြန်အမ်းခဲ့ပါသည်။</p>
-                <p style="white-space: pre-line; background:#f4f4f4; padding:15px; border-radius:5px;">${adopterNotifBody}</p>
-              `;
-              await send(adopterRows[0].email, subject, html);
-            }
-          }
-
-          if (ownerRows.length > 0 && ownerFeeMsg) {
-            const ownerSubject = 'ငွေပြန်အမ်းခြင်း အခကြေးငွေ ကျသင့်မှု';
-            let ownerHtml = `
-              <p>မင်္ဂလာပါ ${ownerRows[0].name} သူ/မ၊</p>
-              <p>"${petName}" အတွက် မွေးစားရန် တောင်းဆိုချက်ကို ပယ်ဖျက်ပြီး မွေးစားသူအား ငွေပြန်အမ်းလိုက်ပါသည်။</p>
-              <p>ငွေပြန်အမ်းခြင်းဆိုင်ရာ အခကြေးငွေများကို သင်ဆောင်ရပါမည်။</p>
-              <p style="white-space: pre-line; background:#f4f4f4; padding:15px; border-radius:5px;">${ownerFeeMsg.replace(/•/g, '<br>')}</p>
-            `;
-            await send(ownerRows[0].email, ownerSubject, ownerHtml);
-          }
-        } catch (emailErr) {
-          console.error('Refund email failed (non-fatal):', emailErr.message);
-        }
+        // Note: Email sending logic has been removed to prevent Resend API domain validation errors.
       }
     }
 
@@ -297,6 +259,7 @@ const declineAndRefund = async (req, res) => {
     client.release();
   }
 };
+
 module.exports = { 
   getOrCreateConversation, 
   listConversations, 

@@ -21,7 +21,8 @@
         <p style="color:#6b7a8d;font-size:0.9rem">အိမ်မွေးတိရစ္ဆာန်များ မွေးစားရန်ပါဝင်ပါ</p>
       </div>
 
-      <div class="card">
+      <!-- REGISTRATION FORM CARD -->
+      <div class="card" id="register-card">
         <div id="alert-area"></div>
 
         <div class="form-group">
@@ -32,7 +33,6 @@
         <div class="form-group">
           <label for="email">အီးမေးလ် <span style="color:#e76f51">*</span></label>
           <input type="email" id="email" class="form-control" placeholder="you@example.com">
-          <small style="color:#6b7a8d">ဤအီးမေးလ်သို့ အတည်ပြုလင့်ခ် ပေးပို့ပါမည်။</small>
         </div>
 
         <div class="form-row">
@@ -110,12 +110,31 @@
           </div>
         </div>
 
-        <button type="button" class="btn btn-primary btn-full" id="register-btn" onclick="doRegister()">အကောင့် ဖွင့်ရန်</button>
+        <button type="button" class="btn btn-primary btn-full" id="register-btn" onclick="doRegister(event)">အကောင့် ဖွင့်ရန်</button>
 
         <hr class="divider">
         <p style="text-align:center;font-size:0.86rem;color:#6b7a8d">
           အကောင့်ရှိပြီးသားလား။ <a href="/pages/login.html">အကောင့်ဝင်ရန်</a>
         </p>
+      </div>
+
+      <!-- NEW: TOTP QR CODE CARD (Hidden initially) -->
+      <div class="card" id="totp-card" style="display:none; text-align:center;">
+        <h2 style="font-size:1.2rem; margin-bottom:10px;">Authenticator ဖြင့် အတည်ပြုပါ</h2>
+        <p style="color:#6b7a8d; font-size:0.86rem; margin-bottom:20px;">
+          Google Authenticator သို့မဟုတ် အလားတူ App ကို ဖွင့်ပြီး QR Code ကို စကင်(န်) ဖတ်ပါ။ ထို့နောက် ပေါ်လာသော 6 လုံး ကုဒ်ကို ထည့်ပါ။
+        </p>
+        
+        <img id="qr-image" src="" alt="QR Code" style="margin: 0 auto 20px; max-width: 200px; border: 1px solid #eee; padding: 10px; border-radius: 8px;">
+        
+        <div class="form-group" style="text-align:left;">
+          <label for="totp-code">6 လုံး ကုဒ် <span style="color:#e76f51">*</span></label>
+          <input type="text" id="totp-code" class="form-control" placeholder="123456" maxlength="6" inputmode="numeric" style="text-align:center; letter-spacing: 4px; font-size: 1.2rem;">
+        </div>
+        
+        <div id="totp-alert"></div>
+        
+        <button type="button" class="btn btn-primary btn-full" id="verify-btn" onclick="verifyTOTP()">အတည်ပြုရန်</button>
       </div>
 
     </div>
@@ -153,6 +172,9 @@ function detectBrand(num) {
   if (/^35/.test(num)) return 'jcb';
   return 'unknown';
 }
+
+// Store email globally to use in TOTP verification step
+var registeredEmail = '';
 
 async function doRegister(event) {
   if (event) event.preventDefault(); 
@@ -241,14 +263,16 @@ async function doRegister(event) {
 
     var res = await Auth.register(body);
 
-    if (res && res.ok && res.data && res.data.token) {
-      saveAuth(res.data.token, res.data.user);
-      showToast('ကြိုဆိုပါသည်၊ ' + res.data.user.name + '။', 'success');
-      setTimeout(function() { 
-        window.location.href = '/index.html'; 
-      }, 600);
+    if (res && res.ok && res.data && res.data.requireTwoFactor) {
+      // Hide Registration form, show TOTP form
+      document.getElementById('register-card').style.display = 'none';
+      document.getElementById('totp-card').style.display = 'block';
+      
+      // Set QR code image
+      document.getElementById('qr-image').src = res.data.qrCode;
+      registeredEmail = res.data.email; // Save email for verification API call
     } else {
-      var errMsg = (res && res.data && res.data.message) ? res.data.message : 'အကောင့်ဖွင့်၍မရပါ။';
+      var errMsg = (res && res.data && res.data.message) ? res.data.message : 'အကောင့်ဖွင့်၍မရပါ။';
       alertArea.innerHTML = '<div class="alert alert-danger">' + errMsg + '</div>';
     }
   } catch(e) {
@@ -257,6 +281,51 @@ async function doRegister(event) {
 
   btn.disabled = false;
   btn.textContent = 'အကောင့် ဖွင့်ရန်';
+}
+
+// NEW: Function to verify TOTP code
+async function verifyTOTP() {
+  var token = document.getElementById('totp-code').value.trim();
+  var alertArea = document.getElementById('totp-alert');
+  var btn = document.getElementById('verify-btn');
+
+  if (!token || token.length !== 6) {
+    alertArea.innerHTML = '<div class="alert alert-danger">ကျေးဇူးပြု၍ ကုဒ် ၆ လုံး ထည့်ပါ။</div>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'အတည်ပြုနေသည်...';
+
+  try {
+    // Ensure this matches how your api.js sends requests. Assuming it uses fetch internally.
+    // Example fallback if Auth.verifyTOTP is not defined in api.js:
+    var res = await fetch('/api/auth/verify-totp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: registeredEmail, token: token })
+    }).then(r => r.json());
+
+    // If your api.js has an Auth.verifyTOTP method, you can replace the above with:
+    // var res = await Auth.verifyTOTP({ email: registeredEmail, token: token });
+    // Adjust the below condition based on your api.js wrapper structure.
+
+    if (res && res.token) {
+      saveAuth(res.token, res.user);
+      showToast('ကြိုဆိုပါသည်၊ ' + res.user.name + '။', 'success');
+      setTimeout(function() { 
+        window.location.href = '/index.html'; 
+      }, 600);
+    } else {
+      var errMsg = (res && res.message) ? res.message : 'ကုဒ် မမှန်ကန်ပါ။';
+      alertArea.innerHTML = '<div class="alert alert-danger">' + errMsg + '</div>';
+    }
+  } catch(e) {
+    alertArea.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။ ထပ်မံကြိုးစားပါ။</div>';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'အတည်ပြုရန်';
 }
 </script>
 </body>

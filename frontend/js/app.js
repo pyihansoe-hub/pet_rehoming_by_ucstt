@@ -269,7 +269,7 @@ function initModals() {
           '<a href="' + p('messages.html') + '">မက်ဆေ့ခ်ျများ</a>' +
           (isLoggedIn ? 
             '<div class="nav-dropdown">' +
-              '<a href="javascript:void(0)" class="dropbtn">ကိုယ်ပိုင် စာမျက်နှာ ▾</a>' +
+              '<a href="javascript:void(0)" class="dropbtn">နောက်ထပ်▾</a>' +
               '<div class="dropdown-content">' +
                 '<a href="' + p('my-pets.html') + '">ကျွန်ုပ်တင်ထားသော အိမ်မွေးတိရစ္ဆာန်များ</a>' +
                 '<a href="' + p('rehomed-pets.html') + '">မွေးစားလိုက်သော အိမ်မွေးတိရစ္ဆာန်များ</a>' +
