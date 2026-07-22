@@ -230,8 +230,7 @@ function initModals() {
       if (e.target === this) this.classList.remove('open');
     });
   });
-}
-function renderNavbar() {
+}function renderNavbar() {
   var user = getUser();
   var token = getToken();
   var isLoggedIn = !!token && !!user;
@@ -275,6 +274,7 @@ function renderNavbar() {
                 '<a href="' + p('my-pets.html') + '">ကျွန်ုပ်တင်ထားသော အိမ်မွေးတိရစ္ဆာန်များ</a>' +
                 '<a href="' + p('rehomed-pets.html') + '">မွေးစားလိုက်သော အိမ်မွေးတိရစ္ဆာန်များ</a>' +
                 '<a href="' + p('adoption-requests.html') + '">အခြေအနေနှင့် တောင်းဆိုချက်</a>' +
+                '<a href="' + p('favorites.html') + '">အကြိုက်ဆုံးများ</a>' +
                 '<a href="' + p('about-us.html') + '">ကျွန်ုပ်တို့အကြောင်း</a>' +
               '</div>' +
             '</div>' 
@@ -320,6 +320,7 @@ function renderNavbar() {
     '<a href="' + p('messages.html') + '">မက်ဆေ့ခ်ျများ</a>' +
     '<a href="' + p('my-pets.html') + '">ကျွန်ုပ်တင်ထားသော အိမ်မွေးတိရစ္ဆာန်များ</a>' +
     (isLoggedIn ? '<a href="' + p('adoption-requests.html') + '">အခြေအနေနှင့် တောင်းဆိုချက်</a>' : '') +
+    (isLoggedIn ? '<a href="' + p('favorites.html') + '">အကြိုက်ဆုံးများ</a>' : '') +
     (isLoggedIn ? '<a href="' + p('profile.html') + '">ပရိုဖိုင်</a>' : '') +
     (isAdmin    ? '<a href="' + p('admin.html') + '">အက်ဒမင်</a>' : '') +
     (isLoggedIn ? '<a href="#" onclick="logout()">အကောင့်ထွက်ရန်</a>' : '<a href="' + p('login.html') + '">အကောင့်ဝင်ရန်</a>');

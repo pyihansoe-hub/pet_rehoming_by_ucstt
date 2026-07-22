@@ -3,8 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ပရိုဖိုင် — </title>
+  <title>ပရိုဖိုင် — PetNet</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme');
+      if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+      else if (t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
   <style>
   .profile-avatar-wrap { text-align:center; margin-bottom:20px; }
 .profile-avatar { width:90px; height:90px; border-radius:50%; object-fit:cover; border:3px solid var(--accent-light-bg); }
@@ -41,6 +51,7 @@
         <a href="/pages/my-pets.html" class="btn btn-outline btn-sm">ပို့စ်များ</a>
         <a href="/pages/adoption-requests.html" class="btn btn-outline btn-sm">တောင်းဆိုချက်များ</a>
         <a href="/pages/adoption-requests.html?tab=received" class="btn btn-outline btn-sm">လက်ခံရရှိမှုများ</a>
+        <a href="/pages/favorites.html" class="btn btn-outline btn-sm">သိမ်းဆည်းထားသော အိမ်မွေးတိရစ္ဆာန်များ</a>
         <a href="/pages/notifications.html" class="btn btn-outline btn-sm">အကြောင်းကြားချက်များ</a>
         <a href="/pages/messages.html" class="btn btn-outline btn-sm">မက်ဆေ့ခ်ျများ</a>
       </div>
@@ -49,7 +60,6 @@
         <div class="tabs">
           <button class="tab-btn active" data-tab="tab-info">ပရိုဖိုင် အချက်အလက်</button>
           <button class="tab-btn" data-tab="tab-password">စကားဝှက် ပြောင်းရန်</button>
-          <button class="tab-btn" data-tab="tab-favorites">သိမ်းဆည်းထားသော အိမ်မွေးတိရစ္ဆာန်များ</button>
         </div>
 
         <div class="tab-panel active" id="tab-info">
@@ -111,12 +121,6 @@
           </div>
         </div>
 
-        <div class="tab-panel" id="tab-favorites">
-          <div id="favorites-list">
-            <div class="loading-wrap"><div class="spinner"></div></div>
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
@@ -125,7 +129,7 @@
 <footer class="footer" id="footer"></footer>
 
 <script src="../js/api.js"></script>
-<script src="/../js/app.js"></script>
+<script src="../js/app.js"></script>
 <script>
 var currentAvatarUrl = null;
 var newAvatarFile    = null;
@@ -154,10 +158,6 @@ document.addEventListener('DOMContentLoaded', async function() {
   } catch(e) { showToast('ပရိုဖိုင် ဖွင့်၍မရပါ။', 'error'); }
 
   loadStats();
-
-  document.querySelector('[data-tab="tab-favorites"]').addEventListener('click', function() {
-    loadFavorites();
-  });
 });
 
 function renderAvatar(url, name) {
@@ -269,55 +269,6 @@ async function changePassword() {
     alertEl.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div>';
   }
   btn.disabled = false; btn.textContent = 'စကားဝှက် ပြောင်းလဲရန်';
-}
-
-async function loadFavorites() {
-  var el = document.getElementById('favorites-list');
-  if (el.querySelector('.spinner')) {
-  } else return;
-
-  try {
-    var res = await Favorites.list();
-    if (!res || !res.ok) { el.innerHTML = '<div class="alert alert-danger">ဖွင့်၍မရပါ။</div>'; return; }
-    var favs = res.data.favorites || [];
-    if (!favs.length) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon"></div><h3>သိမ်းဆည်းထားသော အိမ်မွေးတိရစ္ဆာန် မရှိပါ</h3><p>အိမ်မွေးတိရစ္ဆာန်များ ရှာဖွေပြီး ကြိုက်နှစ်သက်ရာများကို သိမ်းဆည်းပါ။</p><a href="/pages/pets.html" class="btn btn-primary">အိမ်မွေးတိရစ္ဆာန်များ ရှာဖွေရန်</a></div>';
-      return;
-    }
-    el.innerHTML = '<div class="grid-3">' + favs.map(function(pet) {
-      var petId = petIdOf(pet);
-      var img = pet.primary_image || null;
-      var imgHtml = img
-        ? '<img class="pet-card-img" src="' + imgUrl(img) + '" alt="' + pet.name + '">'
-        : '<div class="pet-card-placeholder"></div>';
-      return '<div class="pet-card" style="cursor:pointer" onclick="window.location.href=\'' + petDetailHref(petId) + '\'">' +
-        imgHtml +
-        '<div class="pet-card-body">' +
-          '<div class="pet-card-title">' + pet.name + '</div>' +
-          '<div class="pet-card-meta">' + (pet.pet_type_name||'') + (pet.city ? ' · ' + pet.city : '') + '</div>' +
-          '<div class="pet-card-footer">' +
-            (pet.fee_type === 'free' ? '<span class="pill pill-free">အခမဲ့</span>' : '<span class="pill pill-paid">' + fmtMoney(pet.adoption_fee) + '</span>') +
-            '<button onclick="event.stopPropagation();removeFav(' + petId + ',this)" style="background:none;border:none;color:#e76f51;cursor:pointer;font-size:0.8rem">ဖယ်ရှားရန်</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    }).join('') + '</div>';
-  } catch(e) {
-    el.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div>';
-  }
-}
-
-async function removeFav(petId, btn) {
-  try {
-    var res = await Favorites.remove(petId);
-    if (res && res.ok) {
-      showToast('သိမ်းဆည်းထားရာမှ ဖယ်ရှားလိုက်ပါပြီ။', 'success');
-      document.getElementById('favorites-list').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
-      loadFavorites();
-      var statEl = document.getElementById('stat-favorites');
-      statEl.textContent = Math.max(0, parseInt(statEl.textContent) - 1);
-    }
-  } catch(e) { showToast('မအောင်မြင်ပါ။', 'error'); }
 }
 </script>
 </body>
