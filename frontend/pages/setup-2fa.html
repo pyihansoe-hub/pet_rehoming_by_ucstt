@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enable 2FA — Pet Rehoming</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+<div id="mobile-menu" class="mobile-menu"></div>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrap">
+  <div class="container">
+    <div style="max-width:420px;margin:0 auto">
+
+      <div style="text-align:center;margin-bottom:28px">
+        <div style="font-size:2.5rem;margin-bottom:8px"></div>
+        <h1 style="font-size:1.5rem;margin-bottom:6px">Enable 2FA</h1>
+        <p style="color:#6b7a8d;font-size:0.9rem">Scan the QR code with Google Authenticator</p>
+      </div>
+
+      <div class="card">
+        <div id="alert-area"></div>
+
+        <div id="setup-area">
+          <div style="text-align:center; margin-bottom:16px;">
+            <img id="qr-image" src="" alt="QR Code" style="display:none; max-width:200px; border-radius:8px; border:1px solid #eee; padding:8px; background:#fff;">
+            <div id="loading-text">Generating QR code...</div>
+          </div>
+          
+          <div class="form-group" style="margin-top:16px;">
+            <label for="totp-code">Enter the 6-digit code from your app</label>
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+                   id="totp-code" class="form-control" placeholder="123456"
+                   oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+          </div>
+          <button class="btn btn-primary btn-full" id="verify-btn" onclick="verifySetup()">Enable 2FA</button>
+        </div>
+
+        <div id="success-area" class="hidden">
+          <div class="alert alert-success">
+            2FA has been enabled on your account!
+          </div>
+          <a href="/pages/profile.html" class="btn btn-primary btn-full" style="margin-top:8px">Back to Profile</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/app.js"></script>
+<script>
+function showAlert(msg, type) {
+  type = type || 'danger';
+  document.getElementById('alert-area').innerHTML = '<div class="alert alert-' + type + '">' + msg + '</div>';
+}
+function clearAlert() {
+  document.getElementById('alert-area').innerHTML = '';
+}
+
+window.onload = async function() {
+  if (!requireAuth()) return;
+  
+  try {
+    var res = await Auth.setup2FA();
+    if (res && res.ok) {
+      document.getElementById('qr-image').src = res.data.qrCode;
+      document.getElementById('qr-image').style.display = 'inline-block';
+      document.getElementById('loading-text').style.display = 'none';
+    } else {
+      var msg = (res && res.data && res.data.message) ? res.data.message : 'Failed to generate QR code.';
+      if (msg.includes('already enabled')) {
+        document.getElementById('setup-area').innerHTML = '<div class="alert alert-success">2FA is already enabled on your account.</div>';
+      } else {
+        showAlert(msg);
+      }
+    }
+  } catch (e) {
+    showAlert('Error connecting to server.');
+  }
+};
+
+async function verifySetup() {
+  var code = document.getElementById('totp-code').value.trim();
+  var btn = document.getElementById('verify-btn');
+
+  clearAlert();
+  if (!/^\d{6}$/.test(code)) {
+    showAlert('Please enter the 6-digit code.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+  try {
+    var res = await Auth.verify2FASetup({ token: code });
+    
+    if (res && res.ok) {
+      document.getElementById('setup-area').classList.add('hidden');
+      document.getElementById('success-area').classList.remove('hidden');
+      
+      var user = getUser();
+      if (user) {
+        user.two_factor_enabled = true;
+        setUser(user);
+      }
+    } else {
+      var msg = (res && res.data && res.data.message) ? res.data.message : 'Invalid code.';
+      showAlert(msg);
+    }
+  } catch (e) {
+    showAlert('Something went wrong.');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Enable 2FA';
+}
+</script>
+</body>
+</html>

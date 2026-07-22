@@ -79,7 +79,7 @@ const register = async (req, res) => {
   }
 };
 
-// NEW: POST /api/auth/verify-totp
+// POST /api/auth/verify-totp
 const verifyTOTP = async (req, res) => {
   const { email, token } = req.body;
   
@@ -97,7 +97,7 @@ const verifyTOTP = async (req, res) => {
       secret: user.two_factor_secret,
       encoding: 'base32',
       token: token,
-      window: 2 // Allows 1 step before/after current time (30 seconds variance)
+      window: 4 // Allows 1 step before/after current time (30 seconds variance)
     });
 
     if (!verified) {
@@ -122,7 +122,7 @@ const verifyTOTP = async (req, res) => {
   }
 };
 
-// POST /api/auth/login (Modified to check for 2FA)
+// POST /api/auth/login
 const login = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ message: 'Email and password are required.' });
@@ -153,4 +153,88 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, verifyTOTP, login };
+// GET /api/auth/2fa/setup
+const setup2FA = async (req, res) => {
+  try {
+    // req.user is injected by your JWT auth middleware
+    const { rows } = await pool.query('SELECT email, two_factor_enabled FROM users WHERE id=$1', [req.user.id]);
+    if (!rows.length) return res.status(404).json({ message: 'User not found.' });
+
+    const user = rows[0];
+
+    // If already enabled, stop them from generating a new code
+    if (user.two_factor_enabled) {
+      return res.status(400).json({ message: '2FA is already enabled on this account.' });
+    }
+
+    // Generate a new secret
+    const secret = speakeasy.generateSecret({
+      length: 20,
+      name: `PetAdoption (${user.email})`,
+    });
+
+    // Save the secret to DB (but keep two_factor_enabled = FALSE until they verify it)
+    await pool.query('UPDATE users SET two_factor_secret = $1 WHERE id = $2', [secret.base32, req.user.id]);
+
+    // Generate QR code
+    const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url);
+
+    res.json({ 
+      message: 'Scan the QR code with Google Authenticator',
+      qrCode: qrCodeUrl 
+    });
+  } catch (err) {
+    console.error('❌ SETUP 2FA ERROR:', err);
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
+};
+
+// POST /api/auth/2fa/verify
+const verify2FASetup = async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) return res.status(400).json({ message: 'Token is required.' });
+
+  try {
+    const { rows } = await pool.query('SELECT two_factor_secret, two_factor_enabled FROM users WHERE id=$1', [req.user.id]);
+    if (!rows.length) return res.status(404).json({ message: 'User not found.' });
+
+    const user = rows[0];
+
+    if (user.two_factor_enabled) {
+      return res.status(400).json({ message: '2FA is already enabled.' });
+    }
+
+    if (!user.two_factor_secret) {
+      return res.status(400).json({ message: 'Please generate a QR code first.' });
+    }
+
+    // Verify the token provided by the user's Google Authenticator
+    const verified = speakeasy.totp.verify({
+      secret: user.two_factor_secret,
+      encoding: 'base32',
+      token: token,
+      window: 2
+    });
+
+    if (!verified) {
+      return res.status(401).json({ message: 'Invalid authenticator code.' });
+    }
+
+    // Enable 2FA for future logins
+    await pool.query('UPDATE users SET two_factor_enabled = TRUE WHERE id = $1', [req.user.id]);
+
+    res.json({ message: '2FA enabled successfully!' });
+  } catch (err) {
+    console.error('❌ VERIFY 2FA SETUP ERROR:', err);
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
+};
+
+module.exports = { 
+  register, 
+  verifyTOTP, 
+  login, 
+  setup2FA,       
+  verify2FASetup   
+};

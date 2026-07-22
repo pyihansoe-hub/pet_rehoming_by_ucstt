@@ -53,10 +53,14 @@ var Auth = {
   login:            function(b) { return post('/api/auth/login', b); },
   verifyTOTP:       function(b) { return post('/api/auth/verify-totp', b); }, 
   
-  // New 2FA-only password reset flow
+  // Password Reset flow
   checkReset2FA:    function(b) { return post('/api/auth/reset/check', b); },
   verifyReset2FA:   function(b) { return post('/api/auth/reset/verify-2fa', b); },
-  completeReset2FA: function(b) { return post('/api/auth/reset/complete', b); }
+  completeReset2FA: function(b) { return post('/api/auth/reset/complete', b); },
+
+  // 2FA Setup flow (MUST BE ADDED)
+  setup2FA:         function() { return get('/api/auth/2fa/setup'); },
+  verify2FASetup:   function(b) { return post('/api/auth/2fa/verify', b); }
 };
 
 var User = {

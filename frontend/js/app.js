@@ -1,4 +1,3 @@
-// ===== THEME =====
 function initTheme() {
   var t = localStorage.getItem('theme');
   if (t === 'dark') {
@@ -26,7 +25,6 @@ function p(pageName) {
   return inPages ? pageName : 'pages/' + pageName;
 }
 
-// Use this for loading images/assets from the pages/images folder
 function imgAsset(filename) {
   var inPages = window.location.pathname.indexOf('/pages/') !== -1;
   return (inPages ? '' : 'pages/') + 'images/' + filename;
@@ -77,11 +75,10 @@ function showToast(msg, type) {
 }
 function imgUrl(path) {
   if (!path) return '';
-  // If it's an absolute URL (starts with http), extract just the pathname
   if (path.startsWith('http://') || path.startsWith('https://')) {
     try {
       var urlObj = new URL(path);
-      path = urlObj.pathname; // e.g., turns http://localhost:3000/uploads/img.jpg into /uploads/img.jpg
+      path = urlObj.pathname;
     } catch(e) {}
   }
 
@@ -230,7 +227,9 @@ function initModals() {
       if (e.target === this) this.classList.remove('open');
     });
   });
-}function renderNavbar() {
+}
+
+function renderNavbar() {
   var user = getUser();
   var token = getToken();
   var isLoggedIn = !!token && !!user;
@@ -238,7 +237,6 @@ function initModals() {
   var nav = document.getElementById('navbar');
   if (!nav) return;
 
-  // Determine correct relative path for images
   var imgBase = window.location.pathname.indexOf('/pages/') !== -1 ? '../' : '';
 
   var bellSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
@@ -276,6 +274,7 @@ function initModals() {
                 '<a href="' + p('adoption-requests.html') + '">အခြေအနေနှင့် တောင်းဆိုချက်</a>' +
                 '<a href="' + p('favorites.html') + '">အကြိုက်ဆုံးများ</a>' +
                 '<a href="' + p('about-us.html') + '">ကျွန်ုပ်တို့အကြောင်း</a>' +
+                (user && !user.two_factor_enabled ? '<a href="' + p('setup-2fa.html') + '">Enable 2FA</a>' : '') +
               '</div>' +
             '</div>' 
           : '') +
@@ -311,7 +310,6 @@ function initModals() {
     document.body.appendChild(mm);
   }
   
-  // Also updated the mobile menu text to match Myanmar language
   mm.innerHTML =
     '<a href="' + p() + '">ပင်မစာမျက်နှာ</a>' +
     '<a href="' + p('pets.html') + '">အိမ်မွေးတိရစ္ဆာန်များ</a>' +
@@ -321,6 +319,7 @@ function initModals() {
     '<a href="' + p('my-pets.html') + '">ကျွန်ုပ်တင်ထားသော အိမ်မွေးတိရစ္ဆာန်များ</a>' +
     (isLoggedIn ? '<a href="' + p('adoption-requests.html') + '">အခြေအနေနှင့် တောင်းဆိုချက်</a>' : '') +
     (isLoggedIn ? '<a href="' + p('favorites.html') + '">အကြိုက်ဆုံးများ</a>' : '') +
+    (isLoggedIn && user && !user.two_factor_enabled ? '<a href="' + p('setup-2fa.html') + '">Enable 2FA</a>' : '') +
     (isLoggedIn ? '<a href="' + p('profile.html') + '">ပရိုဖိုင်</a>' : '') +
     (isAdmin    ? '<a href="' + p('admin.html') + '">အက်ဒမင်</a>' : '') +
     (isLoggedIn ? '<a href="#" onclick="logout()">အကောင့်ထွက်ရန်</a>' : '<a href="' + p('login.html') + '">အကောင့်ဝင်ရန်</a>');
