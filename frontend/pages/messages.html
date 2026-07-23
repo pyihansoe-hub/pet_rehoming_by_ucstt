@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>မက်ဆေ့ခ်ျများ</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="/css/style.css">
   <style>
     .conv-item-row { display:flex; align-items:flex-start; gap:6px; }
@@ -157,9 +158,14 @@
 var activeConvId   = null;
 var activeConvData = null;
 var currentUserId  = null;
-var activeOtherUserId = null; // Holds the ID of the user we are chatting with
+var activeOtherUserId = null; 
 var pollTimer      = null;
 
+
+const SUPABASE_URL = 'https://mgqqonycityxfiqsbqvo.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_vSFOtlberzYfJ1alNUDw8Q_zs89KcAi';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var activeRealtimeChannel = null;
 document.addEventListener('DOMContentLoaded', async function() {
   if (!requireAuth()) return;
   var u = getUser();
@@ -216,11 +222,17 @@ async function loadConversations() {
     el.innerHTML = '<div style="padding:16px;font-size:0.84rem;color:#e76f51">တစ်ခုခု မှားယွင်းသွားသည်။</div>';
   }
 }
-
 async function openConversation(convId, el) {
   activeConvId = convId;
-  activeOtherUserId = null; // Reset when opening a new chat
+  activeOtherUserId = null;
+  
+  // Clear old polling timer if it exists
   if (pollTimer) clearInterval(pollTimer);
+  
+  // Unsubscribe from previous Realtime channel
+  if (activeRealtimeChannel) {
+    supabaseClient.removeChannel(activeRealtimeChannel);
+  }
 
   document.querySelectorAll('.conv-item').forEach(function(c){ c.classList.remove('active'); });
   if (el) el.classList.add('active');
@@ -230,11 +242,18 @@ async function openConversation(convId, el) {
 
   loadMessages(convId);
 
-  pollTimer = setInterval(function(){
-    if (activeConvId === convId) silentRefresh(convId);
-  }, 5000);
+  // Set up Supabase Realtime listener for this specific conversation
+  activeRealtimeChannel = supabaseClient
+    .channel('public:messages:conversation_id=eq.' + convId)
+    .on('postgres_changes', 
+      { event: 'INSERT', schema: 'public', table: 'messages', filter: 'conversation_id=eq.' + convId }, 
+      function(payload) {
+        // When a new message is inserted into the DB, instantly refresh the chat
+        if (activeConvId === convId) silentRefresh(convId);
+      }
+    )
+    .subscribe();
 }
-
 async function loadMessages(convId) {
   var area = document.getElementById('msg-messages-area');
   area.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
