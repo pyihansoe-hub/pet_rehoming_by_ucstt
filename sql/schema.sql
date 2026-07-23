@@ -467,6 +467,23 @@ ALTER TABLE pet_status_history
   ALTER COLUMN old_status TYPE adoption_status USING old_status::adoption_status,
   ALTER COLUMN new_status TYPE adoption_status USING new_status::adoption_status;
 
+ALTER TABLE users ADD COLUMN two_factor_secret VARCHAR(255);
+ALTER TABLE users ADD COLUMN two_factor_enabled BOOLEAN DEFAULT FALSE;
+
+-- Add reported_user_id column to reports table
+ALTER TABLE reports 
+  ADD COLUMN IF NOT EXISTS reported_user_id INT REFERENCES users(id) ON DELETE SET NULL;
+
+-- Drop the old constraint that only allowed pets or blogs
+ALTER TABLE reports DROP CONSTRAINT IF EXISTS report_target;
+
+-- Add a new constraint that allows reporting a pet, a blog, OR a user
+ALTER TABLE reports 
+  ADD CONSTRAINT report_target_chk CHECK (
+    (pet_id IS NOT NULL AND blog_id IS NULL AND reported_user_id IS NULL) OR
+    (blog_id IS NOT NULL AND pet_id IS NULL AND reported_user_id IS NULL) OR
+    (reported_user_id IS NOT NULL AND pet_id IS NULL AND blog_id IS NULL)
+  );
 -- ============================================================
 -- END OF SCHEMA
 -- ============================================================

@@ -12,17 +12,47 @@
     .conv-item:hover .conv-del-btn { opacity:1; }
     .conv-del-btn:hover { color:#e76f51; background:rgba(231,111,81,0.1); }
 
-    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; display:flex; align-items:center; justify-content:center; animation:fadeIn 0.15s ease; }
-    .modal-box { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:28px; max-width:420px; width:90%; text-align:center; animation:scaleIn 0.15s ease; }
-    .modal-box h3 { margin:0 0 8px; font-size:1.05rem; color:var(--text-primary); }
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center; animation:fadeIn 0.15s ease; }
+    .modal-box { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:28px; max-width:420px; width:90%; text-align:center; animation:scaleIn 0.15s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .modal-box h3 { margin:0 0 8px; font-size:1.1rem; color:var(--text-primary); }
     .modal-box p { margin:0 0 22px; font-size:0.86rem; color:var(--text-muted); line-height:1.5; }
-    .modal-actions { display:flex; gap:10px; justify-content:center; }
-    .modal-actions button { padding:8px 22px; border-radius:8px; border:none; font-size:0.86rem; font-weight:600; cursor:pointer; transition:background 0.15s; }
+    .modal-actions { display:flex; gap:10px; justify-content:center; margin-top: 20px; }
+    .modal-actions button { padding:10px 24px; border-radius:8px; border:none; font-size:0.88rem; font-weight:600; cursor:pointer; transition:background 0.15s; }
     .btn-modal-cancel { background:var(--bg-muted); color:var(--text-primary); }
     .btn-modal-cancel:hover { background:var(--border); }
     .btn-modal-danger { background:#e76f51; color:#fff; }
     .btn-modal-danger:hover { background:#d35d40; }
     .btn-modal-danger:disabled { opacity:0.5; cursor:not-allowed; }
+
+    /* Standard Report Button Style */
+    .report-header-btn {
+      display:flex; align-items:center; gap:6px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .report-header-btn:hover {
+      background: #fff0f0;
+      border-color: #e76f51;
+      color: #e76f51;
+    }
+
+    .form-group { text-align: left; margin-bottom: 16px; }
+    .form-label { display:block; font-size:0.84rem; font-weight:600; margin-bottom:8px; color:var(--text-primary); }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+      border-radius: 8px; background: var(--bg-input); color: var(--text-primary);
+      font-size: 0.88rem; font-family: Arial, sans-serif; outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+    .form-textarea { resize: vertical; min-height: 80px; }
 
     @keyframes fadeIn { from{opacity:0} to{opacity:1} }
     @keyframes scaleIn { from{transform:scale(0.95);opacity:0} to{transform:scale(1);opacity:1} }
@@ -88,12 +118,15 @@
       </div>
 
       <div class="msg-main">
-        <div id="msg-header-area" class="msg-header" style="display:none">
-          <div style="width:36px;height:36px;border-radius:50%;background:#e6f5f3;display:flex;align-items:center;justify-content:center;font-size:1.1rem"></div>
-          <div>
+                <div id="msg-header-area" class="msg-header" style="display:none">
+          <div id="msg-header-avatar" style="width:36px;height:36px;border-radius:50%;background:#e6f5f3;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:bold;color:var(--accent);overflow:hidden;flex-shrink:0;"></div>
+          <div style="flex:1; min-width:0;">
             <div id="msg-header-name" style="font-weight:bold;font-size:0.92rem"></div>
-            <div id="msg-header-pet" style="font-size:0.78rem;color:#6b7a8d"></div>
+            <div id="msg-header-pet" style="font-size:0.78rem;color:#6b7a8d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
           </div>
+          <button id="report-user-btn" class="report-header-btn" onclick="openReportUserModal()" style="display:none;">
+            🚩 <span>Report</span>
+          </button>
         </div>
 
         <div id="msg-messages-area" class="msg-messages">
@@ -113,7 +146,9 @@
     </div>
   </div>
 </div>
+
 <div id="delete-modal"></div>
+<div id="report-modal"></div>
 <footer class="footer" id="footer"></footer>
 
 <script src="../js/api.js"></script>
@@ -122,6 +157,7 @@
 var activeConvId   = null;
 var activeConvData = null;
 var currentUserId  = null;
+var activeOtherUserId = null; // Holds the ID of the user we are chatting with
 var pollTimer      = null;
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -183,6 +219,7 @@ async function loadConversations() {
 
 async function openConversation(convId, el) {
   activeConvId = convId;
+  activeOtherUserId = null; // Reset when opening a new chat
   if (pollTimer) clearInterval(pollTimer);
 
   document.querySelectorAll('.conv-item').forEach(function(c){ c.classList.remove('active'); });
@@ -216,11 +253,35 @@ async function loadMessages(convId) {
       if (conv) {
         var u = getUser();
         var otherName = (u && conv.adopter_name !== u.name) ? conv.adopter_name : conv.owner_name;
-        document.getElementById('msg-header-name').textContent = otherName || 'အသုံးပြုသူ';
+                document.getElementById('msg-header-name').textContent = otherName || 'အသုံးပြုသူ';
         document.getElementById('msg-header-pet').textContent  = ' ' + (conv.pet_name || '');
+        
+        // Set Header Avatar
+        var otherAvatar = (u && conv.adopter_name !== u.name) ? conv.adopter_avatar : conv.owner_avatar;
+        var headerAvatarEl = document.getElementById('msg-header-avatar');
+        if (otherAvatar) {
+          headerAvatarEl.innerHTML = '<img src="' + imgUrl(otherAvatar) + '" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'' + initials(otherName || 'U') + '\'">';
+        } else {
+          headerAvatarEl.innerHTML = '<span>' + initials(otherName || 'U') + '</span>';
+        }
+
+        // Extract other user's ID (Check if backend provides these IDs, otherwise fallback to message sender)
+        if (conv.adopter_id && conv.owner_id) {
+          activeOtherUserId = (conv.adopter_id === currentUserId) ? conv.owner_id : conv.adopter_id;
+        }
       }
       loadConversations(); 
     }
+    
+    // Fallback if API doesn't provide IDs in conversation list
+    if (!activeOtherUserId && msgs.length > 0) {
+      var otherMsg = msgs.find(function(m){ return m.sender_id !== currentUserId; });
+      if (otherMsg) activeOtherUserId = otherMsg.sender_id;
+    }
+
+    // Show report button only if we successfully found the other user's ID
+    document.getElementById('report-user-btn').style.display = activeOtherUserId ? 'flex' : 'none';
+
     renderMessages(msgs);
   } catch(e) {
     area.innerHTML = '<div style="padding:16px;color:#e76f51">တစ်ခုခု မှားယွင်းသွားသည်။</div>';
@@ -367,12 +428,10 @@ async function confirmRefund(convId) {
   btn.textContent = 'ငွေပြန်အမ်းနေသည်...';
 
   try {
-    // Call the new API endpoint
     var res = await Messages.declineAndRefund(convId, { pet_status_choice: choice });
 
     if (res && res.ok) {
       closeRefundModal();
-      // Reload messages to show the system message about the refund
       if (activeConvId === convId) {
         loadMessages(convId); 
       }
@@ -388,6 +447,74 @@ async function confirmRefund(convId) {
     showToast('အမှား: ' + e.message, 'error');
     btn.disabled = false;
     btn.textContent = 'ငွေပြန်အမ်းရန်';
+  }
+}
+
+// ==========================================
+// REPORT USER MODAL FUNCTIONS
+// ==========================================
+function openReportUserModal() {
+  if (!activeOtherUserId) return;
+  var modal = document.getElementById('report-modal');
+  modal.innerHTML =
+    '<div class="modal-overlay" onclick="closeReportModal(event)">' +
+      '<div class="modal-box" style="max-width: 450px; text-align: left;" onclick="event.stopPropagation()">' +
+        '<h3 style="text-align:center;">အသုံးပြုသူကို တိုင်ကြားရန်</h3>' +
+        '<p style="text-align:center;">တိုင်ကြားလိုသော အကြောင်းအရာကို ရွေးချယ်ပြီး အသေးစိတ် ဖြည့်စွက်ပါ။</p>' +
+        
+        '<div class="form-group">' +
+          '<label class="form-label">အကြောင်းရင်း (Reason)</label>' +
+          '<select id="report-reason" class="form-select">' +
+            '<option value="harassment">နှောင့်ယှက်ခြင်း (Harassment)</option>' +
+            '<option value="spam">စပမ်းပို့ခြင်း (Spam)</option>' +
+            '<option value="abuse">ဆဲရေးခြင်း/ရိုင်းစိုင်းခြင်း (Abuse)</option>' +
+            '<option value="misleading">လိမ်လည်ခြင်း (Misleading)</option>' +
+            '<option value="inappropriate">မသင့်တော်သော အကြောင်းအရာ (Inappropriate)</option>' +
+            '<option value="other">အခြား (Other)</option>' +
+          '</select>' +
+        '</div>' +
+
+        '<div class="form-group">' +
+          '<label class="form-label">အသေးစိတ် (Details)</label>' +
+          '<textarea id="report-details" class="form-textarea" placeholder="အကြောင်းအရာကို အသေးစိတ် ရေးပါ..."></textarea>' +
+        '</div>' +
+
+        '<div class="modal-actions">' +
+          '<button class="btn-modal-cancel" onclick="closeReportModal()">မလုပ်တော့ပါ</button>' +
+          '<button class="btn-modal-danger" id="submit-report-btn" onclick="submitReportUser()">တိုင်ကြားရန်</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function closeReportModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('report-modal').innerHTML = '';
+}
+
+async function submitReportUser() {
+  var btn = document.getElementById('submit-report-btn');
+  var reason = document.getElementById('report-reason').value;
+  var details = document.getElementById('report-details').value.trim();
+
+  btn.disabled = true;
+  btn.textContent = 'တိုင်ကြားနေသည်...';
+
+  try {
+    var res = await Reports.submit({ reported_user_id: activeOtherUserId, reason: reason, details: details });
+    
+    if (res && res.ok) {
+      closeReportModal();
+      showToast('တိုင်ကြားချက်ကို ပို့ပြီးပါပြီ။ ကျွန်တော်တို့ စစ်ဆေးပေးပါမည်။', 'success');
+    } else {
+      showToast(res.data.message || 'တိုင်ကြား၍မရပါ။', 'error');
+      btn.disabled = false;
+      btn.textContent = 'တိုင်ကြားရန်';
+    }
+  } catch (e) {
+    showToast('တစ်ခုခု မှားယွင်းသွားသည်။', 'error');
+    btn.disabled = false;
+    btn.textContent = 'တိုင်ကြားရန်';
   }
 }
 </script>

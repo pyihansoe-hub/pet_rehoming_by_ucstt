@@ -200,7 +200,7 @@ var Admin = {
   closeAdoption:   function(id, b)  { return patch('/api/admin/adoptions/' + id + '/close', b); },
   followups:       function(q)      { return get('/api/admin/followups?' + new URLSearchParams(q)); },
   healthLogs:      function(q)      { return get('/api/admin/health-logs?' + new URLSearchParams(q)); },
-  reports:         function(q)      { return get('/api/admin/reports?' + new URLSearchParams(q)); },
-  resolveReport:   function(id, b)  { return patch('/api/admin/reports/' + id + '/resolve', b); },
+  reports:         function(q)      { return get('/api/reports?' + new URLSearchParams(q)); },
+  resolveReport:   function(id, b)  { return patch('/api/reports/' + id, b); },
   auditLog:        function(q)      { return get('/api/admin/audit-log?' + new URLSearchParams(q)); },
 };

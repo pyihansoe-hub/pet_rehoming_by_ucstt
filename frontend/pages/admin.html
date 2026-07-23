@@ -84,23 +84,33 @@
     </div>
   </div>
 </div>
-
 <div class="modal-overlay" id="resolve-report-modal">
   <div class="modal">
     <div class="modal-header">
       <h3>တိုင်ကြားချက်အား ဖြေရှင်းရန်</h3>
       <button class="modal-close" onclick="closeModal('resolve-report-modal')">&#10005;</button>
     </div>
-    <div id="resolve-report-info" style="background:#f9f9f7;padding:12px;border-radius:8px;margin-bottom:16px;font-size:0.86rem"></div>
+    
+    <!-- Fixed background to use CSS variables so it works in Dark Mode -->
+    <div id="resolve-report-info" style="background:var(--bg-muted);color:var(--text-secondary);padding:12px;border-radius:8px;margin-bottom:16px;font-size:0.86rem"></div>
+    
     <div class="form-group">
       <label>လုပ်ဆောင်ချက်</label>
-      <select id="resolve-action" class="form-control">
+      <select id="resolve-action" class="form-control" onchange="toggleAdminWarning()">
         <option value="">လုပ်ဆောင်ချက်မရှိ -- ပြန်လည်သုံးသပ်ပြီးဟုသာ မှတ်သားမည်</option>
         <option value="remove_pet">အိမ်မွေးတိရစ္ဆာန် စာရင်းကို ဖယ်ရှားမည်</option>
         <option value="remove_blog">ဆောင်းပါးပို့စ်ကို သိမ်းဆည်းမည်</option>
-        <option value="suspend_reporter">တိုင်ကြားသူအား ဆိုင်းငံ့မည်</option>
+        <option value="warn_user">တိုင်ကြားခံရသော အသုံးပြုသူအား သတိပေးမည် (Warning Only)</option>
+        <option value="suspend_user">တိုင်ကြားခံရသော အသုံးပြုသူကို ဆိုင်းငံ့မည် (Ban)</option>
       </select>
     </div>
+    
+    <!-- Removed the accidental duplicate text box here -->
+    <div class="form-group" id="admin-warning-group" style="display:none; margin-top: 15px;">
+      <label>အသုံးပြုသူအား ပေးပို့မည့် သတိပေးစာ (Warning Message)</label>
+      <textarea id="admin-warning-message" class="form-control" rows="3" placeholder="ဥပမာ - ဆဲရေးသော စကားများကို အသုံးပြုခဲ့သောကြောင့် အကောင့်ကို ဆိုင်းငံ့လိုက်ပါသည်။"></textarea>
+    </div>
+    
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn btn-secondary" onclick="closeModal('resolve-report-modal')">မလုပ်တော့ပါ</button>
       <button class="btn btn-danger" onclick="confirmResolveReport('reviewed')">ဖြေရှင်းမည်</button>
@@ -804,7 +814,6 @@ async function loadHealthLogs() {
     renderPagination('healthlogs-pagination', total, LIMIT, logsPage, function(p){ logsPage=p; loadHealthLogs(); });
   } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
 }
-
 async function loadReports() {
   var el = document.getElementById('reports-table-wrap');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -825,7 +834,11 @@ async function loadReports() {
       '<th>ပစ်မှတ်</th><th>တိုင်ကြားသူ</th><th>အကြောင်းပြချက်</th><th>အသေးစိတ်</th><th>အခြေအနေ</th><th>ရက်စွဲ</th><th>လုပ်ဆောင်ချက်များ</th>' +
     '</tr></thead><tbody>' +
     list.map(function(r) {
-      var target = r.pet_name ? 'အိမ်မွေးတိရစ္ဆာန်: ' + r.pet_name : (r.blog_title ? 'ဆောင်းပါး: ' + r.blog_title.substring(0,30) : '\u2014');
+      // Updated to check for reported_user_name
+      var target = r.pet_name ? 'အိမ်မွေးတိရစ္ဆာန်: ' + r.pet_name : 
+                   (r.blog_title ? 'ဆောင်းပါး: ' + r.blog_title.substring(0,30) : 
+                   (r.reported_user_name ? 'အသုံးပြုသူ: ' + r.reported_user_name : '\u2014'));
+                   
       return '<tr>' +
         '<td style="font-weight:bold">' + target + '</td>' +
         '<td style="font-size:0.82rem;color:#6b7a8d">' + (r.reporter_name||'\u2014') + '</td>' +
@@ -834,7 +847,7 @@ async function loadReports() {
         '<td>' + pill(r.status) + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + timeAgo(r.created_at) + '</td>' +
         '<td>' + (r.status === 'pending'
-          ? '<button onclick="openResolveReport(' + r.id + ',\'' + target.replace(/'/g,"\\'") + '\',' + (r.pet_id||'null') + ',' + (r.blog_id||'null') + ')" class="btn btn-primary btn-sm">ဖြေရှင်းရန်</button>'
+          ? '<button onclick="openResolveReport(' + r.id + ',\'' + target.replace(/'/g,"\\'") + '\',' + (r.pet_id||'null') + ',' + (r.blog_id||'null') + ',' + (r.reported_user_id||'null') + ')" class="btn btn-primary btn-sm">ဖြေရှင်းရန်</button>'
           : '<span style="color:#9baab8;font-size:0.8rem">' + (r.reviewed_by_name||'\u2014') + '</span>') +
         '</td>' +
       '</tr>';
@@ -844,30 +857,48 @@ async function loadReports() {
     renderPagination('reports-pagination', total, LIMIT, reportsPage, function(p){ reportsPage=p; loadReports(); });
   } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
 }
-
-function openResolveReport(id, target, petId, blogId) {
+function openResolveReport(id, target, petId, blogId, reportedUserId) {
   resolveReportId = id;
-  resolveReportData = { petId: petId, blogId: blogId };
+  resolveReportData = { petId: petId, blogId: blogId, reportedUserId: reportedUserId };
+  
   document.getElementById('resolve-report-info').innerHTML =
     '<strong>တိုင်ကြားခံရသည့်အရာ:</strong> ' + target + '<br>' +
     (petId ? '<div style="margin-top:4px;color:#9baab8">အိမ်မွေးတိရစ္ဆာန် ID: ' + petId + '</div>' : '') +
-    (blogId ? '<div style="margin-top:4px;color:#9baab8">ဆောင်းပါး ID: ' + blogId + '</div>' : '');
+    (blogId ? '<div style="margin-top:4px;color:#9baab8">ဆောင်းပါး ID: ' + blogId + '</div>' : '') +
+    (reportedUserId ? '<div style="margin-top:4px;color:#9baab8">အသုံးပြုသူ ID: ' + reportedUserId + '</div>' : '');
 
   var sel = document.getElementById('resolve-action');
   Array.from(sel.options).forEach(function(opt) {
     opt.style.display = '';
     if (opt.value === 'remove_pet' && !petId) opt.style.display = 'none';
     if (opt.value === 'remove_blog' && !blogId) opt.style.display = 'none';
+    if (opt.value === 'suspend_user' && !reportedUserId) opt.style.display = 'none';
+    if (opt.value === 'warn_user' && !reportedUserId) opt.style.display = 'none';
   });
   sel.value = '';
+  
+  // Hide warning message by default
+  document.getElementById('admin-warning-group').style.display = 'none';
+  document.getElementById('admin-warning-message').value = '';
+  
   openModal('resolve-report-modal');
+}
+
+function toggleAdminWarning() {
+  var action = document.getElementById('resolve-action').value;
+  var warningGroup = document.getElementById('admin-warning-group');
+  // Show the text box if the admin chooses to warn OR suspend
+  warningGroup.style.display = (action === 'suspend_user' || action === 'warn_user') ? 'block' : 'none';
 }
 
 async function confirmResolveReport(status) {
   if (!resolveReportId) return;
   var action = document.getElementById('resolve-action').value;
+  var admin_message = document.getElementById('admin-warning-message').value.trim();
+  
   try {
-    var res = await Admin.resolveReport(resolveReportId, { status: status, action: action || undefined });
+    // Send the admin_message to the backend
+    var res = await Admin.resolveReport(resolveReportId, { status: status, action: action || undefined, admin_message: admin_message || undefined });
     if (res && res.ok) {
       closeModal('resolve-report-modal');
       showToast('တိုင်ကြားချက်အား ' + status + ' လိုက်ပါပြီ။', 'success');
@@ -876,7 +907,6 @@ async function confirmResolveReport(status) {
     } else showToast(res.data.message||'မအောင်မြင်ပါ။', 'error');
   } catch(e) { showToast('အမှား။', 'error'); }
 }
-
 async function loadAuditLog() {
   var el = document.getElementById('auditlog-list');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
