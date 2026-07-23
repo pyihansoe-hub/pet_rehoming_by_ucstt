@@ -158,12 +158,17 @@ button { cursor: pointer; font-family: inherit; }
 .nav-links { display: flex; gap: 2px; }
 .nav-links a {
   padding: 8px 12px; border-radius: 8px;
-  font-size: 0.85rem; color: var(--text-secondary);
-  font-weight: 500; transition: all 0.15s; white-space: nowrap;
+  font-size: 0.85rem; 
+  color: var(--text-primary); /* Changed from secondary to primary for better visibility */
+  font-weight: 600; /* Made bolder */
+  transition: all 0.15s; white-space: nowrap;
+  opacity: 0.85;
 }
 .nav-links a:hover, .nav-links a.active {
   background: var(--accent-light-bg);
   color: var(--accent); text-decoration: none;
+  opacity: 1;
+  font-weight: 700; /* Extra bold for active/hover */
 }
 
 .nav-actions { display: flex; align-items: center; gap: 8px; }
@@ -207,12 +212,15 @@ button { cursor: pointer; font-family: inherit; }
 /* ===== NAVBAR DROPDOWN ===== */
 .nav-dropdown { position: relative; display: inline-block; }
 .nav-dropdown .dropbtn {
-  padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; color: var(--text-secondary);
-  font-weight: 500; transition: all 0.15s; white-space: nowrap; cursor: pointer;
+  padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; 
+  color: var(--text-primary); /* Changed to primary for visibility */
+  font-weight: 600; transition: all 0.15s; white-space: nowrap; cursor: pointer;
   display: flex; align-items: center; gap: 4px; text-decoration: none;
+  opacity: 0.85;
 }
 .nav-dropdown:hover .dropbtn {
   background: var(--accent-light-bg); color: var(--accent); text-decoration: none;
+  opacity: 1;
 }
 .dropdown-content {
   display: none; position: absolute; top: 100%; left: 0;
@@ -222,8 +230,10 @@ button { cursor: pointer; font-family: inherit; }
 }
 .nav-dropdown:hover .dropdown-content { display: block; }
 .dropdown-content a {
-  padding: 10px 14px; display: block; font-size: 0.84rem; color: var(--text-secondary);
+  padding: 10px 14px; display: block; font-size: 0.84rem; 
+  color: var(--text-primary); /* Changed to primary for visibility */
   text-decoration: none; border-bottom: 1px solid var(--border-light);
+  font-weight: 500;
 }
 .dropdown-content a:last-child { border-bottom: none; }
 .dropdown-content a:hover {
@@ -246,7 +256,9 @@ button { cursor: pointer; font-family: inherit; }
 .mobile-menu.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
 .mobile-menu a {
   padding: 12px 14px; border-radius: 8px;
-  font-size: 0.92rem; color: var(--text-secondary);
+  font-size: 0.92rem; 
+  color: var(--text-primary); /* Changed to primary for visibility */
+  font-weight: 600; /* Made bolder */
   text-decoration: none;
 }
 .mobile-menu a:hover, .mobile-menu a.active {

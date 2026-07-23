@@ -54,8 +54,12 @@ const listConversations = async (req, res) => {
     const { rows } = await pool.query(
       `SELECT c.id, c.adoption_request_id, c.created_at,
               p.name AS pet_name,
-              owner.name   AS owner_name,
+              owner.id    AS owner_id,
+              owner.name  AS owner_name,
+              owner.avatar_url AS owner_avatar,
+              adopter.id  AS adopter_id,
               adopter.name AS adopter_name,
+              adopter.avatar_url AS adopter_avatar,
               (SELECT content FROM messages WHERE conversation_id=c.id ORDER BY created_at DESC LIMIT 1) AS last_message,
               (SELECT created_at FROM messages WHERE conversation_id=c.id ORDER BY created_at DESC LIMIT 1) AS last_message_at,
               (SELECT COUNT(*) FROM messages WHERE conversation_id=c.id AND is_read=FALSE AND sender_id<>$1) AS unread_count
@@ -240,8 +244,6 @@ const declineAndRefund = async (req, res) => {
         } catch(notifErr) {
           console.error('Notification failed (non-fatal):', notifErr.message);
         }
-
-        // Note: Email sending logic has been removed to prevent Resend API domain validation errors.
       }
     }
 

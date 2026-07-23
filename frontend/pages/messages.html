@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>မက်ဆေ့ခ်ျများ</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="/css/style.css">
   <style>
     .conv-item-row { display:flex; align-items:flex-start; gap:6px; }
@@ -161,11 +160,6 @@ var currentUserId  = null;
 var activeOtherUserId = null; 
 var pollTimer      = null;
 
-
-const SUPABASE_URL = 'https://mgqqonycityxfiqsbqvo.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_vSFOtlberzYfJ1alNUDw8Q_zs89KcAi';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-var activeRealtimeChannel = null;
 document.addEventListener('DOMContentLoaded', async function() {
   if (!requireAuth()) return;
   var u = getUser();
@@ -222,17 +216,13 @@ async function loadConversations() {
     el.innerHTML = '<div style="padding:16px;font-size:0.84rem;color:#e76f51">တစ်ခုခု မှားယွင်းသွားသည်။</div>';
   }
 }
+
 async function openConversation(convId, el) {
   activeConvId = convId;
   activeOtherUserId = null;
   
   // Clear old polling timer if it exists
   if (pollTimer) clearInterval(pollTimer);
-  
-  // Unsubscribe from previous Realtime channel
-  if (activeRealtimeChannel) {
-    supabaseClient.removeChannel(activeRealtimeChannel);
-  }
 
   document.querySelectorAll('.conv-item').forEach(function(c){ c.classList.remove('active'); });
   if (el) el.classList.add('active');
@@ -242,18 +232,14 @@ async function openConversation(convId, el) {
 
   loadMessages(convId);
 
-  // Set up Supabase Realtime listener for this specific conversation
-  activeRealtimeChannel = supabaseClient
-    .channel('public:messages:conversation_id=eq.' + convId)
-    .on('postgres_changes', 
-      { event: 'INSERT', schema: 'public', table: 'messages', filter: 'conversation_id=eq.' + convId }, 
-      function(payload) {
-        // When a new message is inserted into the DB, instantly refresh the chat
-        if (activeConvId === convId) silentRefresh(convId);
-      }
-    )
-    .subscribe();
+  // Set up polling to check for new messages every 3 seconds
+  pollTimer = setInterval(function() {
+    if (activeConvId === convId) {
+      silentRefresh(convId);
+    }
+  }, 3000);
 }
+
 async function loadMessages(convId) {
   var area = document.getElementById('msg-messages-area');
   area.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -284,9 +270,18 @@ async function loadMessages(convId) {
           headerAvatarEl.innerHTML = '<span>' + initials(otherName || 'U') + '</span>';
         }
 
-        // Extract other user's ID (Check if backend provides these IDs, otherwise fallback to message sender)
+        // Extract other user's ID
+        // We convert IDs to strings to prevent strict equality bugs (e.g., 123 vs "123")
         if (conv.adopter_id && conv.owner_id) {
-          activeOtherUserId = (conv.adopter_id === currentUserId) ? conv.owner_id : conv.adopter_id;
+          var adopterIdStr = String(conv.adopter_id);
+          var ownerIdStr = String(conv.owner_id);
+          var currentUserIdStr = String(currentUserId);
+
+          if (adopterIdStr === currentUserIdStr) {
+            activeOtherUserId = conv.owner_id;
+          } else if (ownerIdStr === currentUserIdStr) {
+            activeOtherUserId = conv.adopter_id;
+          }
         }
       }
       loadConversations(); 
@@ -294,7 +289,7 @@ async function loadMessages(convId) {
     
     // Fallback if API doesn't provide IDs in conversation list
     if (!activeOtherUserId && msgs.length > 0) {
-      var otherMsg = msgs.find(function(m){ return m.sender_id !== currentUserId; });
+      var otherMsg = msgs.find(function(m){ return String(m.sender_id) !== String(currentUserId); });
       if (otherMsg) activeOtherUserId = otherMsg.sender_id;
     }
 
@@ -339,7 +334,7 @@ function renderMessages(msgs, skipScroll) {
       lastDate = msgDate;
     }
     
-    var isMe = m.sender_id === currentUserId;
+    var isMe = String(m.sender_id) === String(currentUserId);
     
     var avatarHtml = '';
     if (!isMe) {

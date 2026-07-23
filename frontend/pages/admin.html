@@ -357,7 +357,6 @@
     </div>
   </div>
 </div>
-
 <script src="../js/api.js"></script>
 <script src="/../js/app.js"></script>
 <script>
@@ -393,6 +392,7 @@ function showPanel(name, navEl) {
   if (name === 'reports'    && document.getElementById('reports-table-wrap').querySelector('.spinner'))    loadReports();
   if (name === 'auditlog'   && document.getElementById('auditlog-list').querySelector('.spinner'))         loadAuditLog();
 }
+
 async function loadDashboard() {
   try {
     var res = await Admin.stats();
@@ -406,7 +406,7 @@ async function loadDashboard() {
       statCard('', 'ငွေပေးချေမှု ' + (s.payments.completed ? s.payments.completed.count : 0) + ' ခု') +
       statCard('', (s.blogs.published||0), 'တင်ထားသော ဆောင်းပါးများ', (s.blogs.draft||0) + ' မူကြမ်းများ') +
       statCard('', s.followups||0, 'နောက်ဆက်တွဲများ တင်သွင်းပြီး', 'မွေးစားပြီးနောက် စောင့်ကြည့်ခြင်း') +
-      statCard('', s.reports.pending||0, 'ဆိုင်းငံ့ဆဲ တိုင်ကြားချက်များ', 'ပြန်လည်သုံးသပ်ရန် လိုအပ်သည်', s.reports.pending > 0 ? '#fdf0ec' : null) +
+      statCard('', s.reports.pending||0, 'ဆိုင်းငံ့ဆဲ တိုင်ကြားချက်များ', 'ပြန်လည်သုံးသပ်ရန် လိုအပ်သည်', s.reports.pending > 0 ? 'var(--danger-bg)' : null) +
       statCard('', s.users.admins||0, 'အက်ဒမင်များ', 'ပလက်ဖောင်း စီမံခန့်ခွဲသူများ');
 
     if (s.reports.pending > 0) {
@@ -432,17 +432,17 @@ function statCard(icon, value, label, sub, bg) {
 function renderBreakdown(elId, data, colors) {
   var el = document.getElementById(elId);
   var total = Object.values(data).reduce(function(a,b){ return a+b; }, 0);
-  if (!total) { el.innerHTML = '<p style="color:#9baab8;font-size:0.86rem">ဒေတာ မရှိသေးပါ။</p>'; return; }
+  if (!total) { el.innerHTML = '<p style="color:var(--text-muted);font-size:0.86rem">ဒေတာ မရှိသေးပါ။</p>'; return; }
   el.innerHTML = Object.entries(data).map(function(entry) {
     var key = entry[0], val = entry[1];
     var pct = Math.round((val / total) * 100);
     var color = colors[key] || '#9baab8';
     return '<div style="margin-bottom:10px">' +
       '<div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:4px">' +
-        '<span style="text-transform:capitalize">' + key + '</span>' +
-        '<span style="font-weight:bold">' + val + ' (' + pct + '%)</span>' +
+        '<span style="text-transform:capitalize;color:var(--text-primary)">' + key + '</span>' +
+        '<span style="font-weight:bold;color:var(--text-primary)">' + val + ' (' + pct + '%)</span>' +
       '</div>' +
-      '<div style="background:#f3f3ef;border-radius:999px;height:7px">' +
+      '<div style="background:var(--bg-muted);border-radius:999px;height:7px">' +
         '<div style="background:' + color + ';height:7px;border-radius:999px;width:' + pct + '%"></div>' +
       '</div>' +
     '</div>';
@@ -488,7 +488,7 @@ async function loadUsers() {
           (u.role !== 'admin'
             ? '<button onclick="makeAdmin(' + u.id + ')" class="btn btn-outline btn-sm">အက်ဒမင် ခန့်အပ်ရန်</button>'
             : '<button onclick="removeAdmin(' + u.id + ')" class="btn btn-outline btn-sm">အက်ဒမင် ဖယ်ရှားရန်</button>') +
-          '<button onclick="deleteUser(' + u.id + ',\'' + u.name + '\')" class="btn btn-danger btn-sm">ဖျက်ရန်</button>' +
+          '<button onclick="deleteUser(' + u.id + ',\'' + (u.name||'').replace(/'/g, "\\'") + '\')" class="btn btn-danger btn-sm">ဖျက်ရန်</button>' +
         '</div></td>' +
       '</tr>';
     }).join('') +
@@ -598,7 +598,7 @@ async function loadAdminPets() {
             ['available','pending','adopted','withdrawn'].map(function(s){ return '<option value="' + s + '"' + (p.status===s?' selected':'') + '>' + s + '</option>'; }).join('') +
           '</select>' +
           '<a href="' + petDetailHref(p) + '" class="btn btn-outline btn-sm" target="_blank">ကြည့်ရှုရန်</a>' +
-          '<button onclick="deleteAdminPet(' + p.id + ',\'' + p.name + '\')" class="btn btn-danger btn-sm">ဖျက်ရန်</button>' +
+          '<button onclick="deleteAdminPet(' + p.id + ',\'' + (p.name||'').replace(/'/g, "\\'") + '\')" class="btn btn-danger btn-sm">ဖျက်ရန်</button>' +
         '</div></td>' +
       '</tr>';
     }).join('') +
@@ -661,7 +661,7 @@ async function loadAdminBlogs() {
             ['published','draft','archived'].map(function(s){ return '<option value="' + s + '"' + (b.status===s?' selected':'') + '>' + s + '</option>'; }).join('') +
           '</select>' +
           '<a href="/pages/blog-detail.html?slug=' + b.slug + '" class="btn btn-outline btn-sm" target="_blank">ကြည့်ရှုရန်</a>' +
-          '<button onclick="deleteAdminBlog(' + b.id + ',\'' + b.title.replace(/'/g,"\\'") + '\')" class="btn btn-danger btn-sm">ဖျက်ရန်</button>' +
+          '<button onclick="deleteAdminBlog(' + b.id + ',\'' + (b.title||'').replace(/'/g,"\\'") + '\')" class="btn btn-danger btn-sm">ဖျက်ရန်</button>' +
         '</div></td>' +
       '</tr>';
     }).join('') +
@@ -814,6 +814,7 @@ async function loadHealthLogs() {
     renderPagination('healthlogs-pagination', total, LIMIT, logsPage, function(p){ logsPage=p; loadHealthLogs(); });
   } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
 }
+
 async function loadReports() {
   var el = document.getElementById('reports-table-wrap');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -857,6 +858,7 @@ async function loadReports() {
     renderPagination('reports-pagination', total, LIMIT, reportsPage, function(p){ reportsPage=p; loadReports(); });
   } catch(e) { el.innerHTML = '<div class="alert alert-danger" style="margin:16px">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
 }
+
 function openResolveReport(id, target, petId, blogId, reportedUserId) {
   resolveReportId = id;
   resolveReportData = { petId: petId, blogId: blogId, reportedUserId: reportedUserId };
@@ -907,6 +909,7 @@ async function confirmResolveReport(status) {
     } else showToast(res.data.message||'မအောင်မြင်ပါ။', 'error');
   } catch(e) { showToast('အမှား။', 'error'); }
 }
+
 async function loadAuditLog() {
   var el = document.getElementById('auditlog-list');
   el.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
