@@ -12,7 +12,7 @@ You help users with:
 
 Keep responses helpful, funny and entertaining 
 If a question is unrelated to pets or the platform, still help politely as a general assistant.
-CRITICAL: YOU MUST WRITE ONLY IN THE LANGUAGE OF THE USER'S QUERY. DO NOT MIX LANGUAGES., answer shortly and concisely, avoid long explanations. answer completely in 5k tokens maximum.`;
+CRITICAL: YOU MUST WRITE ONLY IN THE LANGUAGE OF THE USER'S QUERY. USE ENGLISH FOR SOME WORDS THAT CANNOT BE TRANSLATED DIRECTLY., answer shortly and concisely, avoid long explanations. answer completely in 5k tokens maximum.`;
 
 const chat = async (messages) => {
   const controller = new AbortController();

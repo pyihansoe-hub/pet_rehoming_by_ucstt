@@ -596,3 +596,58 @@ textarea.form-control { resize: vertical; min-height: 90px; }
     gap: 12px;
   }
 }
+/* ===== AUTH PAGE BACKGROUND (Frosted Glass Look) ===== */
+body.auth-page {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Background image layer - with slight blur for depth */
+body.auth-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url('bg.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  z-index: -2;
+  
+  transform: scale(1.05); 
+  /* filter: blur(4px); */
+}
+
+
+.auth-page .card {
+  /* Semi-transparent background */
+  background: rgba(255, 255, 255, 0.75); 
+  /* The magic blur effect behind the card */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2), 0 5px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.6); 
+}
+
+/* Dark mode frosted glass */
+[data-theme="dark"] .auth-page .card {
+  background: rgba(15, 23, 42, 0.75); /* Semi-transparent dark slate */
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 5px 15px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1); 
+}
+
+
+.auth-page #qr-image {
+  background: #fff;
+  padding: 10px; 
+  border-radius: 8px;
+}
+
+/* ===== RESPONSIVE TWEAK ===== */
+@media (max-width: 768px) {
+  body.auth-page::before {
+    background-attachment: scroll; 
+    transform: none; 
+  }
+}

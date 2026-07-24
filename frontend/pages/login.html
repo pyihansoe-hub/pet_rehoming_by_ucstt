@@ -6,7 +6,7 @@
   <title>အကောင့်ဝင်ရန်</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
+<body class="auth-page">
 
 <nav class="navbar" id="navbar"></nav>
 <div id="mobile-menu" class="mobile-menu"></div>
@@ -16,13 +16,15 @@
   <div class="container">
     <div style="max-width:420px;margin:0 auto">
 
-      <div style="text-align:center;margin-bottom:28px">
-        <h1 style="font-size:1.5rem;margin-bottom:6px">PetNet မှပြန်လည်ကြိုဆိုပါသည်</h1>
-        <p style="color:#6b7a8d;font-size:0.9rem">သင်၏အကောင့်သို့ ဝင်ရောက်ပါ</p>
-      </div>
-
       <!-- LOGIN FORM CARD -->
       <div class="card" id="login-card">
+        
+        <!-- FORM TITLE INSIDE THE CARD -->
+        <div style="text-align:center; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border);">
+          <h1 style="font-size:1.4rem; margin-bottom:6px; color:var(--text-primary);">PetNet မှပြန်လည်ကြိုဆိုပါသည်</h1>
+          <p style="color:var(--text-secondary); font-size:0.9rem; margin:0;">သင်၏အကောင့်သို့ ဝင်ရောက်ပါ</p>
+        </div>
+
         <div id="alert-area"></div>
 
         <div class="form-group">
@@ -49,10 +51,12 @@
 
       <!-- TOTP 6-DIGIT CODE CARD (Hidden initially, NO QR CODE HERE) -->
       <div class="card" id="totp-card" style="display:none; text-align:center;">
-        <h2 style="font-size:1.2rem; margin-bottom:10px;">Authenticator ဖြင့် အတည်ပြုပါ</h2>
-        <p style="color:#6b7a8d; font-size:0.86rem; margin-bottom:20px;">
-          သင်၏ Google Authenticator App ကို ဖွင့်ပြီး ပေါ်လာသော 6 လုံး ကုဒ်ကို ထည့်ပါ။
-        </p>
+        
+        <!-- FORM TITLE INSIDE THE CARD -->
+        <div style="text-align:center; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border);">
+          <h1 style="font-size:1.4rem; margin-bottom:6px; color:var(--text-primary);">Authenticator ဖြင့် အတည်ပြုပါ</h1>
+          <p style="color:var(--text-secondary); font-size:0.9rem; margin:0;">သင်၏ Google Authenticator App ကို ဖွင့်ပြီး ပေါ်လာသော 6 လုံး ကုဒ်ကို ထည့်ပါ။</p>
+        </div>
         
         <div class="form-group" style="text-align:left;">
           <label for="totp-code">6 လုံး ကုဒ် <span style="color:#e76f51">*</span></label>
