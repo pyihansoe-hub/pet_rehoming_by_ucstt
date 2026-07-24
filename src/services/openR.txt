@@ -1,18 +1,18 @@
+const { Agent } = require('https');
 
-const API_URL = 'https://api.mistral.ai/v1/chat/completions';
+const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const keepAliveAgent = new Agent({ keepAlive: true, maxSockets: 50 });
 
-
-const AI_MODEL = 'mistral-large-latest'; 
-
+const AI_MODEL = 'deepseek/deepseek-chat'; 
 const SYSTEM_PROMPT = `You are PawBot, a warm, friendly and knowledgeable assistant for the Pet Rehoming & Monitoring System.
 You help users with:
 - Pet care advice for dogs, cats
 - Health, nutrition, and training tips for pets
 - Questions about the platform (users can see pets (dog, cats and other animals) for adoption, read blogs, submit adoption requests (can crash with credit card, Kpay, Ayapay, Wavepay), owners can approve and reject, after adoption platform can monitor the pet's health and well-being)
 
-Keep responses helpful, funny and entertaining 
+Keep responses helpful, funny and entertaining ,Use bullet points for lists.
 If a question is unrelated to pets or the platform, still help politely as a general assistant.
-CRITICAL: YOU MUST WRITE ONLY IN THE LANGUAGE OF THE USER'S QUERY. DO NOT MIX LANGUAGES., answer shortly and concisely, avoid long explanations. answer completely in 5k tokens maximum.`;
+PLEASE WRITE ONLY IN THE LANGUAGE OF THE USER'S QUERY`;
 
 const chat = async (messages) => {
   const controller = new AbortController();
@@ -22,10 +22,13 @@ const chat = async (messages) => {
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
-      signal: controller.signal, // 'agent' ကို ဖယ်ထုတ်လိုက်ပါသည်
+      agent: keepAliveAgent,
+      signal: controller.signal,
       headers: {
         'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`,
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer':  process.env.OPENROUTER_REFERER || 'http://localhost:3000', 
+        'X-Title':       'PawBot', 
       },
       body: JSON.stringify({
         model: AI_MODEL,
@@ -33,7 +36,7 @@ const chat = async (messages) => {
           { role: 'system', content: SYSTEM_PROMPT },
           ...recentMessages,
         ],
-        max_tokens: 5048,
+        max_tokens: 2048,
         temperature: 0.5,      
         top_p: 0.9,
       }),
@@ -41,7 +44,7 @@ const chat = async (messages) => {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || err.message || `Mistral API error: ${res.status}`);
+      throw new Error(err.error?.message || err.message || `OpenRouter API error: ${res.status}`);
     }
 
     const data = await res.json();
@@ -62,10 +65,13 @@ const chatStream = async (messages, res, onDone) => {
   try {
     const response = await fetch(API_URL, {
       method: 'POST',
-      signal: controller.signal, // 'agent' ကို ဖယ်ထုတ်လိုက်ပါသည်
+      agent: keepAliveAgent,
+      signal: controller.signal,
       headers: {
         'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`,
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer':  process.env.OPENROUTER_REFERER || 'http://localhost:3000', 
+        'X-Title':       'PawBot',
         'Accept':        'text/event-stream',
       },
       body: JSON.stringify({
@@ -74,7 +80,7 @@ const chatStream = async (messages, res, onDone) => {
           { role: 'system', content: SYSTEM_PROMPT },
           ...recentMessages,
         ],
-        max_tokens: 5048,
+        max_tokens: 2048,
         temperature: 0.5,
         top_p: 0.9,
         stream: true,
@@ -83,7 +89,7 @@ const chatStream = async (messages, res, onDone) => {
 
     if (!response.ok) {
       const errText = await response.text(); 
-      console.error("Mistral API RAW ERROR:", errText); 
+      console.error("OpenRouter API RAW ERROR:", errText); 
       res.write(`data: ${JSON.stringify({ error: errText })}\n\n`);
       res.end();
       return;

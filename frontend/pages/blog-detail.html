@@ -276,7 +276,7 @@ function renderBlog(blog) {
 
   document.getElementById('author-card').innerHTML =
     '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' + avatarHtml(blog.author_avatar, blog.author_name || 'A', 40) + '<div><div style="font-weight:bold;font-size:0.9rem">' + (blog.author_name || 'Author') + '</div></div></div>' +
-    '<p style="font-size:0.82rem;color:var(--text-secondary)">Pet care enthusiast sharing knowledge on the Pet Rehoming platform.</p>';
+    '<p style="font-size:0.82rem;color:var(--text-secondary)">Sharing pet\'s knowledges with you</p>';
 
   // Cover Image
   if (blog.cover_image_url) {

@@ -31,13 +31,15 @@
       border-radius:12px; 
       overflow:hidden; 
       background:var(--bg-card); 
-      flex:1; 
-      min-height:400px;          
-      height: calc(100vh - 150px); /* FIXED: Lock height to screen size to prevent pushing input off-screen */
+      /* FIXED: Using flex:1 to perfectly fill space without moving */
+      flex: 1; 
+      min-height: 400px;
+      max-height: 100%;
       box-shadow: 0 1px 3px var(--shadow-sm);
+      margin-bottom: 20px;
     }
     
-    .pawbot-sidebar { border-right:1px solid var(--border); display:flex; flex-direction:column; background:var(--bg-chat); min-height: 0; }
+    .pawbot-sidebar { border-right:1px solid var(--border); display:flex; flex-direction:column; background:var(--bg-chat); min-height: 0; height: 100%; overflow: hidden; }
     .pawbot-sidebar-header { padding:14px 16px; border-bottom:1px solid var(--border); background:var(--bg-card); display:flex; align-items:center; justify-content:space-between; flex-shrink: 0; }
     .session-list { flex:1; overflow-y:auto; min-height: 0; }
     .session-item { padding:11px 14px; cursor:pointer; border-bottom:1px solid var(--border); transition:background 0.1s; }
@@ -46,11 +48,11 @@
     .session-title { font-size:0.83rem; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .session-preview { font-size:0.75rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
     
-    .pawbot-main { display:flex; flex-direction:column; min-height:0; overflow: hidden; }
+    .pawbot-main { display:flex; flex-direction:column; min-height:0; overflow: hidden; height: 100%; }
     .pawbot-header { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; background:var(--bg-card); flex-shrink: 0; }
     .bot-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent-hover)); display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:800; color:#fff; flex-shrink: 0; }
     
-    .pawbot-messages { flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:14px; background:var(--bg-chat); min-height:0; } /* FIXED: min-height:0 allows it to shrink and scroll properly */
+    .pawbot-messages { flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:14px; background:var(--bg-chat); min-height:0; }
     .chat-msg { display:flex; gap:8px; max-width:78%; }
     .chat-msg.user { align-self:flex-end; flex-direction:row-reverse; }
     .chat-bubble { padding:10px 15px; border-radius:18px; font-size:0.88rem; line-height:1.6; }
@@ -282,9 +284,11 @@ async function sendMsg() {
   addUserMessage(msg);
 
   var botBubble = addBotMessageEmpty();
+  botBubble.innerHTML = '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>';
 
   try {
     var streamUrl;
+    var bodyPayload = JSON.stringify({ messages: [{ role: 'user', content: msg }] });
 
     if (getToken()) {
       if (!activeSessionId) {
@@ -295,13 +299,12 @@ async function sendMsg() {
           loadSessions();
         }
       }
-      streamUrl = 'http://localhost:3000/api/chat/sessions/' + activeSessionId
-                + '/stream?message=' + encodeURIComponent(msg);
+      streamUrl = '/api/chat/sessions/' + activeSessionId + '/stream';
     } else {
-      streamUrl = 'http://localhost:3000/api/chat/stream?message=' + encodeURIComponent(msg);
+      streamUrl = '/api/chat/stream';
     }
 
-    streamResponse(streamUrl, botBubble, function() {
+    streamResponse(streamUrl, bodyPayload, botBubble, function() {
       isWaiting = false;
       document.getElementById('send-btn').disabled = false;
       if (activeSessionId) loadSessions();
@@ -316,81 +319,92 @@ async function sendMsg() {
 
 function stripThinking(text) {
   if (!text) return '';
-  
   let result = text.replace(/<think>[\s\S]*?<\/think>/g, '');
-  
   result = result.replace(/<think>[\s\S]*$/g, '');
-  
   result = result.replace(/<\/think>/g, '');
-  
   const partialRegex = /<\/?(t(h(i(n(k(>)?)?)?)?)?)?$/;
   const match = result.match(partialRegex);
   if (match && match[0] !== '<') {
     result = result.substring(0, match.index);
   }
-  
   return result;
 }
 
-function streamResponse(url, bubbleEl, onDone) {
+async function streamResponse(url, payload, bubbleEl, onDone) {
   var token = getToken();
-  var fullUrl = token ? url + '&token=' + token : url;
+  var headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
 
-  bubbleEl.innerHTML = '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>';
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: headers,
+      body: payload
+    });
 
-  var es       = new EventSource(fullUrl);
-  var fullText = '';
-  var started  = false;
-
-  es.onmessage = function(e) {
-    try {
-      var data = JSON.parse(e.data);
-
-      if (data.error) {
-        bubbleEl.innerHTML = escapeAndFormat('တောင်းပန်ပါတယ်၊ အမှားတစ်ခု ဖြစ်ပွားခဲ့ပါတယ်- ' + data.error);
-        es.close();
-        if (onDone) onDone();
-        return;
-      }
-
-      if (data.token) {
-        fullText += data.token;
-        
-        var visibleText = stripThinking(fullText);
-        
-        if (visibleText.trim() && !started) {
-          bubbleEl.innerHTML = '';
-          started = true;
-        }
-        
-        if (started) {
-          bubbleEl.innerHTML = escapeAndFormat(visibleText);
-          scrollToBottom();
-        }
-      }
-
-      if (data.done) {
-        es.close();
-        var finalVisible = stripThinking(fullText);
-        if (finalVisible.trim()) {
-          bubbleEl.innerHTML = escapeAndFormat(finalVisible);
-        } else if (!started) {
-          bubbleEl.innerHTML = '<span style="color:var(--text-muted)">တုံ့ပြန်မှု မရရှိပါ။</span>';
-        }
-        scrollToBottom();
-        if (onDone) onDone();
-      }
-    } catch(err) {
+    if (!response.ok) {
+      const errText = await response.text();
+      bubbleEl.innerHTML = escapeAndFormat('တောင်းပန်ပါတယ်၊ အမှားတစ်ခု ဖြစ်ပွားခဲ့ပါတယ်: ' + errText);
+      if (onDone) onDone();
+      return;
     }
-  };
 
-  es.onerror = function() {
-    es.close();
-    if (!started) {
-      bubbleEl.innerHTML = 'ချိတ်ဆက်မှု ပြတ်တောက်သွားပါတယ်။ ထပ်မံကြိုးစားပါ။';
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let fullText = '';
+    let started = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          try {
+            const parsed = JSON.parse(data);
+
+            if (parsed.error) {
+              bubbleEl.innerHTML = escapeAndFormat('အမှားတစ်ခု ဖြစ်ပွားခဲ့ပါတယ်: ' + parsed.error);
+              continue;
+            }
+
+            if (parsed.token) {
+              fullText += parsed.token;
+              var visibleText = stripThinking(fullText);
+              if (visibleText.trim() && !started) {
+                bubbleEl.innerHTML = '';
+                started = true;
+              }
+              if (started) {
+                bubbleEl.innerHTML = escapeAndFormat(visibleText);
+                scrollToBottom();
+              }
+            }
+
+            if (parsed.done) {
+              var finalVisible = stripThinking(fullText);
+              if (finalVisible.trim()) {
+                bubbleEl.innerHTML = escapeAndFormat(finalVisible);
+              } else if (!started) {
+                bubbleEl.innerHTML = '<span style="color:var(--text-muted)">တုံ့ပြန်မှု မရရှိပါ။</span>';
+              }
+              scrollToBottom();
+            }
+          } catch(err) { /* skip parse error */ }
+        }
+      }
     }
+  } catch(e) {
+    bubbleEl.innerHTML = 'ချိတ်ဆက်မှု ပြတ်တောက်သွားပါတယ်။ ထပ်မံကြိုးစားပါ။';
+  } finally {
     if (onDone) onDone();
-  };
+  }
 }
 
 function addBotMessageEmpty() {

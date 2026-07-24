@@ -66,6 +66,28 @@
           <div class="filter-label">မြို့</div>
           <select id="filter-city" class="form-control" onchange="applyFilters()">
             <option value="">အားလုံး</option>
+            <option value="ရန်ကုန်">ရန်ကုန်</option>
+            <option value="မန္တလေး">မန္တလေး</option>
+            <option value="နေပြည်တော်">နေပြည်တော်</option>
+            <option value="တောင်ကြီး">တောင်ကြီး</option>
+            <option value="ပုသိမ်">ပုသိမ်</option>
+            <option value="မော်လမြိုင်">မော်လမြိုင်</option>
+            <option value="စစ်ကိုင်း">စစ်ကိုင်း</option>
+            <option value="မြစ်ကြီးနား">မြစ်ကြီးနား</option>
+            <option value="ဘားအံ">ဘားအံ</option>
+            <option value="ထားဝယ်">ထားဝယ်</option>
+            <option value="မှော်ဘီ">မှော်ဘီ</option>
+            <option value="ချောက်">ချောက်</option>
+            <option value="မိုးကုတ်">မိုးကုတ်</option>
+            <option value="ပြည်">ပြည်</option>
+            <option value="ဟင်္သာတ">ဟင်္သာတ</option>
+            <option value="မြင်းခြံ">မြင်းခြံ</option>
+            <option value="ရွှေဘို">ရွှေဘို</option>
+            <option value="လှိုင်သာယာ">လှိုင်သာယာ</option>
+            <option value="တာမွေ">တာမွေ</option>
+            <option value="ဗိုလ်တထောင်">ဗိုလ်တထောင်</option>
+            <option value="မင်္ဂလာဒုံ">မင်္ဂလာဒုံ</option>
+            <option value="ရွှေဂုံတိုင်">ရွှေဂုံတိုင်</option>
           </select>
         </div>
         <div>
@@ -147,18 +169,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   } catch(e) {}
 
-  try {
-    var citiesRes = await Pets.cities();
-    if (citiesRes && citiesRes.ok) {
-      var citySel = document.getElementById('filter-city');
-      citiesRes.data.cities.forEach(function(c) {
-        var opt = document.createElement('option');
-        opt.value = c; opt.textContent = c;
-        citySel.appendChild(opt);
-      });
-    }
-  } catch(e) {}
-
   loadPets();
 });
 
@@ -202,17 +212,26 @@ async function loadPets() {
   var grid = document.getElementById('pets-grid');
   grid.innerHTML = '<div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>';
 
-  var q = { status: 'available', page: currentPage, limit: LIMIT };
   var search = document.getElementById('filter-search').value.trim();
   var type   = document.getElementById('filter-type').value;
   var city   = document.getElementById('filter-city').value;
   var fee    = document.getElementById('filter-fee').value;
 
-  if (search) q.search   = search;
-  if (type)   q.type     = type;
-  if (city)   q.city     = city;
+  var q = { status: 'available' };
+  
+  if (search) q.search = search;
+  if (type)   q.type   = type;
   if (fee)    q.fee_type = fee;
   if (currentGender) q.gender = currentGender;
+
+  // If a city is selected, fetch a larger batch to filter accurately on the client-side
+  if (city) {
+    q.limit = 500; 
+    q.page = 1;
+  } else {
+    q.limit = LIMIT;
+    q.page = currentPage;
+  }
 
   try {
     var res = await Pets.list(q);
@@ -220,8 +239,23 @@ async function loadPets() {
       grid.innerHTML = '<p style="color:var(--danger);grid-column:1/-1">အိမ်မွေးတိရစ္ဆာန်များ ဖွင့်၍မရပါ။</p>';
       return;
     }
+    
     var pets = res.data.pets || [];
     var total = res.data.total || 0;
+
+    if (city) {
+      pets = pets.filter(function(p) {
+        var petCity = (p.city || '').toString();
+        var petLocation = (p.location || '').toString();
+        // Check if the selected city name is inside either the 'city' or 'location' (address) string
+        return petCity.indexOf(city) !== -1 || petLocation.indexOf(city) !== -1;
+      });
+      total = pets.length;
+      
+      // Client-side pagination for the filtered results
+      var start = (currentPage - 1) * LIMIT;
+      pets = pets.slice(start, start + LIMIT);
+    }
 
     document.getElementById('result-count').textContent = total + ' အိမ်မွေးတိရစ္ဆာန်' + (total !== 1 ? 'များ' : '') + ' တွေ့ရှိသည်';
 
@@ -276,19 +310,25 @@ function petCardWithFav(pet, isFaved) {
       '</button>'
     : '';
 
-  var meta = (pet.pet_type_name || '') + 
-    (pet.breed ? ' · ' + pet.breed : '') + 
-    (pet.city || pet.location ? ' · ' + (pet.city || pet.location) : '');
+  var breed = pet.breed || '-';
+  var location = pet.city || pet.location || '-';
+
+  // Updated format as requested
+  var detailsHtml = 
+    '<div style="font-size:0.88rem;line-height:1.6;flex:1">' +
+      '<div style="margin-bottom:4px;"><span style="font-weight:600">အမည် :</span> ' + escapeHtml(pet.name || '-') + '</div>' +
+      '<div style="color:var(--text-secondary);margin-bottom:4px;"><span style="font-weight:600;color:var(--text-primary)">မျိုးစိတ် :</span> ' + escapeHtml(breed) + '</div>' +
+      '<div style="color:var(--text-secondary);"><span style="font-weight:600;color:var(--text-primary)">ဒေသ :</span> ' + escapeHtml(location) + '</div>' +
+    '</div>';
 
   return '<div class="pet-card" onclick="window.location.href=\'' + petDetailHref(petId) + '\'" style="cursor:pointer">' +
     imgHtml +
     '<div class="pet-card-body">' +
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
-        '<div class="pet-card-title">' + escapeHtml(pet.name) + '</div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
+        detailsHtml +
         favBtn +
       '</div>' +
-      '<div class="pet-card-meta">' + escapeHtml(meta) + '</div>' +
-      '<div class="pet-card-footer">' + fee + pill(pet.status) + '</div>' +
+      '<div class="pet-card-footer" style="margin-top:12px;">' + fee + pill(pet.status) + '</div>' +
     '</div>' +
   '</div>';
 }
@@ -336,7 +376,7 @@ function loadChatWidget() {
       '<div class="chat-widget-suggestions" id="widget-suggestions">' +
         '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">အိမ်မွေးတိရစ္ဆာန်တစ်ကောင်ကို ဘယ်လိုမွေးစားရမလဲ။</button>' +
         '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">ခွေးစောင့်ရှောက်နည်း အကြံပြုချက်များ</button>' +
-        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">ကြောင် အာဟာရ</button>' +
+        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">ကြောင်အဟာရပြည့်အောင် ဘာကျွေးရမလဲ</button>' +
       '</div>' +
       '<div class="chat-widget-input">' +
         '<textarea id="widget-input" placeholder="စာတိုရိုက်ထည့်ပါ..." rows="1" onkeydown="widgetHandleKey(event)" oninput="widgetAutoResize(this)"></textarea>' +
@@ -346,10 +386,13 @@ function loadChatWidget() {
       '</div>' +
     '</div>';
 
-  document.getElementById('support-fab').addEventListener('click', function() {
-    var badge = this.querySelector('.support-fab-badge');
-    if (badge) badge.style.display = 'none';
-  });
+  var fabBtn = document.getElementById('support-fab');
+  if (fabBtn) {
+    fabBtn.addEventListener('click', function() {
+      var badge = this.querySelector('.support-fab-badge');
+      if (badge) badge.style.display = 'none';
+    });
+  }
 }
 
 function toggleChatWidget() {
@@ -394,15 +437,24 @@ async function widgetSendMsg() {
 
   input.value = '';
   input.style.height = 'auto';
-  var sugg = document.getElementById('widget-suggestions');
-  if (sugg) sugg.style.display = 'none';
+  
+  var sug = document.getElementById('widget-suggestions');
+  if (sug) sug.style.display = 'none';
+  
   widgetWaiting = true;
 
   widgetAddUserMsg(msg);
   var botBubble = widgetAddBotBubble();
 
+  if (!botBubble) return;
+
+  // Show typing dots initially
+  botBubble.innerHTML = '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>';
+
   try {
     var streamUrl;
+    // Match the exact payload structure expected by your working file and backend
+    var bodyPayload = JSON.stringify({ messages: [{ role: 'user', content: msg }] });
 
     if (getToken()) {
       if (!widgetSessionId) {
@@ -411,54 +463,101 @@ async function widgetSendMsg() {
           widgetSessionId = sessRes.data.session.id;
         }
       }
-      streamUrl = '/api/chat/sessions/' + widgetSessionId + '/stream?message=' + encodeURIComponent(msg);
+      // Use relative URL, NOT localhost
+      streamUrl = '/api/chat/sessions/' + widgetSessionId + '/stream';
     } else {
-      streamUrl = '/api/chat/stream?message=' + encodeURIComponent(msg);
+      // Use relative URL, NOT localhost
+      streamUrl = '/api/chat/stream';
     }
 
+    // Use fetch API to allow POST request and Authorization Headers
     var token = getToken();
-    var fullUrl = token ? streamUrl + '&token=' + token : streamUrl;
+    var headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
 
-    botBubble.innerHTML = '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>';
+    const response = await fetch(streamUrl, {
+      method: 'POST',
+      headers: headers,
+      body: bodyPayload
+    });
 
-    var es = new EventSource(fullUrl);
-    var fullText = '';
-    var started = false;
-
-    es.onmessage = function(e) {
-      try {
-        var data = JSON.parse(e.data);
-        if (data.error) {
-          botBubble.innerHTML = 'တောင်းပန်ပါတယ်၊ အမှားတစ်ခု ဖြစ်ပွားခဲ့ပါတယ်။';
-          es.close();
-          widgetWaiting = false;
-          return;
-        }
-        if (data.token) {
-          if (!started) { botBubble.innerHTML = ''; started = true; }
-          fullText += data.token;
-          botBubble.innerHTML = widgetEscape(fullText);
-          widgetScrollDown();
-        }
-        if (data.done) {
-          es.close();
-          botBubble.innerHTML = widgetEscape(fullText);
-          widgetScrollDown();
-          widgetWaiting = false;
-        }
-      } catch(err) {}
-    };
-
-    es.onerror = function() {
-      es.close();
-      if (!started) botBubble.innerHTML = 'ချိတ်ဆက်မှု ပြတ်တောက်သွားပါတယ်။ ထပ်မံကြိုးစားပါ။';
+    if (!response.ok) {
+      const errText = await response.text();
+      botBubble.innerHTML = widgetEscape('တောင်းပန်ပါတယ်၊ အမှားတစ်ခု ဖြစ်ပွားခဲ့ပါတယ်: ' + errText);
       widgetWaiting = false;
-    };
+      return;
+    }
 
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let fullText = '';
+    let started = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n\n'); // SSE chunks separated by double newlines
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          try {
+            const parsed = JSON.parse(data);
+
+            if (parsed.error) {
+              botBubble.innerHTML = widgetEscape('အမှားတစ်ခု ဖြစ်ပွားခဲ့ပါတယ်: ' + parsed.error);
+              continue;
+            }
+
+            if (parsed.token) {
+              fullText += parsed.token;
+              var visibleText = widgetStripThinking(fullText);
+              if (visibleText.trim() && !started) {
+                botBubble.innerHTML = '';
+                started = true;
+              }
+              if (started) {
+                botBubble.innerHTML = widgetEscape(visibleText);
+                widgetScrollDown();
+              }
+            }
+
+            if (parsed.done) {
+              var finalVisible = widgetStripThinking(fullText);
+              if (finalVisible.trim()) {
+                botBubble.innerHTML = widgetEscape(finalVisible);
+              } else if (!started) {
+                botBubble.innerHTML = '<span style="color:var(--text-muted)">တုံ့ပြန်မှု မရရှိပါ။</span>';
+              }
+              widgetScrollDown();
+            }
+          } catch(err) { /* skip parse error */ }
+        }
+      }
+    }
   } catch(e) {
-    botBubble.innerHTML = 'တောင်းပန်ပါတယ်၊ တစ်ခုခု မှားယွင်းသွားပါတယ်။';
+    botBubble.innerHTML = 'ချိတ်ဆက်မှု ပြတ်တောက်သွားပါတယ်။ ထပ်မံကြိုးစားပါ။';
+  } finally {
     widgetWaiting = false;
   }
+}
+
+// Add the missing stripThinking function for the widget
+function widgetStripThinking(text) {
+  if (!text) return '';
+  let result = text.replace(/<think>[\s\S]*?<\/think>/g, '');
+  result = result.replace(/<think>[\s\S]*$/g, '');
+  result = result.replace(/<\/think>/g, '');
+  const partialRegex = /<\/?(t(h(i(n(k(>)?)?)?)?)?)?$/;
+  const match = result.match(partialRegex);
+  if (match && match[0] !== '<') {
+    result = result.substring(0, match.index);
+  }
+  return result;
 }
 
 function widgetAddUserMsg(text) {

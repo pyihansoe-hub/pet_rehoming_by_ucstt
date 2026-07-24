@@ -312,25 +312,6 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="verify-modal">
-  <div class="modal" style="max-width:400px;">
-    <div class="modal-header">
-      <h3>ငွေပေးချေမှု အတည်ပြုရန်</h3>
-      <button class="modal-close" onclick="closeModal('verify-modal')">x</button>
-    </div>
-    <div id="verify-alert"></div>
-    <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:16px;">သင်၏ငွေပေးချေမှုကို အတည်ပြုရန် ဂဏန်း ၄ လုံးကုဒ်ကို ထည့်ပါ။</p>
-    <div class="form-group">
-      <label>အတည်ပြုကုဒ်</label>
-      <input type="text" id="verify-code-input" class="form-control" placeholder="####" maxlength="4" inputmode="numeric" style="text-align:center;font-size:1.5rem;letter-spacing:12px;font-weight:bold;">
-    </div>
-    <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button class="btn btn-secondary" onclick="closeModal('verify-modal')">မလုပ်တော့ပါ</button>
-      <button class="btn btn-primary" onclick="confirmCodePayment()">အတည်ပြုမည်</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal-overlay" id="report-modal">
   <div class="modal">
     <div class="modal-header">
@@ -408,13 +389,6 @@ document.addEventListener('DOMContentLoaded', async function() {
       var val = e.target.value.replace(/\D/g, '').substring(0, 4);
       if (val.length >= 3) val = val.substring(0,2) + '/' + val.substring(2);
       e.target.value = val;
-    });
-  }
-  
-  var codeInput = document.getElementById('verify-code-input');
-  if (codeInput) {
-    codeInput.addEventListener('input', function(e) {
-      e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
     });
   }
 });
@@ -662,75 +636,16 @@ async function submitAdoption() {
         if (!/^\d{2}\/\d{2}$/.test(expiry)) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">ကျေးဇူးပြု၍ မှန်ကန်သော သက်တမ်းကုန်ဆုံးရက် (MM/YY) ထည့်ပါ။</div>'; return; }
         if (cvv.length < 3) { alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">ကျေးဇူးပြု၍ မှန်ကန်သော CVV ထည့်ပါ။</div>'; return; }
       }
-      processPayment(msg, feeType, feeAmount, btn);
-    } else {
-      if (localPayMode === 'phone') {
-        var phoneEl = document.getElementById('phone-' + selectedPayMethod);
-        if (phoneEl && phoneEl.value.trim() && !/^09\d{7,9}$/.test(phoneEl.value.trim())) {
-          alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">ကျေးဇူးပြု၍ မှန်ကန်သော ဖုန်းနံပါတ် (09xxxxxxxxx) ထည့်ပါ။</div>';
-          return;
-        }
-        closeModal('adopt-modal');
-        document.getElementById('verify-code-input').value = '';
-        document.getElementById('verify-alert').innerHTML = '';
-        openModal('verify-modal');
-        setTimeout(function() { document.getElementById('verify-code-input').focus(); }, 100);
-      } else {
-        processPayment(msg, feeType, feeAmount, btn);
+    } else if (localPayMode === 'phone') {
+      var phoneEl = document.getElementById('phone-' + selectedPayMethod);
+      if (phoneEl && phoneEl.value.trim() && !/^09\d{7,9}$/.test(phoneEl.value.trim())) {
+        alertEl.innerHTML = '<div class="alert alert-danger" style="font-size:0.84rem">ကျေးဇူးပြု၍ မှန်ကန်သော ဖုန်းနံပါတ် (09xxxxxxxxx) ထည့်ပါ။</div>';
+        return;
       }
     }
-    return;
   }
 
   processPayment(msg, feeType, feeAmount, btn);
-}
-
-async function confirmCodePayment() {
-  var code = document.getElementById('verify-code-input').value.trim();
-  var alertEl = document.getElementById('verify-alert');
-  
-  if (code !== '1234') {
-    alertEl.innerHTML = '<div class="alert alert-danger">ကုဒ် မှားယွင်းနေပါသည်။</div>';
-    return;
-  }
-
-  closeModal('verify-modal');
-  showToast('ငွေပေးချေမှု လုပ်ဆောင်နေသည်...', 'info');
-  
-  var msg = document.getElementById('adopt-message').value.trim();
-  var feeType = petData.fee_type;
-  var feeAmount = petData.adoption_fee;
-
-  try {
-    var res = await Adoption.request(petData.id, { message: msg || undefined });
-    if (!res || !res.ok) {
-      showToast((res && res.data && res.data.message) || 'တောင်းဆိုချက် တင်သွင်း၍မရပါ။', 'error');
-      return;
-    }
-    var requestId = res.data.request ? res.data.request.id : null;
-
-    if (feeType === 'paid' && feeAmount > 0 && requestId) {
-      try {
-        var breakdown = getServiceFeeBreakdown(feeAmount);
-        await Payments.simulate({
-          adoption_request_id: requestId,
-          amount: breakdown.baseFee,
-          owner_amount: breakdown.ownerAmount,
-          service_fee: breakdown.serviceFee,
-          method: selectedPayMethod,
-          description: 'Adoption fee for ' + petData.name
-        });
-      } catch(pErr) { 
-        console.error('Payment simulation skipped (demo mode):', pErr); 
-      }
-      await new Promise(function(resolve) { setTimeout(resolve, 1500); });
-    }
-
-    showToast('ငွေပေးချေမှု အောင်မြင်ပါသည်။ တောင်းဆိုချက် တင်သွင်းပြီးပါပြီ။', 'success');
-    setTimeout(function(){ window.location.href = p('adoption-requests.html?tab=mine'); }, 1500);
-  } catch(e) { 
-    showToast('တစ်ခုခု မှားယွင်းသွားသည်။', 'error');
-  }
 }
 
 async function processPayment(msg, feeType, feeAmount, btn) {

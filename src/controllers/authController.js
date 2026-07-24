@@ -37,7 +37,6 @@ const register = async (req, res) => {
     );
     const newUser = rows[0];
 
-    // ... (Keep your existing payment method insertion logic here exactly as it is) ...
     const pm = payment_method;
     if (pm.method_type === 'credit_card') {
       if (!pm.card_holder_name || !pm.card_last_four || !pm.card_expiry_month || !pm.card_expiry_year) {

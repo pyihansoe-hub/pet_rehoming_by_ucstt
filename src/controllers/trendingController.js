@@ -6,7 +6,7 @@ const getTrendingPets = async (req, res) => {
   const { limit = 8 } = req.query;
   try {
     const { rows } = await pool.query(
-      `SELECT p.id, p.name, p.fee_type, p.adoption_fee, p.status, p.location, p.city, p.views,
+      `SELECT p.id, p.name, p.breed, p.fee_type, p.adoption_fee, p.status, p.location, p.city, p.views,
               pt.name AS pet_type_name,
               u.name  AS owner_name,
               (SELECT url FROM pet_images WHERE pet_id=p.id AND is_primary=TRUE LIMIT 1) AS primary_image

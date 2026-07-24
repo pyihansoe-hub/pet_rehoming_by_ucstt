@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title></title>
+  <title>PetNest - အိမ်မွေးတိရစ္ဆာန်မွေးစားခြင်း</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="../css/style.css">
   <script>
@@ -47,7 +47,7 @@
 
 <div style="background:var(--bg-section);padding:48px 0">
   <div class="container">
-    <h2 style="text-align:center;margin-bottom:32px;font-size:1.5rem;font-weight:800">အသုံးပြုလမ်းညွန်</h2>
+    <h2 style="text-align:center;margin-bottom:32px;font-size:1.5rem;font-weight:800">အသုံးပြုလမ်းညွှန်</h2>
     <div class="grid-3">
       <div class="card" style="text-align:center">
         <div class="icon-box">1</div>
@@ -121,6 +121,53 @@ document.addEventListener('DOMContentLoaded', async function() {
   loadChatWidget();
 });
 
+// Custom Pet Card HTML to match pets.html styling
+function petCardHtml(pet) {
+  var petId = petIdOf(pet);
+
+  var img = null;
+  if (pet.images && pet.images[0] && pet.images[0].url) {
+    img = pet.images[0].url;
+  } else if (pet.primary_image) {
+    img = pet.primary_image;
+  }
+
+  var imgHtml = img
+    ? '<img class="pet-card-img" src="' + imgUrl(img) + '" alt="' + escapeHtml(pet.name) + '" loading="lazy" decoding="async" onerror="handleImgError(this)">' 
+    : '<div class="pet-card-placeholder" style="font-size:1rem">' + (pet.name ? pet.name.charAt(0).toUpperCase() : '?') + '</div>';
+
+  var fee = pet.fee_type === 'free'
+    ? '<span class="pill pill-free">အခမဲ့</span>'
+    : '<span class="pill pill-paid">' + fmtMoney(pet.adoption_fee) + '</span>';
+
+  // Fallback to pet_type_name if breed is missing from trending API
+  var breed = pet.breed || pet.breed_name || pet.pet_type_name || '-';
+  
+  // Extract just the township/city from the full address string
+  var rawLocation = pet.city || pet.location || '-';
+  var location = rawLocation;
+  if (rawLocation !== '-' && rawLocation.indexOf('၊') !== -1) {
+    var parts = rawLocation.split('၊');
+    // Usually the second part is the township (e.g., "လှိုင်မြို့နယ်")
+    location = parts[1] ? parts[1].trim() : parts[0].trim();
+  }
+
+  var detailsHtml = 
+    '<div style="font-size:0.88rem;line-height:1.6;flex:1">' +
+      '<div style="margin-bottom:4px;"><span style="font-weight:600">အမည် :</span> ' + escapeHtml(pet.name || '-') + '</div>' +
+      '<div style="color:var(--text-secondary);margin-bottom:4px;"><span style="font-weight:600;color:var(--text-primary)">မျိုးစိတ် :</span> ' + escapeHtml(breed) + '</div>' +
+      '<div style="color:var(--text-secondary);"><span style="font-weight:600;color:var(--text-primary)">ဒေသ :</span> ' + escapeHtml(location) + '</div>' +
+    '</div>';
+
+  return '<div class="pet-card" onclick="window.location.href=\'' + petDetailHref(petId) + '\'" style="cursor:pointer">' +
+    imgHtml +
+    '<div class="pet-card-body">' +
+      detailsHtml +
+      '<div class="pet-card-footer" style="margin-top:12px;">' + fee + pill(pet.status) + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
 function loadChatWidget() {
   var container = document.getElementById('chat-widget-container');
 
@@ -146,7 +193,7 @@ function loadChatWidget() {
       '<div class="chat-widget-suggestions" id="widget-suggestions">' +
         '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">အိမ်မွေးတိရစ္ဆာန်တစ်ကောင်ကို ဘယ်လိုမွေးစားရမလဲ။</button>' +
         '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">ခွေးစောင့်ရှောက်နည်း အကြံပြုချက်များ</button>' +
-        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">ကြောင် အာဟာရ</button>' +
+        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">ကြောင်အဟာရပြည့်အောင် ဘာကျွေးရမလဲ</button>' +
       '</div>' +
       '<div class="chat-widget-input">' +
         '<textarea id="widget-input" placeholder="စာတိုရိုက်ထည့်ပါ..." rows="1" onkeydown="widgetHandleKey(event)" oninput="widgetAutoResize(this)"></textarea>' +
@@ -204,8 +251,13 @@ async function widgetSendMsg() {
   widgetAddUserMsg(msg);
   var botBubble = widgetAddBotBubble();
 
+  // Show typing dots initially
+  botBubble.innerHTML = '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>';
+
   try {
     var streamUrl;
+    // Match the exact payload structure expected by your working file and backend
+    var bodyPayload = JSON.stringify({ messages: [{ role: 'user', content: msg }] });
 
     if (getToken()) {
       if (!widgetSessionId) {
@@ -214,54 +266,101 @@ async function widgetSendMsg() {
           widgetSessionId = sessRes.data.session.id;
         }
       }
-      streamUrl = 'http://localhost:3000/api/chat/sessions/' + widgetSessionId + '/stream?message=' + encodeURIComponent(msg);
+      // Use relative URL, NOT localhost
+      streamUrl = '/api/chat/sessions/' + widgetSessionId + '/stream';
     } else {
-      streamUrl = 'http://localhost:3000/api/chat/stream?message=' + encodeURIComponent(msg);
+      // Use relative URL, NOT localhost
+      streamUrl = '/api/chat/stream';
     }
 
+    // Use fetch API to allow POST request and Authorization Headers
     var token = getToken();
-    var fullUrl = token ? streamUrl + '&token=' + token : streamUrl;
+    var headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
 
-    botBubble.innerHTML = '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>';
+    const response = await fetch(streamUrl, {
+      method: 'POST',
+      headers: headers,
+      body: bodyPayload
+    });
 
-    var es = new EventSource(fullUrl);
-    var fullText = '';
-    var started = false;
-
-    es.onmessage = function(e) {
-      try {
-        var data = JSON.parse(e.data);
-        if (data.error) {
-          botBubble.innerHTML = 'တောင်းပန်ပါတယ်၊ အမှားတစ်ခု ဖြစ်ပွားခဲ့ပါတယ်။';
-          es.close();
-          widgetWaiting = false;
-          return;
-        }
-        if (data.token) {
-          if (!started) { botBubble.innerHTML = ''; started = true; }
-          fullText += data.token;
-          botBubble.innerHTML = widgetEscape(fullText);
-          widgetScrollDown();
-        }
-        if (data.done) {
-          es.close();
-          botBubble.innerHTML = widgetEscape(fullText);
-          widgetScrollDown();
-          widgetWaiting = false;
-        }
-      } catch(err) {}
-    };
-
-    es.onerror = function() {
-      es.close();
-      if (!started) botBubble.innerHTML = 'ချိတ်ဆက်မှု ပြတ်တောက်သွားပါတယ်။ ထပ်မံကြိုးစားပါ။';
+    if (!response.ok) {
+      const errText = await response.text();
+      botBubble.innerHTML = widgetEscape('တောင်းပန်ပါတယ်၊ အမှားတစ်ခု ဖြစ်ပွားခဲ့ပါတယ်: ' + errText);
       widgetWaiting = false;
-    };
+      return;
+    }
 
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let fullText = '';
+    let started = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n\n'); // SSE chunks separated by double newlines
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          try {
+            const parsed = JSON.parse(data);
+
+            if (parsed.error) {
+              botBubble.innerHTML = widgetEscape('အမှားတစ်ခု ဖြစ်ပွားခဲ့ပါတယ်: ' + parsed.error);
+              continue;
+            }
+
+            if (parsed.token) {
+              fullText += parsed.token;
+              var visibleText = widgetStripThinking(fullText);
+              if (visibleText.trim() && !started) {
+                botBubble.innerHTML = '';
+                started = true;
+              }
+              if (started) {
+                botBubble.innerHTML = widgetEscape(visibleText);
+                widgetScrollDown();
+              }
+            }
+
+            if (parsed.done) {
+              var finalVisible = widgetStripThinking(fullText);
+              if (finalVisible.trim()) {
+                botBubble.innerHTML = widgetEscape(finalVisible);
+              } else if (!started) {
+                botBubble.innerHTML = '<span style="color:var(--text-muted)">တုံ့ပြန်မှု မရရှိပါ။</span>';
+              }
+              widgetScrollDown();
+            }
+          } catch(err) { /* skip parse error */ }
+        }
+      }
+    }
   } catch(e) {
-    botBubble.innerHTML = 'တောင်းပန်ပါတယ်၊ တစ်ခုခု မှားယွင်းသွားပါတယ်။';
+    botBubble.innerHTML = 'ချိတ်ဆက်မှု ပြတ်တောက်သွားပါတယ်။ ထပ်မံကြိုးစားပါ။';
+  } finally {
     widgetWaiting = false;
   }
+}
+
+// Added to prevent <think> tags from showing up in the chat widget
+function widgetStripThinking(text) {
+  if (!text) return '';
+  let result = text.replace(/<think>[\s\S]*?<\/think>/g, '');
+  result = result.replace(/<think>[\s\S]*$/g, '');
+  result = result.replace(/<\/think>/g, '');
+  const partialRegex = /<\/?(t(h(i(n(k(>)?)?)?)?)?)?$/;
+  const match = result.match(partialRegex);
+  if (match && match[0] !== '<') {
+    result = result.substring(0, match.index);
+  }
+  return result;
 }
 
 function widgetAddUserMsg(text) {

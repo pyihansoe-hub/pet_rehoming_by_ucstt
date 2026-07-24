@@ -401,10 +401,10 @@ async function openAgreementModal(requestId) {
     }
     var a = res.data.agreement;
 
-    content.innerHTML =
-      '<div style="background:var(--bg-chat);padding:16px;border-radius:8px;margin-bottom:20px;font-size:0.9rem;color:var(--text-secondary);line-height:1.7;border:1px solid var(--border);">' +
-        (a.terms || 'ဤသဘောတူညီချက်ကို လက်မှတ်ရေးထိုးခြင်းဖြင့် နှစ်ဖက်စလုံးသည် မွေးစားခြင်းဆိုင်ရာ စည်းကမ်းချက်များကို သဘောတူပါသည်။ မွေးစားသူသည် ဘေးကင်းလုံခြုံပြီး ချစ်ခင်ယုယမှုရှိသော အိမ်တစ်ခု၊ လုံလောက်သော အစားအစာ၊ ရေနှင့် တိရစ္ဆာန်ဆေးကုသရေး စောင့်ရှောက်မှုတို့ကို ပေးအပ်ရန် သဘောတူပါသည်။ ပိုင်ရှင်သည် အိမ်မွေးတိရစ္ဆာန်၏ ကျန်းမာရေးနှင့် စရိုက်သဘာဝကို တိကျမှန်ကန်စွာ ဖော်ပြရန် သဘောတူပါသည်။') +
-      '</div>' +
+        content.innerHTML =
+      `<div style="background:var(--bg-chat);padding:16px;border-radius:8px;margin-bottom:20px;font-size:0.9rem;color:var(--text-secondary);line-height:1.7;border:1px solid var(--border);">
+  ${a.terms || 'ဤသဘောတူညီချက်ကို လက်မှတ်ရေးထိုးခြင်းဖြင့် နှစ်ဖက်စလုံးသည် မွေးစားခြင်းဆိုင်ရာ စည်းကမ်းချက်များကို သဘောတူပါသည်။ <br><br>မွေးစားသူသည် ဘေးကင်းလုံခြုံပြီး ချစ်ခင်ယုယမှုရှိသော အိမ်တစ်ခု၊ လုံလောက်သော အစားအစာ၊ ရေနှင့် တိရစ္ဆာန်ဆေးကုသရေး စောင့်ရှောက်မှုတို့ကို ပေးအပ်ရန် သဘောတူပါသည်။ <br>Adopter သည် ပိုင်ရှင်သတ်မှတ်ထားသောလိပ်စာတွင် ‌မွေးမြူမည့်တိရစ္ဆာန်ကို သွားရောက်ယူဆောင်နိုင်ရမည်။ တိရစ္ဆာန်ကို သယ်ဆောင်မည့်တာဝန်ကို ကိုယ့်ဘာသာစီစဉ်ရမည်။ <br><br>ပိုင်ရှင်သည် Adopter ထံမှ ထပ်မံ၍ အခကြေးငွေ (လုံးဝ) ယူခွင့်မရှိပါ။ ပိုင်ရှင်သည် အိမ်မွေးတိရစ္ဆာန်၏ ကျန်းမာရေးနှင့် စရိုက်သဘာဝကို တိကျမှန်ကန်စွာ ဖော်ပြရန် သဘောတူပါသည်။'}
+</div>` + // <--- ဤနေရာတွင် Backtick ထပ်ထည့်ပေးရပါမည်
       '<div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;">' +
         '<div style="display:flex;align-items:center;gap:8px;font-size:0.9rem;padding:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;flex:1;">' +
           (a.owner_agreed ? 'လက်မှတ်ရေးထိုးပြီး' : 'စောင့်ဆိုင်းဆဲ') + ' <strong>ပိုင်ရှင်</strong>' +

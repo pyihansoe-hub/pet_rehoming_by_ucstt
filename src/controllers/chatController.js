@@ -1,4 +1,3 @@
-
 const pool = require('../db/pool');
 const { chat, chatStream } = require('../services/qwen');
 
@@ -17,15 +16,17 @@ const chatOneShot = async (req, res) => {
 };
 
 // ── One-shot streaming ────────────────────────────────────────
-// GET /api/chat/stream?message=xxx
-// Frontend uses EventSource to receive tokens word by word
+// POST /api/chat/stream
 const chatOneShotStream = async (req, res) => {
-  const { message } = req.query;
+  // POST request မှ messages array ကို လှမ်းယူခြင်း
+  const { messages } = req.body;
+  const message = messages?.[0]?.content;
+
   if (!message?.trim()) return res.status(400).json({ message: 'Message is required.' });
 
   // SSE headers
   res.setHeader('Content-Type',  'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection',    'keep-alive');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
@@ -84,7 +85,6 @@ const getSessionMessages = async (req, res) => {
 };
 
 // POST /api/chat/sessions/:sessionId/messages
-// Standard (non-streaming) — saves history, returns full reply
 const sendMessage = async (req, res) => {
   const { sessionId } = req.params;
   const { message } = req.body;
@@ -96,19 +96,16 @@ const sendMessage = async (req, res) => {
     if (check.rows[0].user_id && check.rows[0].user_id !== req.user?.id)
       return res.status(403).json({ message: 'Not authorized.' });
 
-    // load history
     const { rows: history } = await pool.query(
       'SELECT role, content FROM chat_messages WHERE session_id=$1 ORDER BY created_at ASC',
       [sessionId]
     );
 
-    // save user message
     await pool.query(
       'INSERT INTO chat_messages (session_id, role, content) VALUES ($1,$2,$3)',
       [sessionId, 'user', message.trim()]
     );
 
-    // auto-title from first message
     if (!history.length) {
       const title = message.trim().slice(0, 60);
       await pool.query('UPDATE chat_sessions SET title=$1 WHERE id=$2', [title, sessionId]);
@@ -117,7 +114,6 @@ const sendMessage = async (req, res) => {
     const messages = [...history, { role: 'user', content: message.trim() }];
     const reply = await chat(messages);
 
-    // save assistant reply
     const { rows: saved } = await pool.query(
       'INSERT INTO chat_messages (session_id, role, content) VALUES ($1,$2,$3) RETURNING *',
       [sessionId, 'assistant', reply]
@@ -131,17 +127,20 @@ const sendMessage = async (req, res) => {
   }
 };
 
-// GET /api/chat/sessions/:sessionId/stream?message=xxx
-// Streaming version — sends tokens via SSE, saves to DB when done
+// ── Streaming per session ────────────────────────────────────
+// POST /api/chat/sessions/:sessionId/stream
 const sendMessageStream = async (req, res) => {
   const { sessionId } = req.params;
-  const { message }   = req.query;
+  
+  // POST request မှ messages array ကို လှမ်းယူခြင်း
+  const { messages: reqMessages } = req.body;
+  const message = reqMessages?.[0]?.content;
 
   if (!message?.trim()) return res.status(400).json({ message: 'Message is required.' });
 
   // SSE headers
   res.setHeader('Content-Type',  'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection',    'keep-alive');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();

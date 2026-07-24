@@ -60,7 +60,7 @@
         <hr class="divider">
         <h3 style="font-size:1.05rem;margin-bottom:10px">ငွေပေးချေမှု နည်းလမ်း</h3>
         <p style="color:#6b7a8d;font-size:0.82rem;margin-bottom:12px">
-          မွေးစားခနှင့် ငွေပြန်အမ်းခြင်းများအတွက် အသုံးပြုပါသည်။ သင်၏ကတ်အချက်အလက်များကို လုံခြုံစွာ သိမ်းဆည်းထားပါသည် (နောက်ဆုံး ဂဏန်း ၄ လုံးသာ)။
+          မွေးစားခနှင့် ငွေပြန်အမ်းခြင်းများအတွက် အသုံးပြုပါသည်။ 
         </p>
 
         <div class="form-group">
@@ -242,11 +242,11 @@ async function doRegister(event) {
   } else {
     var wName  = document.getElementById('wallet_name').value.trim();
     if (!phone) {
-      alertArea.innerHTML = '<div class="alert alert-danger">ပိုက်ဆံအိတ် ငွေပေးချေမှုများအတွက် ဖုန်းနံပါတ် လိုအပ်ပါသည်။</div>';
+      alertArea.innerHTML = '<div class="alert alert-danger">ပိုက်ဆံ ငွေပေးချေမှုများအတွက် ဖုန်းနံပါတ် လိုအပ်ပါသည်။</div>';
       return;
     }
     if (!wName) {
-      alertArea.innerHTML = '<div class="alert alert-danger">ပိုက်ဆံအိတ် အကောင့်ပိုင်ရှင် အမည် လိုအပ်ပါသည်။</div>';
+      alertArea.innerHTML = '<div class="alert alert-danger">ပိုက်ဆံ အကောင့်ပိုင်ရှင်အမည် လိုအပ်ပါသည်။</div>';
       return;
     }
     payment.wallet_phone        = phone;
@@ -305,11 +305,7 @@ async function verifyTOTP() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: registeredEmail, token: token })
     }).then(r => r.json());
-
-    // If your api.js has an Auth.verifyTOTP method, you can replace the above with:
-    // var res = await Auth.verifyTOTP({ email: registeredEmail, token: token });
-    // Adjust the below condition based on your api.js wrapper structure.
-
+    
     if (res && res.token) {
       saveAuth(res.token, res.user);
       showToast('ကြိုဆိုပါသည်၊ ' + res.user.name + '။', 'success');
