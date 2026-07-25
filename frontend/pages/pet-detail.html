@@ -110,9 +110,10 @@
                     <input type="number" id="log-weight" class="form-control" placeholder="မဖြည့်လည်းရပါသည်" step="0.1">
                   </div>
                   <div class="form-group">
-                    <label>ပြုလုပ်သည့်ရက်</label>
-                    <input type="date" id="log-next-due" class="form-control">
-                  </div>
+                  <label>ပြုလုပ်သည့်ရက်</label>
+  
+                      <input type="date" id="log-next-due" class="form-control">
+                    </div>
                 </div>
                 <div class="form-group">
                   <label>မှတ်စုများ</label>
@@ -352,6 +353,21 @@ var currentUser = getUser();
 var LOG_ICONS = { vaccination:'VAC', vet_visit:'VET', deworming:'DEW', weight:'WT', other:'LOG' };
 var selectedPayMethod = 'card';
 var localPayMode = 'qr';
+
+ // ယနေ့ရက်စွဲကို ရယူရန်
+  const today = new Date();
+  
+  // ရက်စွဲကို YYYY-MM-DD ပုံစံသို့ ပြောင်းရန်
+  const year = today.getFullYear();
+  // လ (Month) သည် 0 မှ စတင်သောကြောင့် +1 ပေါင်းပါသည်။ 10 ထက်ငယ်ပါက ရှေ့တွင် 0 ထည့်ပါသည်။
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  // ရက် (Day) 10 ထက်ငယ်ပါက ရှေ့တွင် 0 ထည့်ပါသည်။
+  const day = String(today.getDate()).padStart(2, '0');
+  
+  const maxDate = `${year}-${month}-${day}`;
+
+  // input field ၏ max attribute တွင် ယနေ့ရက်စွဲကို သတ်မှတ်ပေးခြင်း
+  document.getElementById("log-next-due").setAttribute("max", maxDate);
 
 function getServiceFeeBreakdown(baseFee) {
   var fee = parseFloat(baseFee) || 0;

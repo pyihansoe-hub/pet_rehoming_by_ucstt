@@ -24,7 +24,17 @@
     .mission-section h2 { font-size: 1.5rem; margin-bottom: 16px; border-left: 4px solid var(--accent); padding-left: 12px; }
     .mission-section p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 12px; }
 
-    .dev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 24px; }
+    /* Updated Grid Layout: 4 Columns */
+    .dev-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 24px; }
+    
+    /* Responsive design for smaller screens */
+    @media (max-width: 1024px) {
+      .dev-grid { grid-template-columns: repeat(2, 1fr); /* 2 columns on tablet */ }
+    }
+    @media (max-width: 600px) {
+      .dev-grid { grid-template-columns: 1fr; /* 1 column on mobile */ }
+    }
+
     .dev-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-align: center; transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; align-items: center; }
     .dev-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px var(--shadow-md); }
     
@@ -32,7 +42,7 @@
     
     .dev-card h3 { font-size: 1.2rem; margin-bottom: 4px; }
     .dev-card .role { color: var(--accent); font-weight: 600; font-size: 0.9rem; margin-bottom: 12px; display: block; }
-    .dev-card .bio { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; }
+    .dev-card .bio { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; min-height: 42px; /* Keeps card heights consistent even if bio is empty */ }
     
     .dev-socials { display: flex; gap: 10px; justify-content: center; margin-top: auto; }
     .dev-socials a { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--bg-muted); color: var(--text-secondary); transition: all 0.2s; }
@@ -71,113 +81,117 @@
         
         <!-- Developer 1 -->
         <div class="dev-card">
-          <img src="/images/dev1.jpg" alt="Developer 1" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <img src="images/dev1.jpg" alt="Developer 1" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
           <div class="dev-img" style="display:none;">D1</div>
-          <h3></h3>
-          <span class="role">Project Lead & Full Stack Developer</span>
-          <p class="bio">ပရောဂျက်的整体ဆန်းသစ်မှုနှင့် စနစ်တည်ဆောက်ရေးကို ဦးဆောင်သူ။</p>
+          <h3>မောင်ကောင်းခန့်မင်း</h3>
+          <span class="role">Backend Developer</span>
+          <p class="bio">Database နှင့် bug fixing</p>
           <div class="dev-socials">
-            <a href="#" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
-            <a href="#" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
-            <a href="https://outlook.live.com/mail/0/" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
+            <a href="https://t.me/KayroX52" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
+            <a href="https://github.com/kaungkhantmin521-dotcom" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
+            <a href="mailto:kaungkhantmin@ucstt.edu.mm" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
           </div>
         </div>
 
         <!-- Developer 2 -->
         <div class="dev-card">
-          <img src="/images/dev2.jpg" alt="Developer 2" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <img src="images/dev2.jpg" alt="Developer 2" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
           <div class="dev-img" style="display:none;">D2</div>
-          <h3></h3>
+          <h3>မောင်ပြည်ဟန်စိုး</h3>
           <span class="role">Frontend Developer</span>
-          <p class="bio">အသုံးပြုသူ အတွေ့အကြုံ (UI/UX) နှင့် ဝဘ်ဆိုက် ရှေ့ပိုင်းတည်ဆောက်ရေး။</p>
+          <p class="bio">RESTful API ‌များရေးခြင်းနှင့် business logic</p>
           <div class="dev-socials">
-            <a href="#" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
-            <a href="#" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
-            <a href="https://outlook.live.com/mail/0/" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
+            <a href="https://t.me/I_AM_BEYOND_BIRTHDAY" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
+            <a href="https://github.com/pyihansoe-hub" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
+            <a href="mailto:pyihansoe@ucstt.edu.mm" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
           </div>
         </div>
 
         <!-- Developer 3 -->
         <div class="dev-card">
-          <img src="/images/dev3.jpg" alt="Developer 3" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <img src="images/dev3.jpg" alt="Developer 3" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
           <div class="dev-img" style="display:none;">D3</div>
-          <h3></h3>
-          <span class="role">Backend Developer</span>
-          <p class="bio">ဆာဗာ ဆက်သွယ်ရေးနှင့် ဒေတာဘေ့စ် စီမံခန့်ခွဲမှု။</p>
+          <h3>မသဲစုလှိုင်</h3>
+          <span class="role">Frontend Developer</span>
+          <p class="bio">Api integration</p>
           <div class="dev-socials">
-            <a href="#" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
-            <a href="#" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
-            <a href="https://outlook.live.com/mail/0/" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
+            <a href="https://t.me/urfavv_uknow" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
+            <a href="https://github.com/thaesuh907-star" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
+            <a href="mailto:thaesuhlaing22@ucstt.edu.mm" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
           </div>
         </div>
 
         <!-- Developer 4 -->
         <div class="dev-card">
-          <img src="/images/dev4.jpg" alt="Developer 4" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <img src="images/dev4.jpg" alt="Developer 4" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
           <div class="dev-img" style="display:none;">D4</div>
-          <h3></h3>
-          <span class="role">UI/UX Designer</span>
-          <p class="bio">ဝဘ်ဆိုက် ဒီဇိုင်းဆွဲခြင်းနှင့် အသုံးပြုသူ အပြန်အလှန် ဆက်သွယ်မှု ဒီဇိုင်း။</p>
+          <h3>မအေးမြတ်ဘုန်းလွင်</h3>
+          <span class="role">Frontend</span>
+          <p class="bio">Design (UI အဓိက)</p>
           <div class="dev-socials">
-            <a href="#" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
-            <a href="#" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
-            <a href="https://outlook.live.com/mail/0/" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
+            <a href="https://t.me/Lwin1756" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
+            <a href="https://github.com/" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
+            <a href="mailto:ayemyatbhonelwin@ucstt.edu.mm" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
           </div>
         </div>
 
         <!-- Developer 5 -->
         <div class="dev-card">
-          <img src="/images/dev5.jpg" alt="Developer 5" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <img src="images/dev5.jpg" alt="Developer 5" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
           <div class="dev-img" style="display:none;">D5</div>
-          <h3></h3>
-          <span class="role">Database Administrator</span>
-          <p class="bio">ဒေတာများ လုံခြုံစွာ သိမ်းဆည်းခြင်းနှင့် စနစ် ထိန်းသိမ်းရေး။</p>
+          <h3>မဆုမြတ်ဗိုလ်</h3>
+          <span class="role">Data research </span>
+          <p class="bio"></p>
           <div class="dev-socials">
-            <a href="#" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
-            <a href="#" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
-            <a href="https://outlook.live.com/mail/0/" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
+            <a href="https://t.me/" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
+            <!-- <a href="https://github.com/" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
+             -->
+            <a href="mailto:hsumyatbo@ucstt.edu.mm" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
           </div>
         </div>
 
         <!-- Developer 6 -->
         <div class="dev-card">
-          <img src="/images/dev6.jpg" alt="Developer 6" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <img src="images/dev6.jpg" alt="Developer 6" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
           <div class="dev-img" style="display:none;">D6</div>
-          <h3></h3>
-          <span class="role">QA Engineer</span>
-          <p class="bio">စနစ်အမှားများ ရှာဖွေစစ်ဆေးခြင်းနှင့် အရည်အသွေး ထိန်းသိမ်းရေး။</p>
+          <h3>မဖြူဖြူစင်</h3>
+          <span class="role">Data research</span>
+          <p class="bio"></p>
           <div class="dev-socials">
-            <a href="#" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
-            <a href="#" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
-            <a href="https://outlook.live.com/mail/0/" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
+            <a href="https://t.me/Pphyu58" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
+            <!-- <a href="https://github.com/" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
+             -->
+            <a href="mailto:phyuphyusin@ucstt.edu.mm" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
           </div>
         </div>
 
         <!-- Developer 7 -->
         <div class="dev-card">
-          <img src="/images/dev7.jpg" alt="Developer 7" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <img src="images/dev7.jpg" alt="Developer 7" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
           <div class="dev-img" style="display:none;">D7</div>
-          <h3></h3>
-          <span class="role">Mobile Developer</span>
-          <p class="bio">မိုဘိုင်းတွန်းထုတ်မှု ဆက်သွယ်ရေးနှင့် API တိုးတက်မှု။</p>
+          <h3>မရတနာထွန်း</h3>
+          <span class="role">Data research</span>
+          <p class="bio"></p>
           <div class="dev-socials">
-            <a href="#" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
-            <a href="#" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
-            <a href="https://outlook.live.com/mail/0/" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
+            <a href="https://t.me/jewelkuu2342005" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
+            <!-- <a href="" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
+             -->
+            <a href="mailto:yadanarhtun@ucstt.edu.mm" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
           </div>
         </div>
 
         <!-- Developer 8 -->
         <div class="dev-card">
-          <img src="/images/dev8.jpg" alt="Developer 8" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <img src="images/dev8.jpg" alt="Developer 8" class="dev-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
           <div class="dev-img" style="display:none;">D8</div>
-          <h3></h3>
-          <span class="role">Content Creator & Marketing</span>
-          <p class="bio">ပလက်ဖောင်းကြော်ငြာမှုနှင့် အကြောင်းအရာ ဖန်တီးရေး။</p>
+          <h3>မကြယ်စင်လင်းလက်</h3>
+          <span class="role">Data research</span>
+          <p class="bio"></p>
           <div class="dev-socials">
-            <a href="#" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
-            <a href="#" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
-            <a href="https://outlook.live.com/mail/0/" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
+            <a href="https://t.me/KyalSin_01" title="Telegram"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>
+            <!-- <a href="#" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 2c-5.52 0-10 4.48-10 10 0 4.42 2.87 8.17 6.84 9.5.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.16.58.67.48 3.97-1.33 6.83-5.08 6.83-9.5 0-5.52-4.48-10-10-10z"/></svg></a>
+             -->
+            <a href="mailto:kyalsinlinlatt@ucstt.edu.mm" title="Outlook Mail"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></a>
           </div>
         </div>
 
