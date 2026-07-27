@@ -39,6 +39,7 @@
 <div id="mobile-menu" class="mobile-menu"></div>
 <div id="toast-container" class="toast-container"></div>
 
+
 <div class="page-wrap">
   <div class="container">
 
@@ -380,9 +381,10 @@ function loadChatWidget() {
         '</div>' +
       '</div>' +
       '<div class="chat-widget-suggestions" id="widget-suggestions">' +
-        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">အိမ်မွေးတိရစ္ဆာန်တစ်ကောင်ကို ဘယ်လိုမွေးစားရမလဲ။</button>' +
+        '<button class="suggestion-chip-sm" onclick="chatbotSearch(\'Dog\',\'ရန်ကုန်\',\'\')">ရန်ကုန်မှာ ခွေးလေးတွေ ရှိလား?</button>' +
+        '<button class="suggestion-chip-sm" onclick="chatbotSearch(\'Cat\',\'\',\'\')">ကြောင်လေးတွေ ပြပါ</button>' +
+        '<button class="suggestion-chip-sm" onclick="chatbotSearch(\'\',\'\',\'free\')">အခမဲ့ မွေးစားလို့ရတဲ့ အိမ်မွေးတိရစ္ဆာန်များ</button>' +
         '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">ခွေးစောင့်ရှောက်နည်း အကြံပြုချက်များ</button>' +
-        '<button class="suggestion-chip-sm" onclick="widgetSend(this.textContent)">ကြောင်အဟာရပြည့်အောင် ဘာကျွေးရမလဲ</button>' +
       '</div>' +
       '<div class="chat-widget-input">' +
         '<textarea id="widget-input" placeholder="စာတိုရိုက်ထည့်ပါ..." rows="1" onkeydown="widgetHandleKey(event)" oninput="widgetAutoResize(this)"></textarea>' +
@@ -416,6 +418,7 @@ function toggleChatWidget() {
 }
 
 var widgetWaiting = false;
+var botFiltersApplied = false;
 var widgetSessionId = null;
 
 function widgetHandleKey(e) {
@@ -434,7 +437,6 @@ function widgetSend(text) {
     widgetSendMsg();
   }
 }
-
 async function widgetSendMsg() {
   var input = document.getElementById('widget-input');
   if (!input) return;
@@ -459,7 +461,6 @@ async function widgetSendMsg() {
 
   try {
     var streamUrl;
-    // Match the exact payload structure expected by your working file and backend
     var bodyPayload = JSON.stringify({ messages: [{ role: 'user', content: msg }] });
 
     if (getToken()) {
@@ -469,14 +470,11 @@ async function widgetSendMsg() {
           widgetSessionId = sessRes.data.session.id;
         }
       }
-      // Use relative URL, NOT localhost
       streamUrl = '/api/chat/sessions/' + widgetSessionId + '/stream';
     } else {
-      // Use relative URL, NOT localhost
       streamUrl = '/api/chat/stream';
     }
 
-    // Use fetch API to allow POST request and Authorization Headers
     var token = getToken();
     var headers = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = 'Bearer ' + token;
@@ -499,13 +497,14 @@ async function widgetSendMsg() {
     let buffer = '';
     let fullText = '';
     let started = false;
+    let botFiltersApplied = false; // ADDED: Track if filters have been applied
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n\n'); // SSE chunks separated by double newlines
+      const lines = buffer.split('\n\n');
       buffer = lines.pop();
 
       for (const line of lines) {
@@ -521,7 +520,22 @@ async function widgetSendMsg() {
 
             if (parsed.token) {
               fullText += parsed.token;
-              var visibleText = widgetStripThinking(fullText);
+              
+              // --- ADDED: Check for filters JSON ---
+              if (!botFiltersApplied) {
+                var filterMatch = fullText.match(/<filters>([\s\S]*?)<\/filters>/);
+                if (filterMatch) {
+                  botFiltersApplied = true;
+                  try {
+                    var fJson = JSON.parse(filterMatch[1].trim());
+                    applyBotFilters(fJson);
+                  } catch(e) { console.error("Filter parse error:", e); }
+                }
+              }
+              // -------------------------------------
+
+              // CHANGED: Use widgetStripTags instead of widgetStripThinking
+              var visibleText = widgetStripTags(fullText);
               if (visibleText.trim() && !started) {
                 botBubble.innerHTML = '';
                 started = true;
@@ -533,7 +547,8 @@ async function widgetSendMsg() {
             }
 
             if (parsed.done) {
-              var finalVisible = widgetStripThinking(fullText);
+              // CHANGED: Use widgetStripTags instead of widgetStripThinking
+              var finalVisible = widgetStripTags(fullText);
               if (finalVisible.trim()) {
                 botBubble.innerHTML = widgetEscape(finalVisible);
               } else if (!started) {
@@ -552,17 +567,24 @@ async function widgetSendMsg() {
   }
 }
 
-// Add the missing stripThinking function for the widget
-function widgetStripThinking(text) {
+function widgetStripTags(text) {
   if (!text) return '';
   let result = text.replace(/<think>[\s\S]*?<\/think>/g, '');
   result = result.replace(/<think>[\s\S]*$/g, '');
-  result = result.replace(/<\/think>/g, '');
+  
+  // Strip complete and partial filters tags
+  result = result.replace(/<filters>[\s\S]*?<\/filters>/g, '');
+  result = result.replace(/<filters>[\s\S]*$/g, '');
+  
+  // Clean up partial tags
   const partialRegex = /<\/?(t(h(i(n(k(>)?)?)?)?)?)?$/;
   const match = result.match(partialRegex);
-  if (match && match[0] !== '<') {
-    result = result.substring(0, match.index);
-  }
+  if (match && match[0] !== '<') result = result.substring(0, match.index);
+  
+  const partialFilterRegex = /<\/?(f(i(l(t(e(r(s(>)?)?)?)?)?)?)?)?$/;
+  const matchF = result.match(partialFilterRegex);
+  if (matchF && matchF[0] !== '<') result = result.substring(0, matchF.index);
+  
   return result;
 }
 
@@ -613,7 +635,105 @@ function widgetEscape(text) {
   if (inList) html += '</ul>';
   return html || '<p>' + safe + '</p>';
 }
+// Function to apply search filters from the chatbot
+function chatbotSearch(typeName, city, fee) {
+  var typeSelect = document.getElementById('filter-type');
+  var typeVal = '';
+  
+  // Find the matching type ID from the dropdown
+  if (typeName) {
+    Array.from(typeSelect.options).forEach(function(opt) {
+      if (opt.text === typeName) typeVal = opt.value;
+    });
+  }
+  
+  // Apply values to the filter inputs
+  if (typeVal !== null) typeSelect.value = typeVal;
+  if (city !== null) document.getElementById('filter-city').value = city;
+  if (fee !== null) document.getElementById('filter-fee').value = fee;
+  
+  // Trigger the search function
+  applyFilters();
+  
+  // Close the chat widget so the user can see the results
+  var widget = document.getElementById('chat-widget');
+  if (widget) widget.classList.remove('open');
+  
+  // Scroll to the top of the pet grid
+  var grid = document.getElementById('pets-grid');
+  if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  
+  showToast('စစ်ထုတ်မှုများကို အသုံးပြု၍ ရှာဖွေလိုက်ပါပြီ!', 'info');
+}
+function applyBotFilters(f) {
+  if (!f) return;
+  var typeSelect = document.getElementById('filter-type');
+  var citySelect = document.getElementById('filter-city');
+  var feeSelect = document.getElementById('filter-fee');
+  var searchInput = document.getElementById('filter-search');
 
+  // 1. Match Type (Dog, Cat, Other)
+  if (f.type) {
+    var fType = String(f.type).toLowerCase();
+    Array.from(typeSelect.options).forEach(function(opt) {
+      if (opt.text.toLowerCase() === fType) {
+        typeSelect.value = opt.value;
+      }
+    });
+  }
+
+  // 2. Match City
+  if (f.city) {
+    var fCity = String(f.city).trim();
+    Array.from(citySelect.options).forEach(function(opt) {
+      if (opt.text === fCity) {
+        citySelect.value = opt.value;
+      }
+    });
+  }
+
+  // 3. Match Fee (free, paid)
+  if (f.fee) {
+    var fFee = String(f.fee).toLowerCase();
+    Array.from(feeSelect.options).forEach(function(opt) {
+      if (opt.value === fFee) {
+        feeSelect.value = opt.value;
+      }
+    });
+  }
+
+  // 4. Match Gender (male, female, unknown)
+  if (f.gender) {
+    var fGender = String(f.gender).toLowerCase();
+    document.querySelectorAll('[data-gender]').forEach(function(c){ c.classList.remove('active'); });
+    
+    var gChip = document.querySelector('[data-gender="' + fGender + '"]');
+    if (gChip) {
+      gChip.classList.add('active');
+      currentGender = fGender; // Update the global variable!
+    } else {
+      document.querySelector('[data-gender=""]').classList.add('active');
+      currentGender = '';
+    }
+  }
+
+  // 5. Match Name or Breed (Search Input)
+  if (f.search) {
+    var fSearch = String(f.search).trim();
+    searchInput.value = fSearch;
+  }
+  
+  // Trigger the search!
+  applyFilters();
+  
+  // Close chat widget so user can see results
+  var widget = document.getElementById('chat-widget');
+  if (widget) widget.classList.remove('open');
+  
+  // Scroll to grid
+  var grid = document.getElementById('pets-grid');
+  if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 // Initialize widget
 loadChatWidget();
 </script>

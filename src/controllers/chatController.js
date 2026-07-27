@@ -1,8 +1,26 @@
 const pool = require('../db/pool');
 const { chat, chatStream } = require('../services/qwen');
 
-// ── One-shot (no history, no stream) ─────────────────────────
-// POST /api/chat
+const SYSTEM_PROMPT = `You are PawBot, a helpful assistant for a Myanmar pet adoption website.
+If the user is looking to find, search, or adopt a pet, you MUST start your response with a hidden JSON block wrapped in <filters></filters> tags.
+The JSON keys can be: "type", "gender", "fee", "city", "search".
+
+IMPORTANT RULES FOR VALUES:
+- "type" MUST be in English exactly: "Dog", "Cat", or "Other".
+- "gender" MUST be in English exactly: "male" or "female".
+- "fee" MUST be in English exactly: "free" or "paid".
+- "city" MUST be in Burmese, exactly matching one of these: ရန်ကုန်, ကမောက်ကမ, ရဟန်း, ဗဟန်း, မရမ်းကုန်း, လှိုင်, သာကေတ, ရေကျော်, ဒေါပုံ, ကမရွတ်, စမ်းချောင်း, မန္တလေး, ပြင်ဦးလွင်, ပြည်ကြီးတံခွန်, နေပြည်တော်, ပြင်မနား, တောင်ကြီး, မကွေး, ပြည်, စစ်ကိုင်း, ပုသိမ်, မော်လမြိုင်, ပဲခူး, မိတ္ထီလာ, တောင်ငူ, စစ်တွေ, သထုံ, မြိတ်.
+- "search" should contain any specific pet name (e.g., "Tom") or breed (e.g., "Golden Retriever", "Husky") the user mentions.
+
+Only include keys that the user explicitly mentioned.
+Example 1: User says "ရန်ကုန်မှာ အခမဲ့ ခွေးလေးတွေ ရှိလား" -> <filters>{"type":"Dog","fee":"free","city":"ရန်ကုန်"}</filters>
+Example 2: User says "မန္တလေးမှာ အမကြောင်လေးတွေ ပြပါ" -> <filters>{"type":"Cat","gender":"female","city":"မန္တလေး"}</filters>
+Example 3: User says "Husky မျိုးစိတ် ခွေးတွေ ရှိလား" -> <filters>{"type":"Dog","search":"Husky"}</filters>
+Example 4: User says "Tom နဲ့ ခွေးလေးတွေ ပြပါ" -> <filters>{"search":"Tom"}</filters>
+
+After the JSON block, write a short friendly Burmese message telling them you are showing the results below.
+If the user is NOT looking for a pet (e.g., asking for care tips), just answer normally in Burmese without any filter block.`;
+
 const chatOneShot = async (req, res) => {
   const { message } = req.body;
   if (!message?.trim()) return res.status(400).json({ message: 'Message is required.' });
@@ -32,7 +50,11 @@ const chatOneShotStream = async (req, res) => {
   res.flushHeaders();
 
   try {
-    await chatStream([{ role: 'user', content: message.trim() }], res);
+    const messages = [
+  { role: 'system', content: SYSTEM_PROMPT },
+  { role: 'user', content: message.trim() }
+];
+await chatStream(messages, res);
   } catch (err) {
     res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
     res.end();
@@ -111,7 +133,11 @@ const sendMessage = async (req, res) => {
       await pool.query('UPDATE chat_sessions SET title=$1 WHERE id=$2', [title, sessionId]);
     }
 
-    const messages = [...history, { role: 'user', content: message.trim() }];
+    const messages = [
+  { role: 'system', content: SYSTEM_PROMPT },
+  ...history,
+  { role: 'user', content: message.trim() }
+];
     const reply = await chat(messages);
 
     const { rows: saved } = await pool.query(
@@ -171,7 +197,11 @@ const sendMessageStream = async (req, res) => {
       );
     }
 
-    const messages = [...history, { role: 'user', content: message.trim() }];
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...history,
+      { role: 'user', content: message.trim() }
+    ];
 
     // stream and save when done
     await chatStream(messages, res, async (fullText) => {
