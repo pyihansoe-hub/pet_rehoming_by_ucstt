@@ -49,17 +49,6 @@
               <option value="">အမျိုးအစား မရှိပါ</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>အခြေအနေ</label>
-            <div style="display:flex;gap:20px;padding-top:8px">
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem">
-                <input type="radio" name="status" value="draft" checked> မူကြမ်းအဖြစ် သိမ်းဆည်းမည်
-              </label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem">
-                <input type="radio" name="status" value="published"> ယခု တင်မည်
-              </label>
-            </div>
-          </div>
         </div>
         <div class="form-group">
           <label for="summary">အကျဉ်းချုပ်</label>
@@ -94,8 +83,7 @@
 
       <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
         <a href="/pages/blogs.html" class="btn btn-secondary">မလုပ်တော့ပါ</a>
-        <button class="btn btn-outline" id="draft-btn" onclick="saveBlog('draft')">မူကြမ်း သိမ်းဆည်းရန်</button>
-        <button class="btn btn-primary" id="publish-btn" onclick="saveBlog('published')">တင်ရန်</button>
+        <button class="btn btn-primary" id="publish-btn" onclick="saveBlog('draft')">တင်ရန် တောင်းဆိုရန်</button>
       </div>
 
     </div>
@@ -128,7 +116,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   editId = params.get('id');
   if (editId) {
     document.getElementById('page-title').textContent = 'ဆောင်းပါး ပြင်ဆင်ရန်';
-    document.getElementById('publish-btn').textContent = 'ပြင်ဆင်သိမ်းဆည်းရန်';
+    document.getElementById('publish-btn').textContent = 'ပြင်ဆင်တင်ရန် တောင်းဆိုရန်';
     loadForEdit(editId);
   }
 });
@@ -151,10 +139,6 @@ async function loadForEdit(id) {
   document.getElementById('summary').value = blog.summary || '';
   document.getElementById('content').value = blog.content || '';
   if (blog.category_id) document.getElementById('category').value = blog.category_id;
-
-  document.querySelectorAll('input[name="status"]').forEach(function(r) {
-    r.checked = r.value === (blog.status || 'draft');
-  });
 
   if (blog.cover_image_url) {
     document.getElementById('existing-cover-area').innerHTML =
@@ -184,18 +168,17 @@ function removeCoverPreview() {
 
 async function saveBlog(forceStatus) {
   var alertArea  = document.getElementById('alert-area');
-  var draftBtn   = document.getElementById('draft-btn');
   var publishBtn = document.getElementById('publish-btn');
   alertArea.innerHTML = '';
 
   var title   = document.getElementById('title').value.trim();
   var content = document.getElementById('content').value.trim();
-  var status  = forceStatus || document.querySelector('input[name="status"]:checked').value;
+  var status  = forceStatus; 
 
   if (!title)   { alertArea.innerHTML = '<div class="alert alert-danger">ခေါင်းစဉ် လိုအပ်ပါသည်။</div>';   return; }
   if (!content) { alertArea.innerHTML = '<div class="alert alert-danger">အကြောင်းအရာ လိုအပ်ပါသည်။</div>'; return; }
 
-  draftBtn.disabled = publishBtn.disabled = true;
+  publishBtn.disabled = true;
   publishBtn.textContent = 'သိမ်းဆည်းနေသည်...';
 
   var fd = new FormData();
@@ -224,17 +207,14 @@ async function saveBlog(forceStatus) {
         if (editId) {
           window.history.replaceState({}, '', '/pages/write-blog.html?id=' + editId);
           document.getElementById('page-title').textContent = 'ဆောင်းပါး ပြင်ဆင်ရန်';
-          document.getElementById('publish-btn').textContent = 'ပြင်ဆင်သိမ်းဆည်းရန်';
+          document.getElementById('publish-btn').textContent = 'ပြင်ဆင်တင်ရန် တောင်းဆိုရန်';
         }
       }
 
-      showToast(status === 'published' ? 'ဆောင်းပါး တင်ပြီးပါပြီ။' : 'မူကြမ်း သိမ်းဆည်းပြီးပါပြီ။', 'success');
+      showToast('တင်ရန် တောင်းဆိုပြီးပါပြီ။ စိစစ်နေသည်။', 'success');
+      
+      setTimeout(function(){ window.location.href = '/pages/blogs.html'; }, 500);
 
-      if (status === 'published') {
-        setTimeout(function(){ window.location.href = '/pages/blogs.html'; }, 500);
-      } else {
-        alertArea.innerHTML = '<div class="alert alert-success">မူကြမ်း သိမ်းဆည်းပြီးပါပြီ။</div>';
-      }
     } else {
       alertArea.innerHTML = '<div class="alert alert-danger">' + (res.data.message || 'သိမ်းဆည်း၍မရပါ။') + '</div>';
     }
@@ -242,8 +222,8 @@ async function saveBlog(forceStatus) {
     alertArea.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။ ထပ်မံကြိုးစားပါ။</div>';
   }
 
-  draftBtn.disabled = publishBtn.disabled = false;
-  publishBtn.textContent = editId ? 'ပြင်ဆင်သိမ်းဆည်းရန်' : 'တင်ရန်';
+  publishBtn.disabled = false;
+  publishBtn.textContent = editId ? 'ပြင်ဆင်တင်ရန် တောင်းဆိုရန်' : 'တင်ရန် တောင်းဆိုရန်';
 }
 </script>
 </body>

@@ -240,10 +240,10 @@
         </div>
         <div class="search-filter-row">
           <input type="text" id="blog-search" class="form-control" placeholder="ခေါင်းစဉ်ဖြင့် ရှာဖွေရန်..." oninput="debounceBlogs()">
-          <select id="blog-status-filter" class="form-control" style="width:160px" onchange="loadAdminBlogs()">
+                    <select id="blog-status-filter" class="form-control" style="width:160px" onchange="loadAdminBlogs()">
             <option value="">အခြေအနေအားလုံး</option>
             <option value="published">တင်ပြီး</option>
-            <option value="draft">မူကြမ်း</option>
+            <option value="draft">ဆိုင်းငံ့ဆဲ</option>
             <option value="archived">သိမ်းဆည်းထားသည်</option>
           </select>
         </div>
@@ -404,7 +404,7 @@ async function loadDashboard() {
       statCard('', Object.values(s.pets).reduce(function(a,b){ return a+b; }, 0), 'စုစုပေါင်း အိမ်မွေးတိရစ္ဆာန်များ', (s.pets.available||0) + ' ရရှိနိုင်သည်') +
       statCard('', Object.values(s.adoptions).reduce(function(a,b){ return a+b; }, 0), 'စုစုပေါင်း မွေးစားခြင်းများ', (s.adoptions.approved||0) + ' အတည်ပြုပြီး') +
       statCard('', 'ငွေပေးချေမှု ' + (s.payments.completed ? s.payments.completed.count : 0) + ' ခု') +
-      statCard('', (s.blogs.published||0), 'တင်ထားသော ဆောင်းပါးများ', (s.blogs.draft||0) + ' မူကြမ်းများ') +
+      statCard('', (s.blogs.published||0), 'တင်ထားသော ဆောင်းပါးများ', (s.blogs.draft||0) + ' ဆိုင်းငံ့ဆဲများ') +
       statCard('', s.followups||0, 'နောက်ဆက်တွဲများ တင်သွင်းပြီး', 'မွေးစားပြီးနောက် စောင့်ကြည့်ခြင်း') +
       statCard('', s.reports.pending||0, 'ဆိုင်းငံ့ဆဲ တိုင်ကြားချက်များ', 'ပြန်လည်သုံးသပ်ရန် လိုအပ်သည်', s.reports.pending > 0 ? 'var(--danger-bg)' : null) +
       statCard('', s.users.admins||0, 'အက်ဒမင်များ', 'ပလက်ဖောင်း စီမံခန့်ခွဲသူများ');
@@ -649,16 +649,22 @@ async function loadAdminBlogs() {
       '<th>ခေါင်းစဉ်</th><th>စာရေးသူ</th><th>အမျိုးအစား</th><th>အခြေအနေ</th><th>ကြည့်ရှုမှုများ</th><th>ရက်စွဲ</th><th>လုပ်ဆောင်ချက်များ</th>' +
     '</tr></thead><tbody>' +
     blogs.map(function(b) {
+      // Map the backend 'draft' to 'Pending' just for displaying
+      var displayStatus = b.status === 'draft' ? 'pending' : b.status;
+      
       return '<tr>' +
         '<td style="max-width:220px"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:bold">' + b.title + '</div></td>' +
         '<td style="color:#6b7a8d;font-size:0.84rem">' + (b.author_name||'\u2014') + '</td>' +
         '<td style="color:#6b7a8d;font-size:0.82rem">' + (b.category_name||'\u2014') + '</td>' +
-        '<td>' + pill(b.status) + '</td>' +
+        '<td>' + pill(displayStatus) + '</td>' +
         '<td style="color:#6b7a8d">' + (b.views||0) + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + fmtDate(b.created_at) + '</td>' +
         '<td><div class="actions">' +
           '<select onchange="changeBlogStatus(' + b.id + ',this.value)" class="form-control" style="padding:4px 8px;font-size:0.78rem;width:120px">' +
-            ['published','draft','archived'].map(function(s){ return '<option value="' + s + '"' + (b.status===s?' selected':'') + '>' + s + '</option>'; }).join('') +
+            ['published','draft','archived'].map(function(s){ 
+              var label = s === 'draft' ? 'pending' : s; 
+              return '<option value="' + s + '"' + (b.status===s?' selected':'') + '>' + label + '</option>'; 
+            }).join('') +
           '</select>' +
           '<a href="/pages/blog-detail.html?slug=' + b.slug + '" class="btn btn-outline btn-sm" target="_blank">ကြည့်ရှုရန်</a>' +
           '<button onclick="deleteAdminBlog(' + b.id + ',\'' + (b.title||'').replace(/'/g,"\\'") + '\')" class="btn btn-danger btn-sm">ဖျက်ရန်</button>' +

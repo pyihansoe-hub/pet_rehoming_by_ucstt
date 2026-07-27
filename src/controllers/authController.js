@@ -136,22 +136,12 @@ const login = async (req, res) => {
     if (!user || !(await bcrypt.compare(password, user.password)))
       return res.status(401).json({ message: 'Invalid email or password.' });
 
-    // If user has 2FA enabled, ask for TOTP code instead of logging in immediately
-    if (user.two_factor_enabled) {
-      return res.status(200).json({ 
-        message: '2FA required.', 
-        requireTwoFactor: true,
-        email: user.email 
-      });
-    }
-
     const { password: _, ...safeUser } = user;
     res.json({ message: 'Login successful.', token: signToken(user.id), user: safeUser });
   } catch (err) {
     res.status(500).json({ message: 'Server error.', error: err.message });
   }
 };
-
 // GET /api/auth/2fa/setup
 const setup2FA = async (req, res) => {
   try {
