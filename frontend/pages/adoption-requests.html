@@ -183,7 +183,7 @@ async function loadMine() {
       } else if (r.status === 'approved') {
         alertHtml = '<div class="pay-alert" style="background:var(--success-bg); border-color:var(--success-border)"><div class="pay-alert-text"><h4 style="color:var(--success-text)">အတည်ပြုပြီးပါပြီ။</h4><p>သင်၏တောင်းဆိုချက် အတည်ပြုပြီးပါပြီ။ အိမ်မွေးတိရစ္ဆာန်ကို သွားရောက်ကြိုယူရန် ပိုင်ရှင်နှင့် ယခု စာတိုပေးပို့နိုင်ပါပြီ။</p></div></div>';
         actions += '<a href="/pages/messages.html" class="btn btn-primary btn-sm">ပိုင်ရှင်ထံ စာတိုပေးပို့ရန်</a>';
-        actions += '<button onclick="openAgreementModal(' + r.id + ')" class="btn btn-outline btn-sm">သဘောတူညီချက် ကြည့်ရှုရန်</button>';
+        actions += '<button onclick="openAgreementModal(' + r.id + ', \'adopter\')" class="btn btn-outline btn-sm">သဘောတူညီချက် ကြည့်ရှုရန်</button>';
         actions += '<button onclick="openFollowupModal(' + r.id + ')" class="btn btn-outline btn-sm">နောက်ဆက်တွဲ တင်သွင်းရန်</button>';
         actions += '<button onclick="viewFollowups(' + r.id + ', ' + petId + ')" class="btn btn-outline btn-sm">မှတ်တမ်းများ ကြည့်ရှုရန်</button>';
       } else if (r.status === 'rejected') {
@@ -232,7 +232,8 @@ async function loadReceived() {
       } else if (r.status === 'approved') {
         statusNote = '<div style="margin-bottom:14px;padding:10px;background:var(--success-bg);border-radius:8px;font-size:0.86rem;color:var(--success-text);border:1px solid var(--success-border);">အတည်ပြုပြီးပါပြီ။ မွေးစားသူနှင့် ယခု စာတိုပေးပို့နိုင်ပါပြီ။</div>';
         actionsHtml = '<a href="/pages/messages.html" class="btn btn-primary btn-sm">မွေးစားသူထံ စာတိုပေးပို့ရန်</a>' +
-                      '<button onclick="openAgreementModal(' + r.id + ')" class="btn btn-outline btn-sm">သဘောတူညီချက် ကြည့်ရှုရန်</button>' +
+                      // CHANGED: Added 'owner' parameter here
+                      '<button onclick="openAgreementModal(' + r.id + ', \'owner\')" class="btn btn-outline btn-sm">သဘောတူညီချက် ကြည့်ရှုရန်</button>' +
                       '<button onclick="viewFollowups(' + r.id + ', ' + petId + ')" class="btn btn-outline btn-sm">နောက်ဆက်တွဲ များ ကြည့်ရှုရန်</button>';
       } else if (r.status === 'rejected') {
         statusNote = '<div style="margin-bottom:14px;padding:10px;background:var(--danger-bg);border-radius:8px;font-size:0.86rem;color:var(--danger-text);border:1px solid var(--danger-border);">ငြင်းပယ်ထားသည်။</div>';
@@ -383,9 +384,14 @@ async function submitFollowup() {
   } catch(e) { alertEl.innerHTML = '<div class="alert alert-danger">တစ်ခုခု မှားယွင်းသွားသည်။</div>'; }
   btn.disabled = false; btn.textContent = 'တင်သွင်းရန်';
 }
+var activeFollowupId = null;
+var activeAgreementId = null;
+var activeRole = null; // Added to track who is viewing
 
-async function openAgreementModal(requestId) {
+async function openAgreementModal(requestId, role) {
   activeAgreementId = requestId;
+  activeRole = role; // 'adopter' or 'owner'
+  
   var content = document.getElementById('agreement-content');
   var agreeBtn = document.getElementById('agree-btn');
   content.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
@@ -401,10 +407,10 @@ async function openAgreementModal(requestId) {
     }
     var a = res.data.agreement;
 
-        content.innerHTML =
+    content.innerHTML =
       `<div style="background:var(--bg-chat);padding:16px;border-radius:8px;margin-bottom:20px;font-size:0.9rem;color:var(--text-secondary);line-height:1.7;border:1px solid var(--border);">
-  ${a.terms || 'ဤသဘောတူညီချက်ကို လက်မှတ်ရေးထိုးခြင်းဖြင့် နှစ်ဖက်စလုံးသည် မွေးစားခြင်းဆိုင်ရာ စည်းကမ်းချက်များကို သဘောတူပါသည်။ <br><br>မွေးစားသူသည် ဘေးကင်းလုံခြုံပြီး ချစ်ခင်ယုယမှုရှိသော အိမ်တစ်ခု၊ လုံလောက်သော အစားအစာ၊ ရေနှင့် တိရစ္ဆာန်ဆေးကုသရေး စောင့်ရှောက်မှုတို့ကို ပေးအပ်ရန် သဘောတူပါသည်။ <br>Adopter သည် ပိုင်ရှင်သတ်မှတ်ထားသောလိပ်စာတွင် ‌မွေးမြူမည့်တိရစ္ဆာန်ကို သွားရောက်ယူဆောင်နိုင်ရမည်။ တိရစ္ဆာန်ကို သယ်ဆောင်မည့်တာဝန်ကို ကိုယ့်ဘာသာစီစဉ်ရမည်။ <br><br>ပိုင်ရှင်သည် Adopter ထံမှ ထပ်မံ၍ အခကြေးငွေ (လုံးဝ) ယူခွင့်မရှိပါ။ ပိုင်ရှင်သည် အိမ်မွေးတိရစ္ဆာန်၏ ကျန်းမာရေးနှင့် စရိုက်သဘာဝကို တိကျမှန်ကန်စွာ ဖော်ပြရန် သဘောတူပါသည်။'}
-</div>` + // <--- ဤနေရာတွင် Backtick ထပ်ထည့်ပေးရပါမည်
+        ${a.terms || 'ဤသဘောတူညီချက်ကို လက်မှတ်ရေးထိုးခြင်းဖြင့် နှစ်ဖက်စလုံးသည် မွေးစားခြင်းဆိုင်ရာ စည်းကမ်းချက်များကို သဘောတူပါသည်။ <br><br>မွေးစားသူသည် ဘေးကင်းလုံခြုံပြီး ချစ်ခင်ယုယမှုရှိသော အိမ်တစ်ခု၊ လုံလောက်သော အစားအစာ၊ ရေနှင့် တိရစ္ဆာန်ဆေးကုသရေး စောင့်ရှောက်မှုတို့ကို ပေးအပ်ရန် သဘောတူပါသည်။ <br>Adopter သည် ပိုင်ရှင်သတ်မှတ်ထားသောလိပ်စာတွင် ‌မွေးမြူမည့်တိရစ္ဆာန်ကို သွားရောက်ယူဆောင်နိုင်ရမည်။ တိရစ္ဆာန်ကို သယ်ဆောင်မည့်တာဝန်ကို ကိုယ့်ဘာသာစီစဉ်ရမည်။ <br><br>ပိုင်ရှင်သည် Adopter ထံမှ ထပ်မံ၍ အခကြေးငွေ (လုံးဝ) ယူခွင့်မရှိပါ။ ပိုင်ရှင်သည် အိမ်မွေးတိရစ္ဆာန်၏ ကျန်းမာရေးနှင့် စရိုက်သဘာဝကို တိကျမှန်ကန်စွာ ဖော်ပြရန် သဘောတူပါသည်။'}
+      </div>` +
       '<div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;">' +
         '<div style="display:flex;align-items:center;gap:8px;font-size:0.9rem;padding:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;flex:1;">' +
           (a.owner_agreed ? 'လက်မှတ်ရေးထိုးပြီး' : 'စောင့်ဆိုင်းဆဲ') + ' <strong>ပိုင်ရှင်</strong>' +
@@ -417,13 +423,17 @@ async function openAgreementModal(requestId) {
       '</div>' +
       (a.owner_agreed && a.adopter_agreed ? '<div class="alert alert-success">နှစ်ဖက်စလုံး လက်မှတ်ရေးထိုးပြီးပါပြီ။ မွေးစားခြင်း အပြီးသတ်ပါပြီ။</div>' : '');
 
-    if (a.owner_agreed && a.adopter_agreed) agreeBtn.style.display = 'none';
+    // HIDE BUTTON IF ALREADY SIGNED BY THIS USER OR BOTH SIGNED
+    if ((activeRole === 'owner' && a.owner_agreed) || (activeRole === 'adopter' && a.adopter_agreed) || (a.owner_agreed && a.adopter_agreed)) {
+      agreeBtn.style.display = 'none';
+    } else {
+      agreeBtn.style.display = 'inline-block';
+    }
   } catch(e) {
     content.innerHTML = '<div class="alert alert-danger">သဘောတူညီချက် ဖွင့်၍မရပါ။</div>';
     agreeBtn.style.display = 'none';
   }
 }
-
 async function signAgreement() {
   if (!activeAgreementId) return;
   var btn = document.getElementById('agree-btn');
