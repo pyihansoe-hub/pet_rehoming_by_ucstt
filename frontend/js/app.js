@@ -265,13 +265,13 @@ function renderNavbar() {
           '<a href="' + p('blogs.html') + '">ဆောင်းပါးများ</a>' +
           '<a href="' + p('chat.html') + '">PawBot</a>' +
           '<a href="' + p('messages.html') + '">မက်ဆေ့ခ်ျများ</a>' +
+          '<a href="' + p('adoption-requests.html') + '">အခြေအနေ</a>' +
           (isLoggedIn ? 
             '<div class="nav-dropdown">' +
               '<a href="javascript:void(0)" class="dropbtn">နောက်ထပ်▾</a>' +
               '<div class="dropdown-content">' +
                 '<a href="' + p('my-pets.html') + '">ကျွန်ုပ်တင်ထားသော အိမ်မွေးတိရစ္ဆာန်များ</a>' +
                 '<a href="' + p('rehomed-pets.html') + '">မွေးစားလိုက်သော အိမ်မွေးတိရစ္ဆာန်များ</a>' +
-                '<a href="' + p('adoption-requests.html') + '">အခြေအနေနှင့် တောင်းဆိုချက်</a>' +
                 '<a href="' + p('favorites.html') + '">အကြိုက်ဆုံးများ</a>' +
                 '<a href="' + p('about-us.html') + '">ကျွန်ုပ်တို့အကြောင်း</a>' +
                 (user && !user.two_factor_enabled ? '<a href="' + p('setup-2fa.html') + '">Enable 2FA</a>' : '') +
@@ -316,8 +316,8 @@ function renderNavbar() {
     '<a href="' + p('blogs.html') + '">ဆောင်းပါးများ</a>' +
     '<a href="' + p('chat.html') + '">PawBot</a>' +
     '<a href="' + p('messages.html') + '">မက်ဆေ့ခ်ျများ</a>' +
+    '<a href="' + p('adoption-requests.html') + '">အခြေအနေများ</a>' +
     '<a href="' + p('my-pets.html') + '">ကျွန်ုပ်တင်ထားသော အိမ်မွေးတိရစ္ဆာန်များ</a>' +
-    (isLoggedIn ? '<a href="' + p('adoption-requests.html') + '">အခြေအနေနှင့် တောင်းဆိုချက်</a>' : '') +
     (isLoggedIn ? '<a href="' + p('favorites.html') + '">အကြိုက်ဆုံးများ</a>' : '') +
     (isLoggedIn && user && !user.two_factor_enabled ? '<a href="' + p('setup-2fa.html') + '">Enable 2FA</a>' : '') +
     (isLoggedIn ? '<a href="' + p('profile.html') + '">ပရိုဖိုင်</a>' : '') +
@@ -378,7 +378,7 @@ function renderFooter() {
       '<div class="footer-inner">' +
         '<div>' +
           '<div class="footer-brand"></div>' +
-          '<p class="footer-desc">PetNet By UCSTT</p>' +
+          '<p class="footer-desc">PetNest By UCSTT</p>' +
         '</div>' +
         '<div class="footer-col"><h4>ရှာဖွေရန်</h4>' +
           '<a href="' + p('pets.html') + '">အိမ်မွေးတိရစ္ဆာန်များ ရှာဖွေရန်</a>' +

@@ -126,15 +126,15 @@
 
           <div style="display:flex; align-items:center; margin:24px 0; padding:16px; background:var(--bg-chat); border-radius:10px;">
             <button id="like-btn" onclick="togglePetLike()" style="display:flex; align-items:center; background:none; border:1.5px solid var(--border); padding:8px 16px; border-radius:8px; font-size:0.88rem; font-weight:bold; cursor:pointer; color:var(--text-secondary); margin-right:16px;">
-              <span id="like-icon" style="margin-right:6px;">ကြိုက်နှစ်သက်သည်</span> <span id="like-count">0</span> ကြိုက်နှစ်သက်မှုများ
+              <span id="like-icon" style="margin-right:6px;"></span> <span id="like-count">0 </span> ❤️
             </button>
-            <span style="font-size:0.84rem; color:var(--text-muted);">ဤအိမ်မွေးတိရစ္ဆာန်ကို ကြိုက်နှစ်သက်ပါသလား။ နှလုံးသားလေး ပေးခဲ့ပါ။</span>
+            <span style="font-size:0.84rem; color:var(--text-muted);">အိမ်မွေးတိရစ္ဆာန်ကို ကြိုက်နှစ်သက်ပါသလား like ပေးခဲ့လို့ရပါတယ်</span>
           </div>
 
           <hr class="divider">
 
           <div>
-            <h3 style="margin-bottom:16px;">မေးခွန်းများနှင့် မှတ်ချက်များ <span id="comment-count" style="font-size:0.9rem; color:var(--text-muted); font-weight:normal;"></span></h3>
+            <h3 style="margin-bottom:16px;">Comments <span id="comment-count" style="font-size:0.9rem; color:var(--text-muted); font-weight:normal;"></span></h3>
             <div id="comments-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
             <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border);">
               <div id="comment-login-prompt" class="hidden" style="margin-bottom:16px;">
@@ -142,7 +142,7 @@
               </div>
               <div id="comment-form" class="hidden">
                 <div id="comment-alert"></div>
-                <textarea id="comment-input" class="form-control" rows="3" placeholder="ဤအိမ်မွေးတိရစ္ဆာန်နှင့် ပတ်သက်၍ မေးခွန်းမေးပါ..."></textarea>
+                <textarea id="comment-input" class="form-control" rows="3" placeholder="ထင်မြင်ချက်ရေးရန်..."></textarea>
                 <div style="display:flex; justify-content:flex-end; margin-top:8px;">
                   <button class="btn btn-primary btn-sm" onclick="submitPetComment()">မှတ်စာရန်</button>
                 </div>
@@ -776,7 +776,7 @@ async function togglePetLike() {
       var liked = res.data.liked;
       var current = parseInt(document.getElementById('like-count').textContent) || 0;
       var newCount = liked ? current + 1 : Math.max(0, current - 1);
-      btn.innerHTML = (liked ? '❤️' : '🤍') + ' <span id="like-count" style="margin-left:6px;">' + newCount + '</span>  ကြိုက်နှစ်သက်မှုများ';
+      btn.innerHTML = (liked ? '❤️' : '🤍') + ' <span id="like-count" style="margin-left:6px;">' + newCount + '</span>  ';
     }
   } catch(e) { showToast('ကြိုက်နှစ်သက်မှု ပြောင်းလဲ၍မရပါ။', 'error'); }
 }
@@ -788,7 +788,7 @@ async function loadPetComments(id) {
     if (!res || !res.ok) { list.innerHTML = '<p style="color:var(--danger)">မှတ်ချက်များ ဖွင့်၍မရပါ။</p>'; return; }
     var comments = res.data.comments || [];
     document.getElementById('comment-count').textContent = '(' + comments.length + ')';
-    if (!comments.length) { list.innerHTML = '<p style="color:var(--text-muted); font-size:0.86rem;">မှတ်ချက် မရှိသေးပါ။ ပထမဆုံး မှတ်ချက်ပေးသူ ဖြစ်လိုက်ပါ။</p>'; return; }
+    if (!comments.length) { list.innerHTML = '<p style="color:var(--text-muted); font-size:0.86rem;">comment များမရှိသေးပါ</p>'; return; }
     list.innerHTML = comments.map(function(c) {
       var canDelete = currentUser && (currentUser.id === c.user_id || currentUser.role === 'admin');
       return '<div class="comment-item"><div style="display:flex; gap:10px; align-items:flex-start;"><div class="comment-avatar">' + initials(c.user_name || 'U') + '</div><div style="flex:1;"><div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;"><div style="font-weight:bold; font-size:0.86rem;">' + (c.user_name || 'အသုံးပြုသူ') + '</div><div style="display:flex; align-items:center; gap:8px;"><span style="font-size:0.76rem; color:var(--text-muted);">' + timeAgo(c.created_at) + '</span>' + (canDelete ? '<button onclick="deletePetComment(' + c.id + ')" style="background:none; border:none; color:var(--danger); font-size:0.76rem; cursor:pointer;">ဖျက်ရန်</button>' : '') + '</div></div><p style="font-size:0.88rem; color:var(--text-primary); margin-top:4px; white-space:pre-wrap;">' + c.content + '</p></div></div></div>';

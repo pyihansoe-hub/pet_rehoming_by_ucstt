@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="my">
 <head>
@@ -16,10 +17,8 @@
   <div class="container">
     <div style="max-width:520px;margin:0 auto">
 
-      <!-- REGISTRATION FORM CARD -->
       <div class="card" id="register-card">
         
-        <!-- FORM TITLE INSIDE THE CARD -->
         <div style="text-align:center; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border);">
           <h1 style="font-size:1.4rem; margin-bottom:6px; color:var(--text-primary);">အကောင့်တစ်ခု ဖွင့်ရန်</h1>
           <p style="color:var(--text-secondary); font-size:0.9rem; margin:0;">အိမ်မွေးတိရစ္ဆာန်များ မွေးစားရန်ပါဝင်ပါ</p>
@@ -34,13 +33,13 @@
 
         <div class="form-group">
           <label for="email">အီးမေးလ် <span style="color:#e76f51">*</span></label>
-          <input type="email" id="email" class="form-control" placeholder="you@example.com">
+          <input type="email" id="email" class="form-control" placeholder="သင့်အီးမေးလ်လိပ်စာကို ထည့်ပါ">
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label for="password">စကားဝှက် <span style="color:#e76f51">*</span></label>
-            <input type="password" id="password" class="form-control" placeholder="အနည်းဆုံး စာလုံး ၆ လုံး">
+            <input type="password" id="password" class="form-control" placeholder="စကားဝှက် ထပ်ထည့်ပါ">
           </div>
           <div class="form-group">
             <label for="confirm">အတည်ပြုရန် <span style="color:#e76f51">*</span></label>
@@ -51,7 +50,7 @@
         <div class="form-row">
           <div class="form-group">
             <label for="phone">ဖုန်း <span style="color:#e76f51">*</span></label>
-            <input type="text" id="phone" class="form-control" placeholder="+95 9...">
+            <input type="text" id="phone" class="form-control" placeholder="+95 9..." inputmode="tel">
           </div>
           <div class="form-group">
             <label for="address">လိပ်စာ</label>
@@ -68,7 +67,7 @@
         <div class="form-group">
           <label for="payment_method">နည်းလမ်း <span style="color:#e76f51">*</span></label>
           <select id="payment_method" class="form-control" onchange="togglePaymentFields()">
-            <option value="">— ရွေးချယ်ပါ —</option>
+            <option value=""> ရွေးချယ်ပါ </option>
             <option value="credit_card">Credit card</option>
             <option value="ayapay">AyaPay</option>
             <option value="wavepay">Wave Pay</option>
@@ -108,7 +107,7 @@
           <div class="form-group">
             <label for="wallet_name">အကောင့်ပိုင်ရှင် အမည် <span style="color:#e76f51">*</span></label>
             <input type="text" id="wallet_name" class="form-control" placeholder="ပိုက်ဆံအိတ်ဖြင့် မှတ်ပုံတင်ထားသော အမည်">
-            <small style="color:#6b7a8d">ဤပိုက်ဆံအိတ်အတွက် အထက်ပါ ပင်မဖုန်းနံပါတ်ကို အသုံးပြုပါမည်။</small>
+            <small style="color:#6b7a8d">ဤပိုက်ဆံအိတ်အတွက် အထက်ပါ ပင်မဖုန်းနံပါတ်ကို အသုံးပြုပါမည်</small>
           </div>
         </div>
 
@@ -120,13 +119,11 @@
         </p>
       </div>
 
-      <!-- NEW: TOTP QR CODE CARD (Hidden initially) -->
       <div class="card" id="totp-card" style="display:none; text-align:center;">
         
-        <!-- FORM TITLE INSIDE THE CARD -->
         <div style="text-align:center; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border);">
           <h1 style="font-size:1.4rem; margin-bottom:6px; color:var(--text-primary);">Authenticator ဖြင့် အတည်ပြုပါ</h1>
-          <p style="color:var(--text-secondary); font-size:0.9rem; margin:0;">Google Authenticator သို့မဟုတ် အလားတူ App ကို ဖွင့်ပြီး QR Code ကို စကင်(န်) ဖတ်ပါ။</p>
+          <p style="color:var(--text-secondary); font-size:0.9rem; margin:0;">Google Authenticator သို့မဟုတ် အလားတူ App ကို ဖွင့်ပြီး QR Code ကို Scan ဖတ်ပါ</p>
         </div>
         
         <img id="qr-image" src="" alt="QR Code" style="margin: 0 auto 20px; max-width: 200px; border: 1px solid #eee; padding: 10px; border-radius: 8px;">
@@ -152,7 +149,7 @@ if (getToken()) window.location.href = '/index.html';
 
 function togglePaymentFields() {
   var method = document.getElementById('payment_method').value;
-  document.getElementById('cc-fields').style.display     = method === 'credit_card' ? 'block' : 'none';
+  document.getElementById('cc-fields').style.display = method === 'credit_card' ? 'block' : 'none';
   document.getElementById('wallet-fields').style.display = ['ayapay','wavepay','kpay'].includes(method) ? 'block' : 'none';
 }
 
@@ -160,6 +157,7 @@ function formatCard(el) {
   var v = el.value.replace(/\D/g,'').slice(0,16);
   el.value = v.replace(/(.{4})/g,'$1 ').trim();
 }
+
 function formatExpiry(el) {
   var v = el.value.replace(/\D/g,'').slice(0,4);
   if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2);
@@ -176,17 +174,34 @@ function detectBrand(num) {
   if (/^35/.test(num)) return 'jcb';
   return 'unknown';
 }
+function normalizeMyanmarPhone(phone) {
+  var cleaned = phone.replace(/[\s-]/g, '');
 
-// Store email globally to use in TOTP verification step
+  if (/^09\d{9}$/.test(cleaned)) {
+    return '95' + cleaned.substring(1);
+  }
+
+  if (/^959\d{9}$/.test(cleaned)) {
+    return cleaned;
+  }
+
+  if (/^\+959\d{9}$/.test(cleaned)) {
+    return cleaned.substring(1);
+  }
+
+  return null;
+}
+
 var registeredEmail = '';
 
 async function doRegister(event) {
-  if (event) event.preventDefault(); 
+  if (event) event.preventDefault();
+
   var name     = document.getElementById('name').value.trim();
   var email    = document.getElementById('email').value.trim();
   var password = document.getElementById('password').value;
   var confirm  = document.getElementById('confirm').value;
-  var phone    = document.getElementById('phone').value.trim();
+  var phoneInput = document.getElementById('phone').value.trim();
   var address  = document.getElementById('address').value.trim();
   var method   = document.getElementById('payment_method').value;
   var alertArea = document.getElementById('alert-area');
@@ -198,14 +213,29 @@ async function doRegister(event) {
     alertArea.innerHTML = '<div class="alert alert-danger">အမည်၊ အီးမေးလ်နှင့် စကားဝှက် လိုအပ်ပါသည်။</div>';
     return;
   }
-  if (password.length < 6) {
-    alertArea.innerHTML = '<div class="alert alert-danger">စကားဝှက်သည် အနည်းဆုံး စာလုံး ၆ လုံး ရှိရပါမည်။</div>';
+
+  if (password.length < 8 || password.length > 15 || !/[A-Z]/.test(password) || !/[!@#$%^&*(),.?":{}|<>_\-\\[\]\\\/'`~+=;']/ .test(password)) {
+    alertArea.innerHTML = '<div class="alert alert-danger">စကားဝှက်သည် စာလုံး ၈ လုံးမှ ၁၅ လုံးအတွင်း ဖြစ်ရပြီး အကြီးစာလုံးနှင့် အထူးသင်္ကေတ အနည်းဆုံး တစ်ခုစီ ပါရပါမည်</div>';
     return;
   }
+
   if (password !== confirm) {
-    alertArea.innerHTML = '<div class="alert alert-danger">စကားဝှက်များ မတူညီပါ။</div>';
+    alertArea.innerHTML = '<div class="alert alert-danger">စကားဝှက်များမတူညီပါ။</div>';
     return;
   }
+
+  if (!phoneInput) {
+    alertArea.innerHTML = '<div class="alert alert-danger">ကျေးဇူးပြု၍ ဖုန်းနံပါတ် ထည့်ပါ။</div>';
+    return;
+  }
+
+  var phone = normalizeMyanmarPhone(phoneInput);
+
+  if (!phone) {
+    alertArea.innerHTML = '<div class="alert alert-danger">ဖုန်းနံပါတ် မမှန်ကန်ပါ။ 09xxxxxxxxx၊ 959xxxxxxxxx သို့မဟုတ် +959xxxxxxxxx ပုံစံဖြင့် ထည့်ပါ။</div>';
+    return;
+  }
+
   if (!method) {
     alertArea.innerHTML = '<div class="alert alert-danger">ကျေးဇူးပြု၍ ငွေပေးချေမှု နည်းလမ်းတစ်ခု ရွေးချယ်ပါ။</div>';
     return;
@@ -224,18 +254,22 @@ async function doRegister(event) {
       alertArea.innerHTML = '<div class="alert alert-danger">ကျေးဇူးပြု၍ ကတ်အကွက်အားလုံး ဖြည့်ပါ။</div>';
       return;
     }
+
     if (ccNumber.length < 13 || ccNumber.length > 16) {
       alertArea.innerHTML = '<div class="alert alert-danger">ကတ်နံပါတ် အရှည် မမှန်ကန်ပါ။</div>';
       return;
     }
+
     if (!/^\d{2}\/\d{2}$/.test(ccExp)) {
       alertArea.innerHTML = '<div class="alert alert-danger">သက်တမ်းကုန်ဆုံးရက်သည် MM/YY ဖြစ်ရပါမည်။</div>';
       return;
     }
+
     if (ccCvc.length < 3) {
       alertArea.innerHTML = '<div class="alert alert-danger">CVC မမှန်ကန်ပါ။</div>';
       return;
     }
+
     var parts = ccExp.split('/');
     payment.card_holder_name   = ccName;
     payment.card_last_four     = ccNumber.slice(-4);
@@ -245,14 +279,12 @@ async function doRegister(event) {
     payment.billing_address    = ccBill || null;
   } else {
     var wName  = document.getElementById('wallet_name').value.trim();
-    if (!phone) {
-      alertArea.innerHTML = '<div class="alert alert-danger">ပိုက်ဆံ ငွေပေးချေမှုများအတွက် ဖုန်းနံပါတ် လိုအပ်ပါသည်။</div>';
-      return;
-    }
+
     if (!wName) {
       alertArea.innerHTML = '<div class="alert alert-danger">ပိုက်ဆံ အကောင့်ပိုင်ရှင်အမည် လိုအပ်ပါသည်။</div>';
       return;
     }
+
     payment.wallet_phone        = phone;
     payment.wallet_account_name = wName;
   }
@@ -261,20 +293,24 @@ async function doRegister(event) {
   btn.textContent = 'အကောင့် ဖွင့်နေသည်...';
 
   try {
-    var body = { name: name, email: email, password: password, payment_method: payment };
-    if (phone)   body.phone   = phone;
+    var body = {
+      name: name,
+      email: email,
+      password: password,
+      phone: phone,
+      payment_method: payment
+    };
+
     if (address) body.address = address;
 
     var res = await Auth.register(body);
 
     if (res && res.ok && res.data && res.data.requireTwoFactor) {
-      // Hide Registration form, show TOTP form
       document.getElementById('register-card').style.display = 'none';
       document.getElementById('totp-card').style.display = 'block';
       
-      // Set QR code image
       document.getElementById('qr-image').src = res.data.qrCode;
-      registeredEmail = res.data.email; // Save email for verification API call
+      registeredEmail = res.data.email;
     } else {
       var errMsg = (res && res.data && res.data.message) ? res.data.message : 'အကောင့်ဖွင့်၍မရပါ။';
       alertArea.innerHTML = '<div class="alert alert-danger">' + errMsg + '</div>';
@@ -287,7 +323,6 @@ async function doRegister(event) {
   btn.textContent = 'အကောင့် ဖွင့်ရန်';
 }
 
-// NEW: Function to verify TOTP code
 async function verifyTOTP() {
   var token = document.getElementById('totp-code').value.trim();
   var alertArea = document.getElementById('totp-alert');
@@ -302,8 +337,6 @@ async function verifyTOTP() {
   btn.textContent = 'အတည်ပြုနေသည်...';
 
   try {
-    // Ensure this matches how your api.js sends requests. Assuming it uses fetch internally.
-    // Example fallback if Auth.verifyTOTP is not defined in api.js:
     var res = await fetch('/api/auth/verify-totp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -330,3 +363,4 @@ async function verifyTOTP() {
 </script>
 </body>
 </html>
+```

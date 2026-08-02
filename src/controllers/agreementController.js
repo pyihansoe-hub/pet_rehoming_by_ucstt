@@ -1,5 +1,5 @@
 const pool = require('../db/pool');
-const notify = require('../services/notify'); // Added notify service
+const notify = require('../services/notify'); 
 
 // POST /api/adoption-requests/:id/agreement
 // Creates agreement when owner approves — called internally from adoptionController
@@ -14,14 +14,15 @@ const createAgreement = async (adoptionRequestId, terms = null) => {
     console.error('Agreement creation failed (non-fatal):', err.message);
   }
 };
+
 // PATCH /api/adoption-requests/:id/agreement/agree
 // Owner or adopter signs the agreement
 const agreeToAdoption = async (req, res) => {
   const adoptionRequestId = req.params.id;
   try {
-    // 1. Check user is owner or adopter, and get pet name for notifications
+    // [UPDATED] Added p.fee_type and p.adoption_fee to fetch the cost
     const { rows: arRows } = await pool.query(
-      `SELECT ar.requester_id, p.owner_id, p.name AS pet_name
+      `SELECT ar.requester_id, p.owner_id, p.name AS pet_name, p.fee_type, p.adoption_fee
        FROM adoption_requests ar
        JOIN pets p ON p.id=ar.pet_id
        WHERE ar.id=$1 AND ar.status='approved'`,
@@ -38,7 +39,7 @@ const agreeToAdoption = async (req, res) => {
     const field     = isOwner ? 'owner_agreed'   : 'adopter_agreed';
     const timeField = isOwner ? 'owner_agreed_at' : 'adopter_agreed_at';
 
-    // 2. Update ONLY IF they haven't signed yet (AND ${field}=FALSE)
+    // Update ONLY IF they haven't signed yet
     const { rows } = await pool.query(
       `UPDATE adoption_agreements
        SET ${field}=TRUE, ${timeField}=NOW()
@@ -47,7 +48,6 @@ const agreeToAdoption = async (req, res) => {
       [adoptionRequestId]
     );
 
-    // If rows.length is 0, it means they ALREADY signed it previously
     if (!rows.length) {
       const { rows: checkRows } = await pool.query(
         `SELECT * FROM adoption_agreements WHERE adoption_request_id=$1`,
@@ -67,31 +67,41 @@ const agreeToAdoption = async (req, res) => {
     const petName = ar.pet_name || 'အိမ်မွေးတိရစ္ဆာန်';
     const link = `/pages/adoption-requests.html`;
 
-    // 3. Send Notification to BOTH parties about who just signed
-    let notifBody = '';
-    if (isOwner) {
-      notifBody = `ပိုင်ရှင်မှ "${petName}" ၏ သဘောတူညီချက်ကို လက်မှတ်ရေးထိုးပြီးပါပြီ။`;
+    // [ADDED] Create cost text to include in notifications
+    let costText = '';
+    if (ar.fee_type === 'paid' && parseFloat(ar.adoption_fee) > 0) {
+      const paidAmount = parseFloat(ar.adoption_fee).toLocaleString();
+      costText = ` ဤအိမ်မွေးတိရစ္ဆာန်အတွက် ငွေကျပ် ${paidAmount} ပေးချေထားပါသည်။ ရရှိငွေကို ဝန်ဆောင်ခများနုတ်ယူပြီး ၄၈ နာရီအတွင်း ပိုင်ရှင်၏ wallet ထဲသိုပိုပေးထားပါမည်`;
     } else {
-      notifBody = `မွေးစားသူမှ "${petName}" ၏ သဘောတူညီချက်ကို လက်မှတ်ရေးထိုးပြီးပါပြီ။`;
+      costText = ' ဤအိမ်မွေးတိရစ္ဆာန်မှာ အခမဲ့ မွေးစားခြင်း ဖြစ်ပါသည်။';
     }
 
+    let notifBody = '';
+    if (isOwner) {
+      notifBody = `ပိုင်ရှင်မှ "${petName}" ၏ စာချုပ်ကို လက်မှတ်ရေးထိုးပြီးပါပြီ။`;
+    } else {
+      notifBody = `မွေးစားသူမှ "${petName}" ၏ စာချုပ်ကို လက်မှတ်ရေးထိုးပြီးပါပြီ။`;
+    }
+
+    // Notify both that someone just signed
     notify(ar.requester_id, {
       type: 'agreement_signed',
-      title: 'သဘောတူညီချက် လက်မှတ်ရေးထိုးပြီး',
+      title: 'စာချုပ် လက်မှတ်ရေးထိုးပြီး',
       body: notifBody,
       link: link
     });
 
     notify(ar.owner_id, {
       type: 'agreement_signed',
-      title: 'သဘောတူညီချက် လက်မှတ်ရေးထိုးပြီး',
+      title: 'စာချုပ် လက်မှတ်ရေးထိုးပြီး',
       body: notifBody,
       link: link
     });
 
-    // 4. If BOTH have signed, send a final completion notification to both
+    // If BOTH have signed, send a final completion notification with the cost
     if (bothAgreed) {
-      const completeBody = `"${petName}" ၏ မွေးစားခြင်း သဘောတူညီချက်ကို နှစ်ဖက်စလုံး လက်မှတ်ရေးထိုးပြီးပါပြီ။ မွေးစားခြင်း လုပ်ငန်းစဉ် အောင်မြင်စွာ အပြီးသတ်ပါပြီ။`;
+      // [UPDATED] Included costText in the final message
+      const completeBody = `"${petName}" ၏ မွေးစားခြင်း စာချုပ်ကို နှစ်ဖက်စလုံး လက်မှတ်ရေးထိုးပြီးပါပြီ။${costText} မွေးစားခြင်း လုပ်ငန်းစဉ် အောင်မြင်စွာ အပြီးသတ်ပါပြီ။`;
       
       notify(ar.requester_id, {
         type: 'agreement_signed',

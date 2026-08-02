@@ -47,10 +47,10 @@ const getOrCreateConversation = async (req, res) => {
     res.status(201).json({ conversation: rows[0] });
   } catch (err) { res.status(500).json({ message: 'Server error.', error: err.message }); }
 };
-
 // GET /api/messages/conversations
 const listConversations = async (req, res) => {
   try {
+    // [UPDATED] Added LEFT JOIN to get agreement status
     const { rows } = await pool.query(
       `SELECT c.id, c.adoption_request_id, c.created_at,
               p.name AS pet_name,
@@ -60,6 +60,8 @@ const listConversations = async (req, res) => {
               adopter.id  AS adopter_id,
               adopter.name AS adopter_name,
               adopter.avatar_url AS adopter_avatar,
+              ag.owner_agreed,
+              ag.adopter_agreed,
               (SELECT content FROM messages WHERE conversation_id=c.id ORDER BY created_at DESC LIMIT 1) AS last_message,
               (SELECT created_at FROM messages WHERE conversation_id=c.id ORDER BY created_at DESC LIMIT 1) AS last_message_at,
               (SELECT COUNT(*) FROM messages WHERE conversation_id=c.id AND is_read=FALSE AND sender_id<>$1) AS unread_count
@@ -68,6 +70,7 @@ const listConversations = async (req, res) => {
        JOIN pets     p       ON p.id=ar.pet_id
        JOIN users    owner   ON owner.id=p.owner_id
        JOIN users    adopter ON adopter.id=ar.requester_id
+       LEFT JOIN adoption_agreements ag ON ag.adoption_request_id = c.adoption_request_id
        WHERE p.owner_id=$1 OR ar.requester_id=$1
        ORDER BY last_message_at DESC NULLS LAST`,
       [req.user.id]

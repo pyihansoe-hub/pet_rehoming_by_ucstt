@@ -124,13 +124,13 @@
 
     <div class="admin-sidebar">
       <div class="admin-sidebar-logo">
-        <div style="color:#fff;font-weight:bold;font-size:1rem"></div>
+        <div style="color:#fff;font-weight:bold;font-size:1rem">Admins' Page</div>
         <div></div>
       </div>
 
       <div class="admin-nav-section"></div>
       <button class="admin-nav-item active" onclick="showPanel('dashboard',this)">
-        <span class="icon"><!-- chart icon --></span> ဒက်ရှ်ဘုတ်
+        <span class="icon"><!-- chart icon --></span> Dashboard
       </button>
 
       <div class="admin-nav-section">စီမံခန့်ခွဲရန်</div>
@@ -172,7 +172,7 @@
     <div class="admin-content" id="admin-content">
 
       <div class="admin-panel active" id="panel-dashboard">
-        <h2 style="margin-bottom:20px">ဒက်ရှ်ဘုတ်</h2>
+        <h2 style="margin-bottom:20px">Dashboard</h2>
         <div id="stats-grid" class="stat-grid">
           <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
         </div>
@@ -718,7 +718,7 @@ async function loadAdminAdoptions() {
         '<td style="font-weight:bold">' + (a.pet_name||'\u2014') + '</td>' +
         '<td style="font-size:0.82rem;color:#6b7a8d">' + (a.owner_name||'\u2014') + '</td>' +
         '<td style="font-size:0.82rem">' + (a.requester_name||'\u2014') + '<div style="color:#9baab8;font-size:0.76rem">' + (a.requester_email||'') + '</div></td>' +
-        '<td>' + (a.fee_type === 'free' ? '<span class="badge-green">အခမဲ့</span>' : '<span class="badge-yellow">ငွေပေးချေရန်</span>') + '</td>' +
+        '<td>' + (a.fee_type === 'free' ? '<span class="badge-green">အခမဲ့</span>' : '<span class="badge-yellow">အခကြေးငွေဖြင့်</span>') + '</td>' +
         '<td>' + pill(a.status) + '</td>' +
         '<td style="color:#9baab8;font-size:0.8rem">' + timeAgo(a.created_at) + '</td>' +
         '<td>' + (a.status === 'approved' || a.status === 'pending'
@@ -802,7 +802,7 @@ async function loadHealthLogs() {
     if (!list.length) { el.innerHTML = '<div class="empty-state"><h3>ကျန်းမာရေး မှတ်တမ်း မရှိသေးပါ</h3></div>'; return; }
 
     el.innerHTML = '<table class="admin-table"><thead><tr>' +
-      '<th>အိမ်မွေးတိရစ္ဆာန်</th><th>အမျိုးအစား</th><th>မှတ်တမ်းတင်သူ</th><th>တိရစ္ဆာန်ဆေးကုဆရာဝန်</th><th>ကိုယ်အလေးချိန်</th><th>နောက်တစ်ကြိမ် ပြုလုပ်ရန်</th><th>ရက်စွဲ</th>' +
+      '<th>အိမ်မွေးတိရစ္ဆာန်</th><th>အမျိုးအစား</th><th>မှတ်တမ်းတင်သူ</th><th>တိရစ္ဆာန်ဆေးကုဆရာဝန်</th><th>ကိုယ်အလေးချိန်</th><th>ပြုလုပ်သည့်နေ့စွဲ</th><th>မှတ်တမ်းတင်သည့်ရက်စွဲ</th>' +
     '</tr></thead><tbody>' +
     list.map(function(l) {
       return '<tr>' +

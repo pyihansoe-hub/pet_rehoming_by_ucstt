@@ -73,7 +73,7 @@ const requestAdoption = async (req, res) => {
         `ဝန်ဆောင်မှုခ (4%) = ${calc.serviceFee} ကျပ်၊ ` +
         `ငွေလွှဲခ (1.5%) = ${calc.transactionFee} ကျပ်။ ` +
         `စုစုပေါင်း နုတ်ယူငွေ = ${calc.totalDeduction} ကျပ်။ ` +
-        `သင်၏ နောက်ဆုံးရရှိငွေမှာ ${calc.netPayout} ကျပ် ဖြစ်ပါသည်။`;
+        `သင်၏ နောက်ဆုံးရရှိငွေမှာ ${calc.netPayout} ကျပ် ဖြစ်ပါသည်။ မွေးစားမည့်သူမှ လက်ခံရရှိကြောင်းအတည်ပြုပြီး  ၄၈ နာရီအတွင်း ရရှိငွေကို သင့် wallet ထဲသို့ပို့ပေးထားပါမည်။ `;
     }
 
     notify(pet.owner_id, {
@@ -141,8 +141,9 @@ const reviewRequest = async (req, res) => {
   try {
     await client.query('BEGIN');
 
+    // [UPDATED] Added p.adoption_fee to the SELECT query
     const { rows } = await client.query(
-      `SELECT ar.*, p.owner_id, p.fee_type FROM adoption_requests ar
+      `SELECT ar.*, p.owner_id, p.fee_type, p.adoption_fee FROM adoption_requests ar
        JOIN pets p ON p.id=ar.pet_id WHERE ar.id=$1`,
       [req.params.id]
     );
@@ -161,7 +162,6 @@ const reviewRequest = async (req, res) => {
     if (status === 'approved') {
       await client.query(`UPDATE pets SET status='adopted' WHERE id=$1`, [req_.pet_id]);
 
-      // Find all OTHER pending requests for this pet to auto-reject and refund
       const { rows: otherReqs } = await client.query(
         `SELECT ar.id, ar.requester_id, p.name AS pet_name, p.fee_type, p.adoption_fee
          FROM adoption_requests ar
@@ -172,7 +172,6 @@ const reviewRequest = async (req, res) => {
 
       const { send, emails } = require('../services/email');
 
-      // Loop through each rejected user and issue a 100% full refund notification
       for (const otherReq of otherReqs) {
         await client.query(
           `UPDATE adoption_requests SET status='rejected', reviewed_at=NOW() WHERE id=$1`,
@@ -183,8 +182,6 @@ const reviewRequest = async (req, res) => {
         if (otherReq.fee_type === 'paid' && otherReq.adoption_fee > 0) {
           const refundAmount = parseFloat(otherReq.adoption_fee) || 0;
           notifBody += `\n\nသင်၏ ပေးချေခဲ့သော ငွေ ${refundAmount.toLocaleString()} ကျပ် အား အပြည့်အဝ ပြန်လည် ထုတ်ပေးထားပါသည်။ (အခကြေးငွေ မယူပါ)`;
-          
-          // TODO: Call 100% refund API (like Stripe) here if using a real payment gateway
         }
 
         notify(otherReq.requester_id, {
@@ -231,15 +228,21 @@ const reviewRequest = async (req, res) => {
 
     const { send, emails } = require('../services/email');
 
-    // Notify the approved/rejected user (The one directly actioned)
+    // [UPDATED] Created a dynamic body message based on payment
+    let approvedBody = '';
+    if (req_.fee_type === 'paid' && parseFloat(req_.adoption_fee) > 0) {
+      const paidAmount = parseFloat(req_.adoption_fee).toLocaleString();
+      approvedBody = `သင်၏တောင်းဆိုချက် အတည်ပြုပြီးပါပြီ။ ဤအိမ်မွေးတိရစ္ဆာန်အတွက် ငွေကျပ် ${paidAmount} ပေးချေထားပြီးဖြစ်ပါသည်။ မက်ဆေ့ခ်ျများတွင် ပိုင်ရှင်နှင့် ဆက်သွယ်၍ အိမ်မွေးတိရစ္ဆာန်ကို သွားရောက်ကြိုယူရန် စီစဉ်ပါ။`;
+    } else {
+      approvedBody = 'သင်၏တောင်းဆိုချက် အတည်ပြုပြီးပါပြီ။ မက်ဆေ့ခ်ျများတွင် ပိုင်ရှင်နှင့် ဆက်သွယ်၍ အိမ်မွေးတိရစ္ဆာန်ကို သွားရောက်ကြိုယူရန် စီစဉ်ပါ။';
+    }
+
     notify(req_.requester_id, {
       type: 'adoption_reviewed',
       title: status === 'approved'
         ? 'သင်၏မွေးစားရန် တောင်းဆိုချက် အတည်ပြုပြီးပါပြီ။'
         : 'မွေးစားရန် တောင်းဆိုချက် အပ်ဒိတ်',
-      body: status === 'approved'
-        ? `သင်၏တောင်းဆိုချက် အတည်ပြုပြီးပါပြီ။ ${req_.fee_type === 'paid' ? 'မက်ဆေ့ခ်ျများတွင် ပိုင်ရှင်နှင့် ဆက်သွယ်၍ အိမ်မွေးတိရစ္ဆာန်ကို သွားရောက်ကြိုယူရန် စီစဉ်ပါ။' : 'မက်ဆေ့ခ်ျများတွင် ပိုင်ရှင်နှင့် ဆက်သွယ်၍ အိမ်မွေးတိရစ္ဆာန်ကို သွားရောက်ကြိုယူရန် စီစဉ်ပါ။'}`
-        : 'ဤတစ်ကြိမ်တွင် သင်၏မွေးစားရန် တောင်းဆိုချက် အတည်ပြုမခံရပါ။',
+      body: status === 'approved' ? approvedBody : 'ဤတစ်ကြိမ်တွင် သင်၏မွေးစားရန် တောင်းဆိုချက် အတည်ပြုမခံရပါ။',
       link: `/pages/messages.html?conv=recent`,
     });
 
