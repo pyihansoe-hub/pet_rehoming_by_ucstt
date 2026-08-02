@@ -9,7 +9,7 @@ const signToken = (id) =>
 
 // POST /api/auth/register
 const register = async (req, res) => {
-  console.log('🔵 REGISTER ENDPOINT HIT! Email:', req.body.email);
+  console.log(' REGISTER ENDPOINT HIT! Email:', req.body.email);
   const { name, email, password, phone, address, payment_method } = req.body;
   
   if (!name || !email || !password) return res.status(400).json({ message: 'Name, email, and password are required.' });
